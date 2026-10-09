@@ -1,0 +1,5 @@
+obligation: O-001
+status: pass
+command: cargo test --manifest-path Cargo.toml
+date: 2026-10-09
+notes: Verified by examples/validate-workflow.ps1; the script reruns this command before the final ledger gate.

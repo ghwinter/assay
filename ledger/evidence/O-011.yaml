@@ -1,0 +1,5 @@
+obligation: O-011
+status: pass
+command: grep -rn "unsafe" pilot-rs/src pilot-rs/tests && cargo test
+date: 2026-10-04
+notes: 语言强制档——safe Rust 零 unsafe 块（grep 仅命中注释），Send/Sync 类型系统保证无数据竞争；升级档 loom 列入升级队列

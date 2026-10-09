@@ -1,0 +1,27 @@
+id: D-024
+status: accepted
+question: 引擎立项前置包——哪些必要工作现在做？（schema 增量、实验 D、spec CLI v0）
+goal: [G-001, G-002]
+alternatives: [前置包三件一起做, 只做schema增量, 等引擎立项后按需逐件做]
+choice: 三件——(1) 账本 schema 增量：D 账 assumptions[]（每条 text+invalidation，"什么证据会推翻我"的字段化，宪法三律 2 的结构位）与 G 账 open_questions[]（目的→问题边的显式登记，Q_next 的最小形态，lint 查非空）；(2) 实验 D 预登记——检查器变异测试（SG9 钝化的主动重放，原设计 meta-lint 的兑现）；(3) tools/spec.py v0：init（WORKFLOW 第 0 步五件套脚手架，账本空置+禁止 BDUF，config python 自移植）与 expand（触发器义务存根展开器，只读输出）两个子命令
+rationale:
+  - text: 交租检验由第二项目兑现——引擎立项使插座真实需求到来（discipline §6.4 插座开设标准：第二实现者/真实需求出现时开设）；schema 字段与 CLI 以引擎为首消费者，spec-ledger 自身不预填
+    anchor: thinking/methodology/discipline.html §6
+  - text: assumptions 与 SG5 猜想状态同族但不重复——invalidation 字段已承载"会推翻我"的实体，义务级 猜想|已检 两态等引擎出现真实需要再升（避免提前开设两个相邻插座）
+    anchor: CONSTITUTION.md 三律之二（软声明交签名）
+  - text: expand 只展开 active 触发器库，候选池（CANDIDATES.md）不自动入账——触发器生长保持人裁决门；init 不代写 G/D 且不自动首提（账本从操作者的一段话开始，bootstrap 顺序问题不回避）
+    anchor: WORKFLOW.md 第 0 步（禁止 BDUF）
+  - text: gate 桥门加空容忍（bridge.yaml 不存在则跳过）——新项目无桥不挡首提，与"验证器是叶子"同构
+    anchor: tools/gate.py
+  - text: 裁决记录——操作者 2026-10-07 批示"开始一切必要的工作"
+    anchor: owner=human（操作者批示 2026-10-07）
+assumptions:
+  - text: assumptions/open_questions 字段会被真实填写而非空转
+    invalidation: 引擎项目前三个决策后两字段全空或全是占位文本——插座无租，随 D 修订移除
+  - text: spec expand 的存根输出会被引擎首个决策实际采用
+    invalidation: 首个带 introduces 的引擎决策未用 expand 且人工展开更快——CLI 徒增一步，降级或删除
+introduces: []
+obligations: []
+waivers: []
+artifacts: [tools/ledger_lint.py, tools/tests/test_ledger_lint.py, tools/spec.py, tools/gate.py, experiments/protocol.md, thinking/glossary.md, ledger/triggers/CANDIDATES.md]
+superseded_by: null

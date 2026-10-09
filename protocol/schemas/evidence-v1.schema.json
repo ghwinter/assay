@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:assay:evidence:v1",
+  "title": "Assay Evidence Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "run_id",
+    "lineage",
+    "subject",
+    "checker",
+    "result",
+    "birth_certificate"
+  ],
+  "properties": {
+    "schema_version": { "const": "assay-evidence/v1" },
+    "event_id": { "type": "string", "minLength": 1 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim_ids", "obligation_ids", "origins", "assumption_ids", "trust_assumptions"],
+      "properties": {
+        "change_id": { "type": ["string", "null"] },
+        "claim_ids": { "$ref": "#/$defs/stringSet" },
+        "obligation_ids": { "$ref": "#/$defs/stringSet" },
+        "origins": { "$ref": "#/$defs/stringSet" },
+        "assumption_ids": { "$ref": "#/$defs/stringSet" },
+        "trust_assumptions": { "type": "array", "items": { "type": "string" }, "uniqueItems": true }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_fingerprint"],
+      "properties": {
+        "revision": { "type": ["string", "null"] },
+        "manifest_fingerprint": { "type": "string", "pattern": "^fnv1a:[0-9a-f]{16}$" }
+      }
+    },
+    "checker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "capability", "strength", "scope", "bound", "stage", "command_fingerprint", "engine_version"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "capability": { "type": "string", "minLength": 1 },
+        "strength": { "type": "integer", "minimum": 1, "maximum": 6 },
+        "scope": {
+          "anyOf": [
+            { "type": "string", "enum": ["unbounded", "bounded", "sampled"] },
+            { "type": "null" }
+          ]
+        },
+        "bound": { "type": ["integer", "null"], "minimum": 0 },
+        "stage": { "type": "string", "minLength": 1 },
+        "command_fingerprint": { "type": "string", "pattern": "^fnv1a:[0-9a-f]{16}$" },
+        "engine_version": { "type": "string", "minLength": 1 },
+        "checker_version": { "type": "string", "minLength": 1 }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict", "exit_code", "started_at", "duration_s", "detail"],
+      "properties": {
+        "verdict": { "type": "string", "enum": ["pass", "fail", "skip", "unknown", "error"] },
+        "exit_code": { "type": ["integer", "null"] },
+        "started_at": { "type": "string", "format": "date-time" },
+        "duration_s": { "type": "number", "minimum": 0 },
+        "detail": { "type": "string" },
+        "counterexample": { "type": "string", "minLength": 1 }
+      }
+    },
+    "birth_certificate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "note"],
+      "properties": {
+        "status": { "type": "string", "enum": ["reproduced", "self_reported", "missing"] },
+        "note": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    }
+  }
+}

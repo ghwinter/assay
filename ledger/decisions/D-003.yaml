@@ -1,0 +1,77 @@
+id: D-003
+status: accepted
+question: MPMC 的并发策略？
+goal: [G-002, G-003]
+alternatives: [mutex+双condvar, lock-free-ring, actor/channel]
+choice: 单 mutex + not_empty/not_full 两个条件变量，阻塞式 push/pop，close 排空后拒绝
+rationale:
+  - text: 正确性优先；G-003 预算（≥50k ops/s）远低于需要 lock-free 的门槛
+    anchor: G-003
+  - text: lock-free 需要内存序证据链，v0 无法建立；账本留档，需要时可复启
+    anchor: CONSTITUTION.md 检查器阶梯
+introduces: [shared_mutable_state, blocking_api]
+obligations:
+  - id: O-003
+    bs_guard: [BS-009]
+    desc: 不存在数据竞争
+    satisfies: race_freedom
+    frozen: true
+    checker:
+      type: test
+      ref: TSAN 全量回归（当前环境无工具链，证据 deferred）
+  - id: O-004
+    bs_guard: []
+    bs_note: 死锁自由（静态 lint 档），非已编目推理失败模式
+    desc: 不产生死锁
+    satisfies: deadlock_freedom
+    frozen: true
+    checker:
+      type: lint
+      ref: grep 证明单锁 + 每方法至多持锁一次 + 无嵌套加锁
+  - id: O-005
+    bs_guard: []
+    bs_note: 状态不变量（每操作后规模界）
+    desc: 每个操作后 0 <= size <= capacity
+    satisfies: invariant_protection
+    frozen: true
+    checker:
+      type: test
+      ref: pilot/tests/test_queue.cpp 压力路径逐操作断言
+  - id: O-006
+    bs_guard: []
+    bs_note: 保序语义的单消费者可检验形式
+    desc: 交付保序——每个生产者的元素按其推送顺序被交付（总 FIFO 的可检验形式）
+    satisfies: ordering_semantics
+    frozen: true
+    checker:
+      type: test
+      ref: pilot/tests/test_queue.cpp test_fifo_single_consumer（单消费者接收序==交付序）+ test_stress（恰好一次）
+  - id: O-007
+    bs_guard: [BS-001, BS-008]
+    desc: 聚合吞吐满足 G-003 预算
+    satisfies: contention_budget
+    frozen: true
+    checker:
+      type: bench
+      ref: pilot/build/test_queue.exe bench，阈值 50000 ops/s
+  - id: O-008
+    bs_guard: []
+    bs_note: 条件变量等待语义（谓词循环）
+    desc: 两处 wait 均为谓词循环，虚假唤醒与关闭唤醒正确
+    satisfies: wakeup_correctness
+    frozen: true
+    checker:
+      type: manual
+      ref: 评审 queue.hpp + 关闭唤醒测试佐证
+  - id: O-009
+    bs_guard: []
+    bs_note: 关闭语义（唤醒与返回值）
+    desc: close 唤醒全部阻塞者；排空后 pop 返回 false；关闭后 push 返回 false
+    satisfies: shutdown_semantics
+    frozen: true
+    checker:
+      type: test
+      ref: pilot/tests/test_queue.cpp 关闭序列测试
+waivers: []
+artifacts: [pilot/src/queue.hpp]
+superseded_by: null

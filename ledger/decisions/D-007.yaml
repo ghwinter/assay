@@ -1,0 +1,15 @@
+id: D-007
+status: accepted
+question: 工作流主语言与试点实现载体？
+goal: [G-001, G-002, G-003]
+alternatives: [Rust主实现+C/C++/Python/Shell备选, 维持C++主实现, 双主实现并行]
+choice: Rust 为工作流主语言；试点以 Rust 重写为 pilot-rs；C/C++/Python/Shell 为第二/备选
+rationale:
+  - text: 操作者指示（2026-10-04）——主语言 Rust，C/C++/Python/Shell 作为第二/备选
+    anchor: owner=human
+  - text: safe Rust 把数据竞争自由与所有权边界下沉为语言强制（O-011/O-019 档位提升），并为 Verus 机器证明档铺路（D-006）
+    anchor: CONSTITUTION.md 检查器阶梯
+introduces: []
+obligations: []
+artifacts: [pilot-rs/Cargo.toml, pilot-rs/src/lib.rs, pilot-rs/tests/queue.rs]
+superseded_by: null

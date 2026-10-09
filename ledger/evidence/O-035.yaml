@@ -1,0 +1,8 @@
+obligation: O-035
+status: pass
+command: pwsh -NoProfile -File examples/validate-workflow.ps1
+date: 2026-10-09
+notes: >-
+  实际通过初始化器冒烟、工作包生成、触发器展开、Rust 单元测试（2 passed）、Spec Ledger
+  checker 与 gate（36 自测通过）、Assay run（K-001 通过且负例出生证明复现）、Assay check
+  与地图生成。覆盖仅限示例声明的进程内行为与当前本机工具链。

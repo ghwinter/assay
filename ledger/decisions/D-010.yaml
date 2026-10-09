@@ -1,0 +1,38 @@
+id: D-010
+status: accepted
+question: Rust 主实现的值语义与容量策略？（C++ 对照见 D-002 / D-004）
+goal: [G-001]
+alternatives: [泛型T按move进出+固定容量, Arc<T>共享元素, 动态容量]
+choice: T 按 move 进出，pop 返回 Option<T>；固定容量；不暴露任何内部引用
+rationale:
+  - text: move 语义下所有权边界由编译器强制——safe Rust 中内部引用不可能逃逸（义务下沉为语言强制的实例）
+    anchor: CONSTITUTION.md 增长律
+introduces: [value_type_copy, fixed_capacity]
+obligations:
+  - id: O-018
+    bs_guard: []
+    bs_note: 背压语义（Rust 主实现）
+    desc: 队满时 push 阻塞，消费释放容量后苏醒完成推送
+    satisfies: backpressure_policy
+    checker:
+      type: test
+      ref: pilot-rs/tests/queue.rs backpressure
+  - id: O-019
+    bs_guard: []
+    bs_note: 所有权边界（Rust 主实现）
+    desc: 内部存储的引用或指针不通过 API 逃逸
+    satisfies: ownership_boundary
+    checker:
+      type: lint
+      ref: 语言强制——safe Rust 编译器 + grep 零 unsafe；API 面审查（无指向内部的 &T/&mut T）
+  - id: O-020
+    bs_guard: []
+    bs_note: panic 安全（deferred，Rust 无异常机制）
+    desc: 元素 drop 或移动发生 panic 时队列状态不破坏（panic 安全）
+    satisfies: exception_safety
+    checker:
+      type: manual
+      ref: panic 安全专项测试（v0 元素为整数无 panic 路径；含 panic drop 的元素列入升级队列）
+waivers: []
+artifacts: [pilot-rs/src/lib.rs]
+superseded_by: null

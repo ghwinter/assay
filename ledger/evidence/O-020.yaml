@@ -1,0 +1,5 @@
+obligation: O-020
+status: deferred
+reason: Rust 无异常机制，义务形态为 panic 安全；v0 元素为整数无 panic 路径。含 panic drop 元素的专项测试列入检查器升级队列
+owner: human
+date: 2026-10-04

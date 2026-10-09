@@ -1,0 +1,37 @@
+id: D-011
+status: accepted
+question: 运行时诊断/调试档是否引入？用什么工具？
+goal: [G-002]
+alternatives: [cdb+gdb（机器现成）, 官方LLVM安装器含lldb, 从llvm-project源码构建, 不引入]
+choice: 引入运行时诊断档，起步用机器现成的 cdb（Rust/MSVC/PDB）与 gdb（C++/MinGW/DWARF）；lldb 按需后补
+rationale:
+  - text: 演示已通过——cdb 批处理断点命中 bounded_queue::BoundedQueue<i32>::close，完整符号化 backtrace（close ← basic_close ← 测试框架），单条命令零人工
+    anchor: demo 2026-10-04
+  - text: 定位是诊断/控制档而非更强证据——失败证据自动采集、交错控制（复现竞争）、模型↔代码桥抽查；不替代 TSAN（O-003）与 TLA+/Verus 档
+    anchor: CONSTITUTION.md 检查器阶梯
+  - text: 操作者下载的 clang+llvm-23.1.2 tarball 是 clang 编译器发行版，不含 lldb（全树 145 工具确认）；其 clang-tidy/clang-format/clangd 留作 C/C++ 备选语言档工具。若需 lldb 本尊（Python API/Rust pretty-printer），正主是官方 LLVM 安装器（winget install LLVM.LLVM，含 lldb.exe）
+    anchor: tools/debug/crash_evidence.py（clang+llvm tarball 考古结论：不含 lldb，官方安装器才是正主——原 anchor 为仓库外绝对路径，D-022 anchor 形式化时改指仓库内产物）
+  - text: cdb 实操坑（留档）：泛型尖括号符号不能直接 bp（语法错误）；行断点因泛型实例化歧义报错；裸 *close* 通配符会命中 std 内部符号——须用 module!bounded_queue::BoundedQueue*::close* 收窄形式
+    anchor: demo 2026-10-04
+introduces: []
+obligations:
+  - id: O-022
+    bs_guard: []
+    bs_note: 结构化崩溃证据
+    desc: 崩溃/断言失败/abort 时自动产出结构化证据（异常 + 符号化 backtrace），可一键复现
+    origin: tool
+    checker:
+      type: test
+      cmd: "{PY} tools/debug/crash_evidence.py pilot-rs/target/debug/examples/crash_demo.exe"
+      ref: tools/debug/crash_evidence.py 对 crash_demo 示例运行，backtrace 含崩溃帧
+  - id: O-023
+    bs_guard: [BS-010, BS-013]
+    desc: close/关停路径断点快照（命中记录 + 符号化调用链）可一键复现
+    origin: tool
+    checker:
+      type: test
+      cmd: "{PY} tools/debug/close_snapshot.py queue"
+      ref: tools/debug/close_snapshot.py（目标名按 mtime 解析最新测试二进制），backtrace 含 close ← 调用方
+waivers: []
+artifacts: [tools/debug/crash_evidence.py, tools/debug/close_snapshot.py, pilot-rs/examples/crash_demo.rs]
+superseded_by: null

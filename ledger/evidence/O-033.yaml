@@ -1,0 +1,7 @@
+obligation: O-033
+status: pass
+command: '"$PY" tools/ledger_check.py O-029（经 config [tools].python 调用 digest --check，结果 PASS）'
+date: 2026-10-07
+notes: 修复验证——修复前 config 存 /c/ 形态路径，subprocess shell=True（cmd.exe）调用必然
+  "The system cannot find the path specified"（2026-10-07 体检实锤，O-029 复跑 FAIL）；
+  config 改 C:/ 驱动盘符形态后 cmd.exe 与 Git Bash 双通道均可执行，复跑档首次真正可用

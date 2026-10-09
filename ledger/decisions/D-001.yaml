@@ -1,0 +1,15 @@
+id: D-001
+status: superseded
+question: 试点（有界 MPMC 队列）的语言与构建形态？
+goal: [G-001, G-002, G-003]
+alternatives: [C++17-header-only, Rust+Verus, Python]
+choice: C++17 header-only，零第三方依赖，w64devkit g++ 构建
+rationale:
+  - text: 操作者熟悉 C/C++，后续可平滑衔接 TSAN 与 TLA+ 等高档检查器
+    anchor: owner=human
+  - text: v0 不引入 Rust/Verus 工具链成本；检查器阶梯允许证据后补
+    anchor: CONSTITUTION.md 增长律
+introduces: []
+obligations: []
+artifacts: [pilot/src/queue.hpp, pilot/tests/test_queue.cpp, pilot/build.sh]
+superseded_by: D-007

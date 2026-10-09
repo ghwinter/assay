@@ -1,0 +1,30 @@
+id: D-018
+status: accepted
+question: 检查器如何从本机脚本升级为可托付工程物？（CI / 世界模型摘要 / 文档收敛 / 落选方案归档）
+goal: [G-001, G-002, G-003]
+alternatives: [CI+digest+文档收敛+归档约定四件套, 仅加CI, 不引入（维持本机钩子门）]
+choice: 四件套——GitHub Actions 四档并跑（ledger/rust/tla/verus，verus 降级 continue-on-error）；
+  tools/digest.py 生成 LEDGER.md 世界模型单页（mermaid 拓扑机械生成，--check 漂移红灯）；
+  文档收敛（AGENTS.md 命令读 config 单点、WORKFLOW 增 digest/归档约定）；
+  决策 schema 增 rejected_alternatives 落选方案归档字段约定
+rationale:
+  - text: 钩子只挡本机提交，远端无门——CI 用同一套检查器把守门延伸到协作面；verus 档资产下载易碎（坑6）诚实降级，不假装覆盖
+    anchor: tools/config.toml（路径单点）+ proofs/WORKFLOW.md 坑6
+  - text: AI 每会话扫描 ledger/ 的上下文成本随账本线性涨——digest 把世界模型压成 O(1) 单页，且由机器生成不允许手改（防账本演出 BS-006 的展示面腐化）
+    anchor: thinking/blind_spots.md BS-006
+  - text: D-013 式"落选方案全量论证"会让 D 账膨胀——rejected_alternatives 字段把落选论证从主文移到归档位，主文保持"问题→选择→理由"锐度（历史决策不追溯改写）
+    anchor: ledger/decisions/D-013.yaml（三条方案全论证的现状）
+introduces: []
+obligations:
+  - id: O-029
+    bs_guard: [BS-013]
+    desc: LEDGER.md 由 digest 机械生成且与账本状态零漂移（CI 档强制）
+    origin: tool
+    checker:
+      type: lint
+      name: digest
+      ref: python tools/digest.py --check
+waivers: []
+artifacts: [.github/workflows/ci.yml, tools/digest.py, LEDGER.md,
+  ledger/evidence/O-029.yaml]
+superseded_by: null

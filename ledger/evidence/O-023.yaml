@@ -1,0 +1,5 @@
+obligation: O-023
+status: pass
+command: '"$PY" tools/debug/close_snapshot.py queue（脚本按 mtime 解析最新 target/debug/deps/queue-*.exe；构建产物 hash 不再入账——BS-013 判例，D-021；ledger_check O-023 可复跑）'
+date: 2026-10-05
+notes: 断点命中 bounded_queue::BoundedQueue<i32>::close，符号化调用链 close ← queue::basic_close ← 测试框架；脚本校验通过返回 0。close/关停路径快照可一键复现

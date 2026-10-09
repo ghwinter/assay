@@ -1,0 +1,8 @@
+obligation: O-025
+status: pass
+command: python tools/bridge_check.py
+notes: 首跑对账平衡——模型常量 4（PROD/CONS/CAP/ITEMS 登记为合成道具）、cfg 检查中的
+  不变式/性质 5 条全部有义务锚点、语义点 8 条 tla/rust/verus 符号三向存在；
+  verus 覆盖 5/8（关闭/唤醒时序诚实登记为 shell 层未覆盖）。对账期间抓出并修复
+  bridge_check 自身两处正则缺陷（findall 元组、CONSTANT 前缀），守门人自证有效。
+date: 2026-10-07

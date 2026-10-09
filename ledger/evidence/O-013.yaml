@@ -1,0 +1,5 @@
+obligation: O-013
+status: pass
+command: cargo test
+date: 2026-10-04
+notes: stress_mpmc_exactly_once（4 生产者 x5000 / 4 消费者 / 容量 8）逐操作断言 size <= cap；5 passed, 0 failed（debug, 0.10s）

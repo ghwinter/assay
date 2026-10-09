@@ -1,0 +1,31 @@
+id: D-026
+status: draft
+question: 元认知层与跨仓约束的三处缺口如何补？（①盲区库停在"评审清单"档而非"门"；②下游消费者与账本之间无声明连线；③触发器库无 AI 时代域，外部实测规律无入账形态）
+goal: [G-001, G-002, G-003]
+alternatives: [三处缺口各自立条, 合为一条元决策（本条）, 维持现状——规律留在提出方仓库为散文]
+choice: 一条元决策承载三件，全部是结构性对策，不改动 pilot 代码——(1) 盲区库从"清单"升为"门"，新增不变量级检查器时账本强制一个字段登记"它防的是哪条判例"，或说明为什么不防任何一条；(2) 下游消费者登记，账本增设消费者连线（身份 + 受约束的义务集 + 核验方式），使"某下游系统的构建受本账本约束"从学说变为可核对的声明；(3) 触发器库增设 AI 时代域六组（adds_derived_state / adds_external_decider / adds_open_type_registry / adds_stable_identity / adds_alternate_representation / adds_append_only_log），先入候选池，激活另裁。候选内容、实例与反例见 thinking/CANDIDATES.md 与 ledger/triggers/CANDIDATES.md
+rationale:
+  - text: 三处缺口同源——外部实测的规律在当前账本里没有合法入册形态：判例法库的交租规则要求"本仓实例或结构化对策"，方法库要求"必须本仓实例"，而 anchor 存在性 lint 只查本仓路径。于是规律只能留在提出方仓库当散文，而宪法「中间地带非法」恰好禁止这一类
+    anchor: thinking/CANDIDATES.md
+  - text: 缺口①的实锤——一次真实的检查器设计在未知会盲区库的情况下，独立造出了 BS-012 的实例（自审不可见偏差：校验与被校验同体）。清单不是门，所以已编目的偏差可以被无摩擦地重犯
+    anchor: thinking/blind_spots.md BS-012
+  - text: 缺口①的配套增量——BS-013 现有硬化预设"载体可复跑且自知新鲜度"，不覆盖浅副本、未提交工作树、编译期内联快照三类载体；且"是否存在"与"内容是什么"必须分开记录（前者更便宜、更常出事）
+    anchor: thinking/blind_spots.md BS-013
+  - text: 缺口③的实锤——现库四类触发器与本文件补的四个弱域，均覆盖经典后端关注点，无"开放类型 + 外部裁决者 + 派生状态 + 追加日志"这一族；下游实测的规律因此无法以义务键形式入账，只能停留在跨系统阅读报告里
+    anchor: ledger/triggers/CANDIDATES.md
+  - text: 缺口②的实锤——全仓检索未发现任何下游消费者声明；现状下"某下游系统的构建受本账本约束"不可机械核对，属 BS-011（无锚断言）
+    anchor: ledger/bridge.yaml
+  - text: 裁决记录——操作者 2026-10-08 授权写入候选与提案。本条为草案，义务展开与接受裁决均待人（AGENTS.md 纪律 2 的两段式）
+    anchor: owner=human（操作者授权 2026-10-08）
+assumptions:
+  - text: 提出方对外部实测的解读与实例描述待验（AGENTS.md「AI 产出一律证据待验」）；实例按机制描述、不记项目身份与外部路径，完整出处留在提出方读数记录
+    invalidation: 独立复核指出任一实例的机制描述与事实不符
+  - text: 三处缺口均为元层改造，不改变任何既有义务的证据状态或 checker 语义
+    invalidation: 改造导致既有 O 账义务的证据档位或 checker 语义发生变化
+  - text: 触发器候选池不自动入账，激活仍走人裁决门（D-024 已确立）
+    invalidation: 若候选被自动激活并入账，则本条撤回
+introduces: []
+obligations: []
+waivers: []
+artifacts: [thinking/CANDIDATES.md, ledger/triggers/CANDIDATES.md, ledger/decisions/D-026.yaml]
+superseded_by: null

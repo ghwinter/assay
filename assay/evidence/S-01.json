@@ -1,0 +1,42 @@
+{
+  "schema_version": "assay-evidence/v1",
+  "event_id": "RUN-1791539952013611100-22672:S-01",
+  "run_id": "RUN-1791539952013611100-22672",
+  "lineage": {
+    "claim_ids": [
+      "C-001"
+    ],
+    "obligation_ids": [],
+    "origins": [
+      "assay-protocol"
+    ],
+    "assumption_ids": [],
+    "trust_assumptions": [
+      "S-01 用的是手写词表（后端工具名）。它证不了协议里没有别的领域名词，也管不住 `verify` 这类通用子命令名。承担者：人（读 PROTOCOL.md 时发现即补词表）"
+    ]
+  },
+  "subject": {
+    "manifest_fingerprint": "fnv1a:badf7bfa0c0329f5"
+  },
+  "checker": {
+    "id": "S-01",
+    "capability": "structural",
+    "strength": 5,
+    "scope": "unbounded",
+    "bound": null,
+    "stage": "pre-commit",
+    "command_fingerprint": "fnv1a:ee1e5b7d06fe6e99",
+    "engine_version": "0.5.0"
+  },
+  "result": {
+    "verdict": "pass",
+    "exit_code": 0,
+    "started_at": "2026-10-09T09:59:12Z",
+    "duration_s": 1.43,
+    "detail": "PASS: PROTOCOL.md 零后端工具名（0 命中；只描述能力，不描述工具）"
+  },
+  "birth_certificate": {
+    "status": "reproduced",
+    "note": "已复现过（棘轮记录）；`run --certify` 可当场重跑"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "birth_certificate": "复现",
+  "birth_note": "已复现过（棘轮记录）；`run --certify` 可当场重跑",
+  "capability": "self-test",
+  "check": "S-09",
+  "claims": [
+    "C-009"
+  ],
+  "detail": "PASS: 分歧被报出并点名（K-9A 绿 / K-9B 红），run exit=1",
+  "duration_s": 0.99,
+  "engine_version": "0.4.0",
+  "exit_code": 0,
+  "proven": true,
+  "stage": "pr",
+  "started": "2026-10-08T18:57:25Z",
+  "strength": 5,
+  "verdict": "pass"
+}

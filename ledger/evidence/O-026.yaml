@@ -1,0 +1,7 @@
+obligation: O-026
+status: pass
+command: python -m unittest discover -s tools/tests
+notes: 黄金用例覆盖——最小好账 PASS；L1 无主产物；L2 裸奔义务/deferred 缺签名/FAIL 证据；
+  L3 目标无决策服务/verification 引用缺失；触发器覆盖缺失与不可豁免豁免；superseded 缺
+  superseded_by；id 重复；非法 checker.type。全部按预期报错。
+date: 2026-10-07

@@ -1,0 +1,5 @@
+obligation: O-006
+status: pass
+command: ./pilot/build/test_queue.exe test
+date: 2026-10-03
+notes: test_fifo_single_consumer（4x5000，唯一消费者，接收序==交付序）逐元素断言每生产者子序列递增；test_stress（4x4）证实恰好一次。义务表述已从"总 FIFO 可外部检验"精化为其可检验形式

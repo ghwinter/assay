@@ -1,0 +1,39 @@
+id: D-015
+status: accepted
+question: 守门人自身如何可信化？（lint 自测、路径配置收敛、检查器运行器）
+goal: [G-001, G-002]
+alternatives: [lint自测+运行器+配置三件套, 仅加CI不修lint, 维持现状（人工信任lint）]
+choice: 三件套并做——ledger_lint 拆出可导入校验函数并配黄金用例自测（含 L1 扩展到 tools/.githooks）；
+  机器路径收敛到 tools/config.toml 单点；新增 ledger_check.py 按 evidence 声明实际执行检查器
+rationale:
+  - text: 321 行守门脚本无自测是单点故障——后续所有改动（桥检查器/证明迁移/CI）都要动它，动它之前先让它自证
+    anchor: owner=human（阶段计划裁决，2026-10-07 操作者批量授权"直接都做"）
+  - text: 硬编码路径（envs/v312、verus-x86-win）散在 AGENTS.md/钩子/文档三处，换机即哑——收敛到 config.toml 一处
+    anchor: proofs/WORKFLOW.md 依赖清单（仓库外路径记录）
+  - text: L2 目前只查"存在 checker 声明"，不查"可复跑"——ledger_check 让 evidence 的 PASS 从手填变成可再生，检查器阶梯的执行面由此补齐
+    anchor: CONSTITUTION.md 三律之二（没有检查器的形式化是装饰）
+introduces: []
+obligations:
+  - id: O-026
+    bs_guard: []
+    bs_note: 守门人黄金用例自测（实现外的独立语料）
+    desc: ledger_lint 黄金用例自测全绿（好账/坏账/L1-L3/触发器覆盖/豁免各档）
+    origin: tool
+    checker:
+      type: test
+      ref: python -m unittest discover -s tools/tests -v
+      cmd: "{PY} -m unittest discover -s tools/tests"
+  - id: O-027
+    bs_guard: []
+    bs_note: 检查器复跑（可执行档）
+    desc: ledger_check 可解析全部已知 checker 类型并对可执行档实际复跑（--list 冒烟）
+    origin: tool
+    checker:
+      type: test
+      ref: python tools/ledger_check.py --list
+      cmd: "{PY} tools/ledger_check.py --list"
+waivers: []
+artifacts: [tools/config.toml, tools/ledger_check.py, tools/ledger_lint.py, tools/trace.py,
+  tools/tests/test_ledger_lint.py, .githooks/pre-commit,
+  ledger/evidence/O-026.yaml, ledger/evidence/O-027.yaml]
+superseded_by: null

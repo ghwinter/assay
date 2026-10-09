@@ -1,0 +1,58 @@
+# 实验 C：金标准标注模板（由操作者人工填写）
+
+## 说明
+1. 阅读反事实命题与 agent 分类：experiments/C/counterfactual.md
+2. 对下面每个实体，把你认为正确的分类填到第二列（替换 TODO）：
+   still-valid / invalidated / newly-required / unaffected / unknown
+3. 保存为本目录下的 gold_labels.txt，然后运行：
+   python experiments/C/score.py
+4. 不要先看 agent_labels.txt 的逐条理由再抄——凭你对账本的独立判断标注。
+
+## 实体清单
+D-001 TODO
+D-002 TODO
+D-003 TODO
+D-004 TODO
+D-005 TODO
+D-006 TODO
+D-007 TODO
+D-008 TODO
+D-009 TODO
+D-010 TODO
+D-011 TODO
+O-001 TODO
+O-002 TODO
+O-003 TODO
+O-004 TODO
+O-005 TODO
+O-006 TODO
+O-007 TODO
+O-008 TODO
+O-009 TODO
+O-010 TODO
+O-011 TODO
+O-012 TODO
+O-013 TODO
+O-014 TODO
+O-015 TODO
+O-016 TODO
+O-017 TODO
+O-018 TODO
+O-019 TODO
+O-020 TODO
+O-021 TODO
+O-022 TODO
+O-023 TODO
+A:pilot-rs/src/lib.rs TODO
+A:pilot-rs/tests/queue.rs TODO
+A:tla/queue.tla TODO
+A:proofs/queue_core.rs TODO
+A:pilot-rs/Cargo.toml TODO
+A:tools/ledger_lint.py TODO
+A:tools/trace.py TODO
+A:tools/debug/crash_evidence.py TODO
+A:tools/debug/close_snapshot.py TODO
+A:ledger/triggers/concurrency.yaml TODO
+A:ledger/triggers/capacity.yaml TODO
+A:ledger/triggers/blocking.yaml TODO
+A:ledger/triggers/value_semantics.yaml TODO

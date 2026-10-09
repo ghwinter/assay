@@ -1,0 +1,31 @@
+id: D-002
+status: accepted
+question: 队列的值语义与 API 形态？
+goal: [G-001]
+alternatives: [按值+出参, shared_ptr 传递, 返回内部引用]
+choice: T 按值进出；pop 用出参；不暴露任何指向内部存储的引用或指针
+rationale:
+  - text: 值语义消除别名逃逸，所有权边界与 D-003 的单锁设计互补
+    anchor: D-003
+introduces: [value_type_copy]
+obligations:
+  - id: O-001
+    bs_guard: []
+    bs_note: 所有权边界设计不变量（公共 API 不得让内部引用逃逸），非已编目推理失败模式
+    desc: 任何公共 API 不得让内部元素的引用或指针逃逸
+    satisfies: ownership_boundary
+    frozen: true
+    checker:
+      type: lint
+      ref: grep 审查 queue.hpp 的 API 面（无 T&/T* 返回、无内部访问器）
+  - id: O-002
+    bs_guard: []
+    bs_note: 异常安全（C++ 归档实现），非已编目推理失败模式
+    desc: 元素拷贝或移动抛异常时，队列状态不破坏
+    satisfies: exception_safety
+    frozen: true
+    checker:
+      type: manual
+      ref: 抛异常类型专项测试（v0 以 int 为 T，暂不适用）
+artifacts: [pilot/src/queue.hpp]
+superseded_by: null

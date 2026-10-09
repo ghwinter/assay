@@ -1,0 +1,13 @@
+id: D-005
+status: accepted
+question: 测试与证据策略？
+goal: [G-001, G-002, G-003]
+alternatives: [断言+压力+基准, 仅单元测试, 仅人工评审]
+choice: 单元 + 关闭/背压时序测试 + 4x4 压力（逐操作不变量断言）+ 吞吐基准；TSAN 与模型检查为后续升级档
+rationale:
+  - text: 证据强度按检查器阶梯从可运行档起步，账本允许后补升级
+    anchor: CONSTITUTION.md 检查器阶梯
+introduces: []
+obligations: []
+artifacts: [pilot/tests/test_queue.cpp, pilot/build.sh]
+superseded_by: null

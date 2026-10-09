@@ -1,0 +1,11 @@
+trigger: blocking_api
+description: 引入阻塞式接口时自动产生的义务
+obligations:
+  - key: wakeup_correctness
+    desc: 等待必须使用谓词循环，虚假唤醒与关闭路径都正确
+    suggested_checker: 评审 + 唤醒测试
+    waive_allowed: true
+  - key: shutdown_semantics
+    desc: 关闭语义被定义：阻塞者被唤醒、已入队内容按约定处理
+    suggested_checker: 关闭序列测试
+    waive_allowed: true

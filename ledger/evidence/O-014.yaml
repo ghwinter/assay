@@ -1,0 +1,5 @@
+obligation: O-014
+status: pass
+command: cargo test fifo_single_consumer
+date: 2026-10-04
+notes: 4 生产者 x5000，唯一消费者（接收序==交付序），逐元素断言每生产者子序列递增；与 C++ 归档实现 O-006 同一可检验形式

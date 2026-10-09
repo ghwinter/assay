@@ -1,0 +1,5 @@
+obligation: O-003
+status: deferred
+reason: 当前 Windows 环境无 TSAN 工具链；接入 Linux CI 后以 TSAN 全量回归升级。注意——2026-10-03 压力测试初版即发生一起真实数据竞争（生产者 lambda 按引用捕获循环变量 p），TSAN 本可直接捕获该类缺陷，故本条升级优先级高
+owner: human
+date: 2026-10-03

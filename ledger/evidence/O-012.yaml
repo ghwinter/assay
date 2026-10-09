@@ -1,0 +1,5 @@
+obligation: O-012
+status: pass
+command: grep -nE "\.lock\(\)|Condvar" pilot-rs/src/lib.rs
+date: 2026-10-04
+notes: 全类仅 state 一把互斥量，4 个加锁点每方法至多持锁一次，无嵌套加锁、无锁序交叉；两处等待均为谓词循环。单锁设计下死锁自由由构造保证

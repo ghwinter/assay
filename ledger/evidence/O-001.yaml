@@ -1,0 +1,5 @@
+obligation: O-001
+status: pass
+command: grep -nE "T&|T\*|front\(\)|begin\(\)|deque" pilot/src/queue.hpp
+date: 2026-10-03
+notes: T& 仅作为调用方所有的出参（pop/try_pop 的 out）；内部 deque 与 front()/pop_front() 均未出现在任何公共返回值或成员访问器中

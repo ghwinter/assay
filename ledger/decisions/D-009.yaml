@@ -1,0 +1,70 @@
+id: D-009
+status: accepted
+question: Rust 主实现的 MPMC 并发策略？（C++ 归档实现的对应决策见 D-003）
+goal: [G-002, G-003]
+alternatives: [std Mutex+双Condvar, crossbeam-channel, lock-free-ring, tokio-mpsc]
+choice: std::sync::Mutex + 两把 Condvar，阻塞式 push/pop，close 排空后拒绝；无 unsafe，零第三方依赖
+rationale:
+  - text: 与归档 C++ 实现语义一致，便于跨语言对照；单锁 ⇒ 死锁自由论证同 D-003
+    anchor: D-003
+  - text: G-003 预算（≥50k ops/s）远低于需要 lock-free 的门槛
+    anchor: G-003
+introduces: [shared_mutable_state, blocking_api]
+obligations:
+  - id: O-011
+    bs_guard: [BS-009]
+    desc: 不存在数据竞争
+    satisfies: race_freedom
+    checker:
+      type: lint
+      ref: 语言强制——safe Rust 零 unsafe 块（grep）+ Send/Sync 类型系统；升级档：loom 线程调度模拟
+  - id: O-012
+    bs_guard: []
+    bs_note: 死锁自由（Rust 主实现）
+    desc: 不产生死锁
+    satisfies: deadlock_freedom
+    checker:
+      type: lint
+      ref: grep 证明单锁（state）+ 每方法至多持锁一次 + 无嵌套加锁
+  - id: O-013
+    bs_guard: []
+    bs_note: 状态不变量（Rust 主实现）
+    desc: 每个操作后 0 <= size <= capacity
+    satisfies: invariant_protection
+    checker:
+      type: test
+      ref: pilot-rs/tests/queue.rs stress_mpmc_exactly_once 逐操作断言
+  - id: O-014
+    bs_guard: []
+    bs_note: 保序语义（Rust 主实现）
+    desc: 交付保序——每个生产者的元素按其推送顺序被交付（总 FIFO 的可检验形式）
+    satisfies: ordering_semantics
+    checker:
+      type: test
+      ref: pilot-rs/tests/queue.rs fifo_single_consumer（单消费者接收序==交付序）
+  - id: O-015
+    bs_guard: [BS-001, BS-008]
+    desc: 聚合吞吐满足 G-003 预算
+    satisfies: contention_budget
+    checker:
+      type: bench
+      ref: cargo test --release -- --ignored bench_throughput，阈值 50000 ops/s
+  - id: O-016
+    bs_guard: []
+    bs_note: 条件变量等待语义（Rust 主实现）
+    desc: 两处谓词循环等待，虚假唤醒与关闭唤醒正确
+    satisfies: wakeup_correctness
+    checker:
+      type: manual
+      ref: 评审 src/lib.rs（while + wait）+ close_wakes_blocked_poppers 佐证
+  - id: O-017
+    bs_guard: []
+    bs_note: 关闭语义（Rust 主实现）
+    desc: close 唤醒全部阻塞者；排空后 pop 返回 None；关闭后 push 返回 false
+    satisfies: shutdown_semantics
+    checker:
+      type: test
+      ref: pilot-rs/tests/queue.rs basic_close + close_wakes_blocked_poppers
+waivers: []
+artifacts: [pilot-rs/src/lib.rs, pilot-rs/tests/queue.rs]
+superseded_by: null

@@ -1,0 +1,8 @@
+obligation: O-030
+status: pass
+command: cargo test --manifest-path pilot-rs/Cargo.toml timed_pop
+notes: 首跑 5/5 通过——timed_pop_timeout_returns_none（超时边界 150..2000ms、状态不变、
+  超时后可继续使用）、timed_pop_delivers_midwait（100ms 阻塞后 push，交付即时返回）、
+  timed_pop_fifo_unchanged（非阻塞路径序不变+空超时）。谓词重检为唯一真值来源，
+  wait_timeout 返回值不参与判断（虚假唤醒安全，D-019）。
+date: 2026-10-07

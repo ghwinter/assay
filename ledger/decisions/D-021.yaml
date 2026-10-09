@@ -1,0 +1,36 @@
+id: D-021
+status: accepted
+question: 强制层如何本地化？（仓库无 remote，CI 从未运行；pre-commit 只挡 lint；证据复跑档不可执行）
+goal: [G-001, G-002]
+alternatives: [pre-commit四合一门+config路径兼容, 推送GitHub启用CI, 维持现状（lint-only钩子）]
+choice: 三件——.githooks/pre-commit 升级为四合一门薄壳（账目 lint / 桥对账 / digest --check / 守门人自测；门逻辑在 tools/gate.py，与 ci.yml ledger job 同一检查器集）；config.toml python 路径改 cmd.exe 兼容形态（C:/ 驱动盘符，Git Bash 同样可执行），cdb 一并入单点；ledger_check 执行器补 checker.cmd 支持（{PY} 占位符）——此前 cmd 字段被忽略，O-026 实际复跑的是 cargo test 全套（证据命令与运行器错配）
+rationale:
+  - text: 强制层错配判例——README 过程记录 8 的"digest 红灯抓到操作者"是人肉执行抓到的，判例未回写为机械强制；无 remote 使 CI 档等于虚设，完成定义四项中三项无本地执行点。体检实锤：O-029 pass 与 LEDGER.md 漂移并存入库（commit 810f527/18497ad）
+    anchor: thinking/blind_spots.md BS-013
+  - text: 复跑档不可执行判例——config 存 /c/ 形态路径，ledger_check 经 shell=True（cmd.exe）调用必然 path not found，O-025/O-029 的"可复跑"在本机从未成立。路径形态在 config 单点修一次，双 shell 通用
+    anchor: tools/ledger_check.py run()（shell=True）
+  - text: gate.py 独立成文件而非塞进钩子脚本——钩子保持薄壳（config 读路径 + exec），门逻辑可被 O-032 以 test 档机器复跑，且不随 shell 方言复制
+    anchor: tools/gate.py
+  - text: 裁决记录——操作者 2026-10-07 批示"都可以做，开始执行"（体检报告 D-021..D-023 批量批准）
+    anchor: owner=human（操作者批量裁决 2026-10-07）
+introduces: []
+obligations:
+  - id: O-032
+    bs_guard: [BS-013]
+    desc: pre-commit 强制门四合一——账目 lint / 桥对账 / digest 新鲜 / 守门人自测，任一失败即拒绝提交；钩子与 CI 同一检查器集（强制层本地化，不依赖远端存在）
+    origin: tool
+    checker:
+      type: test
+      cmd: "{PY} tools/gate.py"
+      ref: tools/gate.py（.githooks/pre-commit 薄壳调用）
+  - id: O-033
+    bs_guard: [BS-013]
+    desc: 证据复跑档本机可执行——config python 路径经 cmd.exe 可调用，ledger_check 复跑 lint 档（digest 新鲜度）成功
+    origin: tool
+    checker:
+      type: test
+      cmd: "{PY} tools/ledger_check.py O-029"
+      ref: BS-013 判例复现——修复前该路径必然 path not found
+waivers: []
+artifacts: [.githooks/pre-commit, tools/gate.py, tools/config.toml, tools/ledger_check.py, tools/debug/crash_evidence.py, tools/debug/close_snapshot.py, ledger/decisions/D-011.yaml, ledger/decisions/D-015.yaml, ledger/evidence/O-022.yaml, ledger/evidence/O-023.yaml, ledger/evidence/O-032.yaml, ledger/evidence/O-033.yaml]
+superseded_by: null

@@ -1,0 +1,1 @@
+{"birth_certificate":"复现","birth_note":"已复现过（棘轮记录）；`run --certify` 可当场重跑","capability":"self-test","check":"S-07","claims":["C-007"],"detail":"PASS: 地图漂移被拦（exit=1）","duration_s":0.93,"engine_version":"0.4.0","exit_code":0,"proven":true,"stage":"pr","started":"2026-10-08T18:57:23Z","strength":5,"verdict":"pass"}

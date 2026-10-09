@@ -1,0 +1,45 @@
+id: D-019
+status: accepted
+question: timed_pop（限时取）如何进入主实现？（实验 A 载体，experiments/protocol.md 实验A）
+goal: [G-001, G-002]
+alternatives: [Condvar::wait_timeout+谓词循环, 独立定时线程+notify_all, 轮询 try_pop+sleep]
+choice: Condvar::wait_timeout + 谓词循环——与 pop() 完全同构的 while 重检结构，
+  deadline 由调用方 timeout 换算；wait_timeout 的返回值不作为真值来源（谓词是唯一真值来源）；
+  None 同形覆盖"超时"与"关闭且排空"两种情形（文档显式声明，不引入 is_closed 区分位）
+rationale:
+  - text: wait_timeout 与 not_empty 共用同一锁域，超时唤醒与虚假唤醒在 while 谓词重检下行为不可区分——tla/queue.tla 的 CWake（苏醒后重检谓词，bridge SP-05）无需扩展即覆盖 timed 路径
+    anchor: tla/queue.tla CWake + ledger/bridge.yaml SP-05
+  - text: 独立定时线程方案引入第二个 notify 源与唤醒丢失窗口，与 O-016（两处谓词循环等待正确性）的既有论证冲突；轮询方案在阻塞 API 上引入延迟/能耗权衡且无下游锚点（BS-001 防线）
+    anchor: ledger/decisions/D-009.yaml O-016
+  - text: None 同形是取舍而非疏漏——调用方区分超时/关闭的需求暂无锚点（synthetic 拒绝预实现）；如真实锚点出现，按 D-013 模式重锚后追加 API
+    anchor: thinking/blind_spots.md BS-001
+  - text: 操作者批量授权（2026-10-07"直接都做"）覆盖本决策裁决；实验 A 记人工介入点 1（批量授权 1 次），裁决形式偏离逐条流程已在此显式登记
+    anchor: owner=human（操作者批量授权）
+introduces: [blocking_api]
+obligations:
+  - id: O-030
+    bs_guard: []
+    bs_note: 限时等待语义
+    desc: timed_pop 谓词循环唤醒正确——超时返回 None 且队列状态不变；虚假唤醒安全；
+      等待中交付即时返回；FIFO 顺序不受限时形式影响
+    satisfies: wakeup_correctness
+    checker:
+      type: test
+      name: timed_pop
+      ref: pilot-rs/tests/queue.rs timed_pop_timeout / timed_pop_delivers_midwait /
+        timed_pop_fifo_unchanged
+  - id: O-031
+    bs_guard: []
+    bs_note: 限时等待的关闭语义
+    desc: timed_pop 的关闭语义——阻塞中 close 立即唤醒返回 None（不耗尽 timeout）；
+      关闭且排空后调用立即返回 None（不等待）
+    satisfies: shutdown_semantics
+    checker:
+      type: test
+      name: timed_pop_close
+      ref: pilot-rs/tests/queue.rs timed_pop_close_wakes_immediately /
+        timed_pop_closed_empty_immediate
+waivers: []
+artifacts: [pilot-rs/src/lib.rs, pilot-rs/tests/queue.rs, experiments/A/log.md,
+  ledger/evidence/O-030.yaml, ledger/evidence/O-031.yaml]
+superseded_by: null

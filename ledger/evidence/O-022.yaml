@@ -1,0 +1,5 @@
+obligation: O-022
+status: pass
+command: '"$PY" tools/debug/crash_evidence.py pilot-rs/target/debug/examples/crash_demo.exe（$PY 见 tools/config.toml [tools].python；ledger_check O-022 可复跑）'
+date: 2026-10-05
+notes: cdb 捕获 fastfail 异常（c0000409, FAST_FAIL_FATAL_APP_EXIT），backtrace 完整符号化——abort_internal ← process::abort ← crash_demo::main ← 运行时。崩溃证据结构化采集路径打通，单命令可复现

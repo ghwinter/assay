@@ -1,0 +1,18 @@
+{
+  "birth_certificate": "复现",
+  "birth_note": "已复现过（棘轮记录）；`run --certify` 可当场重跑",
+  "capability": "self-test",
+  "check": "S-05",
+  "claims": [
+    "C-005"
+  ],
+  "detail": "PASS: 无出生证明的检查被单列、且未进棘轮（run exit=0）",
+  "duration_s": 0.96,
+  "engine_version": "0.4.0",
+  "exit_code": 0,
+  "proven": true,
+  "stage": "pr",
+  "started": "2026-10-08T18:57:21Z",
+  "strength": 5,
+  "verdict": "pass"
+}

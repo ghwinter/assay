@@ -1,0 +1,20 @@
+id: D-012
+status: superseded
+question: G-003 v1（新增 p99 < 10µs @4线程）注入后如何响应？
+goal: [G-003]
+alternatives: [先测量当前实现再决定, 直接重写为lock-free, 拒绝预算修改]
+choice: 先扩展 bench 测量当前 mutex+condvar 实现的 p99（阻塞 push 延迟含唤醒），以测量结果决定 D-009 的去留——测量先于重写
+rationale:
+  - text: 测量先于重写——若当前实现实测满足 p99<10µs，实验 B 的前提被证伪（合法结局，D-009 保留）；若不满足，lint 红灯将强制 D-009 supersession（lock-free 等方案进入 D-013）
+    anchor: experiments/B/log.md
+introduces: []
+obligations:
+  - id: O-024
+    bs_guard: [BS-001, BS-008]
+    desc: push 阻塞延迟（含唤醒）p99 < 10µs @ 4生产者/4消费者（消费者每次 pop 后自旋 2µs、容量 4 的竞争场景，定义见 bench_p99）
+    checker:
+      type: bench
+      ref: cargo test --release -- --ignored bench_p99，阈值 10000ns
+waivers: []
+artifacts: [pilot-rs/tests/queue.rs]
+superseded_by: D-013

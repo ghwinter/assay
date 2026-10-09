@@ -1,0 +1,22 @@
+id: D-004
+status: accepted
+question: 容量策略？
+goal: [G-001]
+alternatives: [构造时固定, 动态增长, 无界]
+choice: 构造时固定 capacity；无界与动态增长被否决
+rationale:
+  - text: 固定容量给出确定的背压语义与内存上界，是有界队列的本意
+    anchor: owner=human
+introduces: [fixed_capacity]
+obligations:
+  - id: O-010
+    bs_guard: []
+    bs_note: 背压语义（队满阻塞）
+    desc: 队满时 push 阻塞，消费释放容量后苏醒完成推送
+    satisfies: backpressure_policy
+    frozen: true
+    checker:
+      type: test
+      ref: pilot/tests/test_queue.cpp 背压测试
+artifacts: [pilot/src/queue.hpp]
+superseded_by: null

@@ -1,0 +1,5 @@
+obligation: O-034
+status: pass
+command: python tools/ledger_lint.py
+notes: 义务级 bs_guard/bs_note 检查——每条义务声明所防判例，引用须真实存在于 thinking/blind_spots.md，空列表须给 bs_note 理由；判例库存在却解析出零条判例时报错（BS-C1 空作用域通过的自应用）。"看它变红"由 lint 黄金用例覆盖——tools/tests/test_ledger_lint.py 新增 7 例（缺字段／空且无理由／空且有理由／有效引用／悬空引用／空库／类型错），与 O-026 同一道门；回填 33 条义务见 D-027。
+date: 2026-10-08

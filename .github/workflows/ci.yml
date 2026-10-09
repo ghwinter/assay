@@ -1,0 +1,70 @@
+# Spec Ledger CI（D-018/B2）——钩子挡本机，CI 挡远端，同一套检查器。
+# 检查器阶梯在 CI 的映射：
+#   ledger job  → lint 档（账目平衡 + 桥对账 + 黄金用例 + digest 新鲜度）
+#   rust job    → 测试档（pilot-rs 断言测试）
+#   tla job     → 模型检查档（TLC 全空间）
+#   verus job   → 机器证明档（发布资产下载易碎，proofs/WORKFLOW.md 坑6，失败降级本地门）
+name: ledger-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: 账目平衡（L1/L2/L3）
+        run: python tools/ledger_lint.py
+      - name: 守门人自测（黄金用例）
+        run: python -m unittest discover -s tools/tests
+      - name: 模型↔代码桥对账
+        run: python tools/bridge_check.py
+      - name: digest 新鲜度
+        run: python tools/digest.py --check
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: pilot-rs 断言测试
+        run: cargo test --manifest-path pilot-rs/Cargo.toml
+
+  tla:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: TLC 模型检查（queue.tla）
+        working-directory: tla
+        run: java -cp ../tools/tla2tools.jar tlc2.TLC -cleanup queue.tla
+
+  verus:
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: 安装 verus 必需工具链
+        run: rustup toolchain install 1.98.1-x86_64-pc-windows-msvc
+      - name: 下载 verus 发布版
+        shell: pwsh
+        run: |
+          $tag = "0.2026.09.27"
+          $assets = Invoke-RestMethod "https://github.com/verus-lang/verus/releases/expanded_assets/release/v$tag"
+          $name = ($assets.Links.href | Where-Object { $_ -match "x86-win\.zip$" } | Select-Object -First 1)
+          if (-not $name) { throw "未找到 x86-win 资产（坑6：资产名易碎）" }
+          Invoke-WebRequest "https://github.com/verus-lang/verus/releases/download/release/v$tag/$($name.Split('/')[-1])" -OutFile verus.zip
+          Expand-Archive verus.zip -DestinationPath verus-bin
+          "VERUS_EXE=$PWD\verus-bin\verus.exe" | Out-File -FilePath $env:GITHUB_ENV -Append
+      - name: 机器证明（qcore 单一事实源）
+        run: |
+          & $env:VERUS_EXE --cfg verus_verify proofs/queue_core.rs

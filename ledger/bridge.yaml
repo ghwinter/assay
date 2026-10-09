@@ -1,0 +1,80 @@
+# 模型↔代码桥（D-016）——BS-010 的结构防线
+# 机械对账三件事：
+#   1. 模型常量（cfg CONSTANTS）全部声明为 model_parameters（合成道具，不对应实现常量，BS-008）
+#   2. cfg 里被检查的每条 INVARIANT/PROPERTY 都必须出现在本表并有义务锚点——
+#      防止"模型检查了某个性质，但没人声明它对应实现的什么承诺"
+#   3. semantic_points 每行的 tla/rust/verus 符号必须在各自文件里真实存在——
+#      防止模型演进（改名/删除动作）与实现/证明静默漂移
+# 对策档位：lint（ledger_lint 同级红灯）；证据义务 O-025。
+# 命名规范见 thinking/methods.md M-011（跨档同名）；术语以 thinking/glossary.md 为准（D-022）。
+
+model: tla/queue.tla
+config: tla/queue.cfg
+
+rust:
+  - pilot-rs/src/lib.rs
+  - pilot-rs/src/qcore.rs
+verus:
+  - pilot-rs/src/qcore.rs
+
+model_parameters: [PROD, CONS, CAP, ITEMS]
+
+invariants:
+  # TypeOK 为结构良构检查，无实现义务对应（结构豁免，bridge_check 显式跳过 null）
+  - {tla: TypeOK, concept: 状态类型良构, obligation: null}
+  - {tla: CapInv, concept: 容量上界 0<=len<=cap, obligation: O-013}
+  - {tla: Partition, concept: 恰好一次——不丢不重, obligation: O-013}
+  - {tla: DoneImpliesClosed, concept: 生产者终止且未发尽 ⇒ 必已关闭, obligation: O-017}
+
+properties:
+  - {tla: AfterCloseTerminate, concept: 关闭后必然终止（蕴含无丢失唤醒）, obligation: O-016}
+
+semantic_points:
+  - id: SP-01
+    concept: 非阻塞入队——队尾追加，元素恰好进入 buf
+    tla: PSend
+    rust: push
+    verus: push
+    obligation: O-013
+  - id: SP-02
+    concept: 容量守卫——队满不入（TLA⁺ 在动作守卫中，Rust 阻塞后调 core）
+    tla: PBlock
+    rust: push
+    verus: push
+    obligation: O-013
+  - id: SP-03
+    concept: 出队——队头交付
+    tla: CPop
+    rust: pop
+    verus: pop
+    obligation: O-014
+  - id: SP-04
+    concept: 关闭即拒绝——closed 后 push 返回 false（verus 不覆盖：closed 在 shell 层）
+    tla: PClosed
+    rust: push
+    verus: null
+    obligation: O-017
+  - id: SP-05
+    concept: 阻塞与唤醒——满/空谓词等待，苏醒后重检谓词（虚假唤醒安全）
+    tla: [PBlock, PWake, CBlock, CWake]
+    rust: push
+    verus: null
+    obligation: O-016
+  - id: SP-06
+    concept: 关闭唤醒全部阻塞者（notify_all）
+    tla: [Close, PWake, CWake]
+    rust: close
+    verus: null
+    obligation: O-017
+  - id: SP-07
+    concept: 排空且关闭后 pop 返回 None
+    tla: CExit
+    rust: pop
+    verus: pop
+    obligation: O-017
+  - id: SP-08
+    concept: FIFO——单消费者保序（O-006 的可检验形式）
+    tla: CPop
+    rust: pop
+    verus: pop
+    obligation: O-014

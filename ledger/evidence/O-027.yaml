@@ -1,0 +1,6 @@
+obligation: O-027
+status: pass
+command: python tools/ledger_check.py --list
+notes: 六档 checker 类型（test/bench/lint/manual/model/proof）全部可解析并可分发到
+  执行器；--list 输出义务→检查器映射，无解析异常。
+date: 2026-10-07

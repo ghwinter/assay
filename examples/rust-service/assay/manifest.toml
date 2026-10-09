@@ -1,0 +1,24 @@
+[assay]
+protocol = "v0.6"
+
+[[claim]]
+id = "C-001"
+text = "A valid create request is normalized and retrievable, while blank fields and duplicate IDs are rejected"
+rejected_by = "Invalid data is stored, normalization is inconsistent, or validation failures collapse into success"
+capability = "coverage-search"
+strength_required = 2
+obligations = ["O-001"]
+scope = "sampled"
+
+[[check]]
+id = "K-001"
+claims = ["C-001"]
+capability = "coverage-search"
+strength = 2
+scope = "sampled"
+command = "cargo test --manifest-path Cargo.toml"
+red_command = "cargo test --manifest-path Cargo.toml --features intentionally-undefined-feature"
+stage = "pre-commit"
+budget_s = 60
+seen_red = "The negative control requests an undefined Cargo feature and must fail."
+ref = "src/lib.rs::tests"

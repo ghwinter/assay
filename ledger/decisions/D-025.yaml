@@ -1,0 +1,23 @@
+id: D-025
+status: accepted
+question: 统一底层工具的吸收战略如何操作化？（吸收语义/协议/格式、验证器保持叶子——统一在契约不在代码库）
+goal: [G-001, G-002]
+alternatives: [统一检查器协议+归一化证据格式, 平台化（验证器焊入本体）, 维持ledger_check裸脚本]
+choice: M2 协议吸收第一片——spec check 子命令：复用 ledger_check 分发器，输出归一化证据记录 schema "spec-evidence/v0"（oid/did/checker/verdict[pass|fail|skip]/started/detail，JSON）。verdict 三值与 evidence 词表同源；任何验证器只要能被 exec 协议调用即可插拔为叶子，其输出经本格式归一后入账
+rationale:
+  - text: 吸收战略的边界由 T1/Rice 划定——可吸收的是语义与协议（schema/触发器/桥/五问/候选池/调用协议/证据格式，M1 已完成大半），不可吸收的是求解器本体（z3/TLC/verus 引擎）；统一在契约 = Unix 模式，统一在代码库 = 平台模式（MDA 的病）
+    anchor: ledger/triggers/CANDIDATES.md（M1 语义吸收的挖矿实例）
+  - text: 证据是数据——归一化记录使验证器输出可被下游机器消费（Quint ITF 轨迹格式同构）；三值 verdict 沿用 evidence 词表避免第二套状态语义
+    anchor: ledger/evidence/O-024.yaml（词表同源先例）
+  - text: M3 终局（单静态二进制 + Spec Ledger Format 标准文档）另立决策，以引擎项目为首个消费者再裁——本决策只开 M2 第一个插座
+    anchor: ledger/decisions/D-024.yaml（前置包先例）
+  - text: 裁决记录——操作者 2026-10-07 批示偏向前者（吸收为统一思想/方法论/底层工具）
+    anchor: owner=human（操作者批示 2026-10-07）
+assumptions:
+  - text: spec check 将成为日常检查入口（替代裸 ledger_check 调用）
+    invalidation: 一个月内 spec check 调用数为零且 ledger_check 直用依旧——双入口冗余，删一个
+introduces: []
+obligations: []
+waivers: []
+artifacts: [tools/spec.py, tools/ledger_check.py]
+superseded_by: null

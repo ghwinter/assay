@@ -1,0 +1,57 @@
+id: D-001
+status: accepted
+question: What is the smallest user-observable service path to implement and verify?
+goal: [G-001]
+alternatives:
+  - Add a network API and persistent database immediately
+  - Implement a synchronous in-memory vertical slice with explicit validation (chosen)
+  - Provide only a data type with no service operation
+choice: >-
+  Implement a synchronous Service::create/get API backed by an in-memory ordered map. Trim IDs and
+  bodies, reject blank fields and duplicate IDs, and return the normalized ID. Process exit loses data.
+rationale:
+  - text: The selected path exercises request validation, application behavior, owned state, observable results, and executable tests without implying unverified production concerns.
+    anchor: engineering/INTENT.md
+  - text: Persistence and network boundaries are explicit non-goals and can be introduced through later decisions with their own checkers.
+    anchor: engineering/ARCHITECTURE.md
+assumptions:
+  - text: The service is used synchronously within one process and does not need durable records.
+    invalidation: A caller requires records to survive process restart or simultaneous access.
+introduces: []
+obligations:
+  - id: O-001
+    desc: Valid create/read behavior is normalized; blank fields and duplicate IDs return distinct errors.
+    origin: tool
+    bs_guard: []
+    bs_note: This example obligation states the exact observable behavior under test; no currently catalogued blind spot specifically guards this small deterministic API contract.
+    checker:
+      type: test
+      cmd: cargo test --manifest-path Cargo.toml
+      ref: src/lib.rs::tests
+waivers: []
+artifacts:
+  - AGENTS.md
+  - Cargo.toml
+  - src/lib.rs
+  - ledger/intent/G-001.yaml
+  - ledger/decisions/D-001.yaml
+  - engineering/INTENT.md
+  - engineering/ARCHITECTURE.md
+  - engineering/AI_WORK_PACKAGE.md
+  - engineering/work-packages/D-001.md
+  - assay/manifest.toml
+  - assay/MAP.md
+  - assay/ratchet.toml
+  - .gitignore
+  - tools/ledger_lint.py
+  - tools/ledger_check.py
+  - tools/bridge_check.py
+  - tools/digest.py
+  - tools/gate.py
+  - tools/spec.py
+  - tools/trace.py
+  - tools/config.toml
+  - tools/prepare_work_package.py
+  - tools/tests/test_ledger_lint.py
+  - .githooks/pre-commit
+superseded_by: null

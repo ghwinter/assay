@@ -1,0 +1,5 @@
+obligation: O-009
+status: pass
+command: ./pilot/build/test_queue.exe test
+date: 2026-10-03
+notes: 关闭序列测试全过——close 唤醒 3 个阻塞 popper（唤醒丢失即挂死）；关闭后 push 返回 false；已入队元素按序排空后才返回 false

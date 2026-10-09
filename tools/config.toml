@@ -1,0 +1,23 @@
+# Spec Ledger 机器配置单点（D-015）
+# 所有仓库外工具路径收敛于此；换机只改本文件。
+# ledger_check.py / digest.py / CI 读取；文档（AGENTS.md）引用本文件而非复制路径。
+
+[tools]
+# Verus 发布版（proofs 档；运行需 rustup 工具链 1.98.1-x86_64-pc-windows-msvc）
+verus = "D:/GitHub/workspace/verus-x86-win/verus.exe"
+# verus 验证时注入的 cfg（契约门控开关，见 pilot-rs/src/qcore.rs）
+verus_cfg = "verus_verify"
+# TLA+ 检查器（随 git 固定）
+tla2tools = "tools/tla2tools.jar"
+java = "java"
+# Python 解释器（工作流脚本）——C:/ 驱动盘符形态：cmd.exe（ledger_check 的 shell=True）
+# 与 Git Bash（pre-commit 钩子）均可直接执行；/c/ 形态经 cmd.exe 必然 path not found（BS-013）
+python = "C:/Users/xzxxn/envs/v312/Scripts/python.exe"
+# cdb（Windows 调试器，运行时诊断档 O-022/O-023 使用）
+cdb = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe'
+
+[pilot-rs]
+# 主实现目录（相对仓库根）
+dir = "pilot-rs"
+# O-015 吞吐阈值（ops/s），与 G-003 预算联动
+throughput_threshold = 50000

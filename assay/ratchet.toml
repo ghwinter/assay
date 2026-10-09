@@ -1,0 +1,81 @@
+# 棘轮：已兑现检查的指纹（协议 v0.1 §6）。由引擎写；放宽必须走 [[waiver]]。
+
+[[entry]]
+id = "S-01"
+claims = ["C-001"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:ee1e5b7d06fe6e99"
+certified = true
+[[entry]]
+id = "S-02"
+claims = ["C-002"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:0bdeced555fbb5aa"
+certified = true
+
+[[entry]]
+id = "S-03"
+claims = ["C-003"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:469ca758760b8181"
+certified = true
+
+[[entry]]
+id = "S-04"
+claims = ["C-004"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:9ffe16d39416dc70"
+certified = true
+
+[[entry]]
+id = "S-05"
+claims = ["C-005"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:3222cd86a529e6a6"
+certified = true
+
+[[entry]]
+id = "S-06"
+claims = ["C-006"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:7461032fc3c12963"
+certified = true
+
+[[entry]]
+id = "S-07"
+claims = ["C-007"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:2b64e0d603399087"
+certified = true
+
+[[entry]]
+id = "S-08"
+claims = ["C-008"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:be47e6d420deab0b"
+certified = true
+
+[[entry]]
+id = "S-09"
+claims = ["C-009"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:050c8a8ad108a5bc"
+certified = true

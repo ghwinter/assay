@@ -1,0 +1,255 @@
+# assay 自己的清单（狗粮）
+#
+# 目标仓 = 这个目录的上一级（`--root D:\GitHub\workspace\assay`）。
+# 声明全部是 **PROTOCOL.md 已经承诺的规则**——即：这台机器声称自己会做的事。
+# 每条规则配一条检查；没有检查的规则不许留在这里（协议 §0、§7）。
+#
+# 接入成本观察：本项目自身叫 assay，于是按 `<root>/assay/manifest.toml` 的约定
+# 落在 `assay/assay/`。**这不是协议缺陷**——一个普通项目的 root 是 `myproj/`，
+# 清单就在 `myproj/assay/manifest.toml`，完全正常。记在这里只是免去下次困惑。
+#
+# 「没买的特性不加」检验：本清单要求的三样东西，各自都有一次具体摩擦——
+#   `self-test` 能力  ← 这些检查判的是引擎自己，§3 的表里没有词可用
+#   `red_command`     ← 第一次跑就发现：§5 号称最重要，却是唯一完全靠自报的一条
+#   `[[change]]`      ← 真实项目上，变化只能事后从 diff 里猜（尚未在真实仓用过）
+
+[assay]
+protocol = "v0.6"
+
+# ── 规则一：零领域字符 ────────────────────────────────────────────────────────
+# "协议里出现一个领域词，视为协议设计错误"（PROTOCOL.md 开头）。
+
+[[claim]]
+id = "C-001"
+text = "协议文档只描述能力，不点名任何判定后端"
+rejected_by = "协议里点名了一个具体后端工具：此后「引擎不认识工具」从结构保证退化成自觉，换工具就要改协议"
+capability = "structural"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+trust_assumption = "S-01 用的是手写词表（后端工具名）。它证不了协议里没有别的领域名词，也管不住 `verify` 这类通用子命令名。承担者：人（读 PROTOCOL.md 时发现即补词表）"
+
+[[check]]
+id = "S-01"
+claims = ["C-001"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-01-protocol-has-no-tool-names.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-01.ps1"
+stage = "pre-commit"
+budget_s = 30
+seen_red = "往 PROTOCOL.md 追加一行含工具名的注释 → S-01 转红并指出行号；撤回后转绿。（本条现在由 R-01 机械复现，不再是自述）"
+ref = "PROTOCOL.md:1-8"
+
+[[claim]]
+id = "C-002"
+text = "引擎源码不认识任何判定后端（哑执行器的边界）"
+rejected_by = "引擎开始按工具名分支：它就不再可丢弃，目标仓被绑死在某个工具上"
+capability = "structural"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+trust_assumption = "S-02 是文本检查：证明源码里没有工具名，不能证明引擎行为上不依赖某个工具。承担者：人（复审唯一构造 Command 的那一处 exec_shell）"
+
+[[check]]
+id = "S-02"
+claims = ["C-002"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-02-engine-knows-no-tools.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-02.ps1"
+stage = "pre-commit"
+budget_s = 30
+seen_red = "往 engine/src/main.rs 追加一行含工具名的注释 → S-02 转红并给出 文件:行；撤回后转绿。（本条现在由 R-02 机械复现）"
+ref = "engine/src/main.rs — exec_shell"
+
+# ── 规则二：门禁自身的行为（§4、§5、§6、§7） ──────────────────────────────────
+# 这些检查对**引擎自己**注入一个违规（一条不该被放行的清单 / 一次手改 / 一次削弱），
+# 然后要求它说不。它们判的是「机器有没有在做它承诺的事」。
+#
+# 它们的出生证明特别值得说：让「档 4 能被拒」这条检查红，唯一办法是**把引擎做坏**。
+# 所以 R-04…R-08 会复制 crate、打一个必须恰好命中一次的字面量补丁、编译到独立目录、
+# 用那个故意做坏的副本跑检查。注入点找不到就立刻失败——注入器自己也有门禁。
+
+[[claim]]
+id = "C-003"
+text = "引擎对不认识的输入非零退出，且不产出任何判定"
+rejected_by = "未知子命令静默通过：门禁变成装饰，任何拼错的阶段名都会假装检查过了"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-03"
+claims = ["C-003"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-03-unknown-subcommand-is-red.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-03.ps1"
+stage = "pre-commit"
+budget_s = 180
+seen_red = "把 main() 的退出改成恒为 0 → S-03 转红（未知子命令 exit=0）；撤回后转绿"
+ref = "engine/src/main.rs — main() 的分派"
+
+[[claim]]
+id = "C-004"
+text = "登记在档 4（调试期断言）的检查被清单自检拒绝"
+rejected_by = "放行档 4：一条发布版里根本不存在的判定被当成了证据，这是强度通胀的入口"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-04"
+claims = ["C-004"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-04-strength4-is-rejected.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-04.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "把 cmd_check 里的档 4 断言恒置为真 → S-04 转红（引擎 exit=0）；撤回后转绿"
+ref = "engine/src/main.rs — cmd_check 的档 4 断言"
+
+[[claim]]
+id = "C-005"
+text = "缺出生证明的检查被单列，且不计入棘轮"
+rejected_by = "把没红过的检查当成证据：一个不会红的检查与没有检查，在统计上等价"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-05"
+claims = ["C-005"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-05-missing-birth-certificate.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-05.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "去掉 cmd_run 入棘轮时的出生证明条件 → S-05 转红（无出生证明的检查进了棘轮）；撤回后转绿"
+ref = "engine/src/main.rs — cmd_run 的棘轮准入"
+
+[[claim]]
+id = "C-006"
+text = "已入棘轮的检查不能被静默削弱"
+rejected_by = "强度被下调而没人知道：这是唯一一条把「已绿的检查不许被删弱」从自觉变成机械的规则"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-06"
+claims = ["C-006"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-06-ratchet-cannot-be-weakened.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-06.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "删掉 cmd_check 里的强度削弱判定 → S-06 转红（削弱被放过）；撤回后转绿"
+ref = "engine/src/main.rs — cmd_check 的棘轮比对"
+
+[[claim]]
+id = "C-007"
+text = "手改地图即红灯"
+rejected_by = "地图可以被手改而不被发现：它就退化成又一个会腐烂的中心文档——正是这套东西要防的东西"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-07"
+claims = ["C-007"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-07-map-drift-is-red.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-07.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "让地图新鲜度永远通过 → S-07 转红（手改后 exit=0）；撤回后转绿"
+ref = "engine/src/main.rs — cmd_check 的地图新鲜度"
+
+[[claim]]
+id = "C-008"
+text = "无界声明不能被有界检查兑现（v0.2 覆盖范围规则）"
+rejected_by = "有界检查冒充穷举/证明：这就是实测抓到的那次强度通胀——一个名叫 verify 的检查器只覆盖 ≤25 步"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+
+[[check]]
+id = "S-08"
+claims = ["C-008"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-08-scope-rule-holds.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-08.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "让 discharge() 对无界声明直接放行 → S-08 转红（有界检查通过了）；撤回后转绿"
+ref = "engine/src/main.rs — discharge() 的 unbounded 分支"
+
+# ── 规则三：分歧（v0.4 §7） ───────────────────────────────────────────────────
+# 真实摩擦：两个实验台把**同一个窗口不变量**各写了一遍，两种语言、两种范围语义，
+# 而没有任何东西检查它们说的是不是同一件事。漂移就藏在那里。
+
+[[claim]]
+id = "C-009"
+text = "同一条声明上出现分歧时，绿的那条不得被读成「该声明成立」"
+rejected_by = "引擎吞掉分歧：同一个不变量在两处各写一遍、互不知情，而绿的那条被当成结论。这是漂移最好的藏身处"
+capability = "self-test"
+strength_required = 5
+origin = "assay-protocol"
+scope = "unbounded"
+trust_assumption = "引擎只能报出「清单里已有的绑定」上的分歧。它不知道两个检查是否在判同一件事——那是人的判断。承担者：清单作者"
+
+[[check]]
+id = "S-09"
+claims = ["C-009"]
+capability = "self-test"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-09-contested-is-reported.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-09.ps1"
+stage = "pr"
+budget_s = 180
+seen_red = "让分歧检测恒不触发 → S-09 转红（绿红并存却无输出）；撤回后转绿"
+ref = "engine/src/main.rs — cmd_run 的分歧段"
+
+# ── 变更 ──────────────────────────────────────────────────────────────────────
+# 这份清单本身是被变更买来的。写下来，它就有了一条可被检查的边；
+# 不写，它就只是事后从 diff 里猜出来的故事。
+
+[[change]]
+id = "CH-001"
+intent = "狗粮：给 assay 自己写清单，并把出生证明从自述变成可复现（新增 red_command）"
+claims_added = ["C-001", "C-002", "C-003", "C-004", "C-005", "C-006", "C-007", "C-008"]
+touches = []
+evidence_required = ["S-01", "S-02", "S-03", "S-04", "S-05", "S-06", "S-07", "S-08"]
+reason = "首份清单：把 PROTOCOL.md 已经承诺的规则逐条变成会红的检查"
+signed = "人类（本仓所有者）"
+
+[[change]]
+id = "CH-002"
+intent = "新增「分歧」规则（引擎报出同一声明上互相矛盾的判定），并给它配一条能红的检查"
+claims_added = ["C-009"]
+touches = ["C-001"]
+evidence_required = ["S-09", "S-01"]
+reason = "新特性没有能红的检查，正是这套东西一直在批评的事；所以立项时就连同它的出生证明一起加"
+signed = "人类（本仓所有者）"

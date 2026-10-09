@@ -1,0 +1,7 @@
+obligation: O-031
+status: pass
+command: cargo test --manifest-path pilot-rs/Cargo.toml timed_pop_close
+notes: 首跑通过——timed_pop_close_wakes_immediately（阻塞 100ms 后 close，
+  立即唤醒返回 None，断言 <5s 远小于 10s timeout）、timed_pop_closed_empty_immediate
+  （关闭且排空调用不等待）。close 的 notify_all 路径复用 O-017 既有机制，未新增唤醒源。
+date: 2026-10-07

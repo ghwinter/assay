@@ -1,0 +1,8 @@
+obligation: O-028
+status: pass
+command: <verus> --cfg verus_verify proofs/queue_core.rs（verus 路径见 tools/config.toml [tools].verus；复跑："$PY" tools/ledger_check.py O-028）
+notes: 验证对象=pilot-rs/src/qcore.rs 本体（经 include 入口）；qnew/push/pop/main
+  共 4 verified 0 errors，覆盖：不变量保持、容量守卫（满拒绝/追加）、队头交付/
+  空返回 None、FIFO 链上断言、cap 保持。同一文件 cargo test 5 passed 2 ignored
+  （bench），行为零变化。契约对 cargo 完全不可见（cfg 门控）。
+date: 2026-10-07

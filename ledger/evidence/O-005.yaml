@@ -1,0 +1,5 @@
+obligation: O-005
+status: pass
+command: ./pilot/build/test_queue.exe test
+date: 2026-10-03
+notes: 压力路径（4 生产者 x5000 / 4 消费者 / 容量 8）逐操作断言 size <= cap；basic 与背压路径另验 size 边界；全部通过

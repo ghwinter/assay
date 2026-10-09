@@ -1,0 +1,7 @@
+trigger: fixed_capacity
+description: 引入固定容量资源时自动产生的义务
+obligations:
+  - key: backpressure_policy
+    desc: 资源耗尽时调用方的行为被定义（阻塞/拒绝/覆盖）并被测试
+    suggested_checker: 行为测试
+    waive_allowed: true

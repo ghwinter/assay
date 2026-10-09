@@ -1,0 +1,18 @@
+{
+  "birth_certificate": "复现",
+  "birth_note": "已复现过（棘轮记录）；`run --certify` 可当场重跑",
+  "capability": "self-test",
+  "check": "S-08",
+  "claims": [
+    "C-008"
+  ],
+  "detail": "PASS: 有界检查未能冒充穷举（exit=1）",
+  "duration_s": 0.9,
+  "engine_version": "0.4.0",
+  "exit_code": 0,
+  "proven": true,
+  "stage": "pr",
+  "started": "2026-10-08T18:57:24Z",
+  "strength": 5,
+  "verdict": "pass"
+}

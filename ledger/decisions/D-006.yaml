@@ -1,0 +1,28 @@
+id: D-006
+status: accepted
+question: 协议级与证明级检查器引入哪些？（TLA+ / Verus / Lean4）
+goal: [G-002]
+alternatives: [TLA+模型检查, Verus机器证明, TLA+与Verus并采, Lean4, 均不引入]
+choice: TLA+ 与 Verus 并采——TLA+ 管协议层安全+liveness，Verus 管 Rust 实现的证明档；Lean4 不采纳
+rationale:
+  - text: 账本证据最弱的义务（唤醒/关闭语义）需要 liveness 证据——阻塞者必然苏醒是 sleep 测试原理上给不了的，TLA+ 的主场
+    anchor: G-002
+  - text: 主语言已改为 Rust（D-007），此前对 Verus 的否决理由（验证对象是 C++）作废；首个里程碑——Verus 证明 BoundedQueue 顺序核心的状态不变量与 push/pop 前后置条件，阻塞等待语义仍归 TLA+
+    anchor: D-007
+  - text: 环境备忘——本机 Rust 1.99 稳定版就绪；Verus 发布版 Windows 资产名未定（直链批量 404、GitHub API 匿名限流）；备选路径——rustup 安装 1.98.1 工具链后从克隆自建。此缺口登记为 O-021（deferred）
+    anchor: verus 克隆（rust-toolchain.toml 钉 1.98.1）
+  - text: Lean4 无 C/C++/Rust 自动验证器，其角色（义务组合元理论的形式化）属研究课题；无复评触发器
+    anchor: owner=human
+introduces: []
+obligations:
+  - id: O-021
+    bs_guard: [BS-010]
+    desc: Verus 证明 BoundedQueue 顺序核心（状态不变量 + push/pop 前后置条件 + FIFO 序列）；协议层安全+liveness 已由 TLA+ 档提供（tla/queue.tla）
+    origin: tool
+    superseded_by: O-028
+    checker:
+      type: proof
+      ref: proofs/queue_core.rs（verus 0.2026.09.27 验证通过，4 verified 0 errors）
+waivers: []
+artifacts: [tla/queue.tla, tla/queue.cfg, tla/WORKFLOW.md, proofs/queue_core.rs, proofs/WORKFLOW.md]
+superseded_by: null

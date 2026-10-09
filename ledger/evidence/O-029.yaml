@@ -1,0 +1,6 @@
+obligation: O-029
+status: pass
+command: python tools/digest.py --check
+notes: LEDGER.md 227 行机械生成——目标/活跃决策/历史决策/义务证据/触发器/桥/元认知
+  七节 + mermaid 活跃拓扑（G→D→O 边与证据状态着色）；--check 比对零漂移。
+date: 2026-10-07

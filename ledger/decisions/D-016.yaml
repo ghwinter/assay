@@ -1,0 +1,27 @@
+id: D-016
+status: accepted
+question: 模型↔代码一致性靠什么维持？（BS-010 承认的"评审+快照"薄墙如何硬化）
+goal: [G-001, G-002]
+alternatives: [机械对账检查器（桥表+符号核对）, 全面精化证明（TLA+↔Verus↔Rust 三层）, 维持评审+断点快照]
+choice: 机械对账检查器——ledger/bridge.yaml 登记模型常量/被检性质/语义点三张映射表，
+  tools/bridge_check.py 机械核对符号存在性与义务锚点，红灯档位与 ledger_lint 同级
+rationale:
+  - text: 全面精化证明是正解但成本超出本阶段（TLA+↔代码的自动精化尚无成熟工具链，VerusSync 精化只在 Rust 侧内部）；对账检查器以 lint 档成本堵住"模型改名实现漂移"这类高频事故
+    anchor: thinking/blind_spots.md BS-010（本仓库实例：O-023 断点快照只是雏形）
+  - text: 桥表强制"cfg 检查的每条性质必须有人认领"——模型检查了却无人声明对应实现什么承诺，是 BS-010 最隐蔽的形态，B2 规则直接封死
+    anchor: CONSTITUTION.md 中间地带非法（检查了但没锚点=无主证据）
+  - text: 3/8 语义点（关闭/唤醒时序）verus 侧为 null——覆盖面诚实登记而非假装全覆盖，这本身就是对 BS-010 的日常提醒
+    anchor: ledger/bridge.yaml semantic_points
+introduces: []
+obligations:
+  - id: O-025
+    bs_guard: [BS-010]
+    desc: 模型↔代码桥对账全绿——常量登记、性质认领、语义点符号三向存在（B1/B2/B3）
+    origin: tool
+    checker:
+      type: lint
+      name: bridge
+      ref: tools/bridge_check.py（ledger_check 亦分发此档）
+waivers: []
+artifacts: [ledger/bridge.yaml, tools/bridge_check.py, ledger/evidence/O-025.yaml]
+superseded_by: null

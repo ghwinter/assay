@@ -1,0 +1,11 @@
+# 棘轮：已兑现检查的指纹（协议 v0.1 §6）。由引擎写；放宽必须走 [[waiver]]。
+
+[[entry]]
+id = "K-001"
+claims = ["C-001"]
+obligations = ["O-001"]
+capability = "coverage-search"
+strength = 2
+scope = "sampled"
+cmd_fp = "fnv1a:ca5efb1050034982"
+certified = true

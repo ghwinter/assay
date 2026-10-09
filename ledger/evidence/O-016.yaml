@@ -1,0 +1,12 @@
+obligation: O-016
+status: pass
+command: 人工评审 pilot-rs/src/lib.rs（push/pop 两处 while + wait）+ TLC 模型检查
+date: 2026-10-04
+notes: |-
+  证据升级历史（检查器阶梯：评审+测试 → 模型检查）：
+  - [评审+测试档] 两处等待均为谓词循环（!st.closed && 满队 / st.q.is_empty() && !closed），
+    虚假唤醒安全；close_wakes_blocked_poppers 证实阻塞者必被唤醒
+  - [模型检查档] tla/queue.tla（2 生产者 / 2 消费者 / 容量 2 / 各 2 条消息）：
+    TLC 全空间检查 2,426 个状态，活性性质 AfterCloseTerminate
+    （close => 全部线程终止，蕴含无丢失唤醒——任一阻塞者不被唤醒则 Terminated 不可达）
+    在公平性假设下成立："Model checking completed. No error has been found."

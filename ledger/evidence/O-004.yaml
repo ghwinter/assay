@@ -1,0 +1,5 @@
+obligation: O-004
+status: pass
+command: grep -nE "std::mutex|lock_guard|unique_lock" pilot/src/queue.hpp
+date: 2026-10-03
+notes: 全类仅一把互斥量 m_（第 72 行），5 个加锁点每方法至多持锁一次，无嵌套加锁、无锁序交叉；两处 wait 均带谓词。单锁设计下死锁自由由构造保证

@@ -1,0 +1,7 @@
+id: G-001
+status: active
+title: Create and retrieve one valid in-memory record
+description: >-
+  A caller can submit a non-blank identifier and body, receive normalized content, and retrieve the
+  stored record. Blank fields and duplicate identifiers are rejected. State is process-local only.
+verification: [O-001]

@@ -1,0 +1,20 @@
+id: D-023
+status: accepted
+question: 义务与目标的生命周期如何结构化？（9 条永久 WARN 钝化、O-021/O-028 双活、C++ 归档线证据老化、G 账无生命周期字段）
+goal: [G-001, G-002, G-003]
+alternatives: [origin/superseded_by/frozen/G-status四字段, 为工具类义务建专用触发器, 降级lint为INFO]
+choice: 四字段——义务出身 origin（tool|trigger；satisfies 与 origin 皆缺才 WARN，消灭 9 条设计性永久告警）；义务级 superseded_by（O-021 由 O-028 继承取代，双活收口）；义务级 frozen（C++ 归档线 O-001..O-010 证据转历史记录——D-008 归档语义的结构化，父决策保持 accepted 以维持 L1 所有权）；G 账 status 必填（active|withdrawn|superseded）+ retractions 结构化字段（G-003 v1 撤回从散文升为数据）
+rationale:
+  - text: 9 条"无 satisfies"WARN 与证据状态正交——O-021 已 4 verified 仍 WARN，每次运行 12 条固定噪声训练操作者无视 WARN 通道（SG9 检测器钝化）。2026-10-07 体检即 D-020 预登记的钝化重放第一次实弹，命中的是 lint 自己；origin 字段是"出身声明通道"，义务若无触发器谱系必须显式承认是工具/流程类
+    anchor: thinking/methods.md M-009（校准记账——预测钝化命中，事后对分）
+  - text: O-024 先例证明"历史"判定可行——其历史地位由父决策 superseded 派生；义务级 superseded_by/frozen 把同一机制下沉到义务粒度。判定逻辑只在 lint 定义一处，digest（LEDGER.md 显示）与 ledger_check（在约束集）消费同一字段
+    anchor: ledger/evidence/O-024.yaml（历史派生先例）
+  - text: G-003 撤回此前只能以散文+内嵌时戳挤在 description（G 账是四类账中唯一无生命周期字段的）；status + retractions 使"已撤回"可被机器读到。G-001 verification 补挂 O-028/O-030（Verus 恰好一次/保序、timed FIFO——同目标的后来证据，L3 只查存在性不查完备性，此处人工补全）
+    anchor: ledger/intent/G-003.yaml（retractions 结构化后）
+  - text: 裁决记录——操作者 2026-10-07 批示"都可以做，开始执行"（体检报告 D-021..D-023 批量批准）
+    anchor: owner=human（操作者批量裁决 2026-10-07）
+introduces: []
+obligations: []
+waivers: []
+artifacts: [tools/ledger_lint.py, tools/tests/test_ledger_lint.py, tools/digest.py, tools/ledger_check.py, ledger/intent/G-001.yaml, ledger/intent/G-002.yaml, ledger/intent/G-003.yaml, ledger/decisions/D-002.yaml, ledger/decisions/D-003.yaml, ledger/decisions/D-004.yaml, ledger/decisions/D-006.yaml, ledger/decisions/D-011.yaml, ledger/decisions/D-015.yaml, ledger/decisions/D-016.yaml, ledger/decisions/D-017.yaml, ledger/decisions/D-018.yaml, ledger/evidence/O-021.yaml]
+superseded_by: null

@@ -1,0 +1,19 @@
+id: D-013
+status: accepted
+question: G-003 v1（synthetic 的 p99<10µs 预算）如何处置？——红灯解锁的第一问：这个预算是真实需求还是实验道具？
+goal: [G-003]
+alternatives: [撤回预算, 锚定真实需求+自旋回退混合小改, 锚定真实需求+lock-free ring重写]
+choice: 方案A——撤回预算。G-003 v1 确认为实验道具（未锚定任何下游需求），红线解除，零优化；实验C 的 invalidated 集（有条件反事实）整体蒸发。测量分布（p50=1700ns / p99=11100ns）保留为资产，bench_p99 转为报告型仪表（移除判废断言），未来任何真实锚点出现时可即时重锚
+rationale:
+  - text: 方案A 撤回预算——G-003 v1 承认为实验道具并撤回，红灯消失，零优化；实验C 预测的 invalidated 集（D-009/O-016/lib.rs/tests/tla）整体蒸发。机制：D-012 superseded_by 本决策，O-024 证据转历史记录（lint 已支持被取代决策义务的历史化）
+    anchor: experiments/B/log.md
+  - text: 方案B 锚定+自旋回退混合——先给出真实锚点（哪个下游 deadline 要求 10µs？），然后 condvar 前 bounded spin（1–3µs，减少唤醒进入内核的次数），预计把 p99 从 11.1µs 压入预算内；成本约为重写的 1/10，TLA+ 模型与大部分证据存活（O-016 仍适用——spin 后仍可能进入等待，唤醒语义保留）
+    anchor: 实验B 实测 p50=1700ns p99=11100ns
+  - text: 方案C 锚定+lock-free ring——兑现实验C 整个 invalidated 集（D-009/O-016/lib.rs/tests/tla 重写，外加 4 条新增义务：内存序/进度保证/ABA回绕/阻塞语义重建）；仅当锚点要求显著低于 11.1µs（如 1µs 级硬实时）时才值得
+    anchor: experiments/C/counterfactual.md
+  - text: 操作者裁决（2026-10-05）：保持严格——主账未平阻塞一切提交（含无关工作），后续可修改；本决策即解锁动作
+    anchor: owner=human
+introduces: []
+obligations: []
+artifacts: [tools/ledger_lint.py]
+superseded_by: null

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>推理方法论 — 索引</title>
+</head>
+<body>
+
+<h1>推理方法论</h1>
+<p>一组可复用的推理与迭代方法的形式化手册。供人、AI 系统与工程迭代共用。
+对象不限领域；方法的产物是可审计的陈述（定义、命题、证据、声明），而非印象。</p>
+
+<h2>结构：一棵导出树</h2>
+<p>手册只有一套根结构，其余各层由它导出（映射见 root.html §5）。
+根层是九条生成学科 G1–G9：G1–G6 由一个类型化原语、两条定理
+（自证不可能、检验不分解）与一个不对称（反驳/证实）导出；G7–G9
+（边界不分离、承重与分诊、干预纪律）由完备性探询收编。
+层与层之间只有显式接口：翻译表、承认程序、修正程序、跨层捷径登记。</p>
+
+<h2>目录</h2>
+<table border="1" cellpadding="6">
+<tr><th>层</th><th>文档</th><th>内容</th></tr>
+<tr><td>第〇层（根）</td><td><a href="root.html">root.html</a></td><td>原语（四类标签）、两条定理与一个不对称、生成学科 G1–G9、分歧定位规则、导出表、完备性探询记录。</td></tr>
+<tr><td>第一层（方法）</td><td><a href="methods.html">methods.html</a></td><td>方法清单 M0–M9：推广、统一、普遍性、公理化、元问题、结构-组合、弱涌现观测、信息论视角、自指分层。各方法标注其根源（G 编号）。</td></tr>
+<tr><td>第二层（程序）</td><td><a href="apm-loop.html">apm-loop.html</a></td><td>APM 循环（抽象 → 模式 → 元问题）的形式化定义、收敛条件、产物模板。</td></tr>
+<tr><td>第三层（纪律）</td><td><a href="discipline.html">discipline.html</a></td><td>迭代纪律：审计清单、四类失败模式、执行顺序、补充纪律五条。</td></tr>
+<tr><td>第四层（对照）</td><td><a href="foundations-math.html">foundations-math.html</a></td><td>已存在的数学/哲学碎片与各方法的对应关系；统合承诺的边界。</td></tr>
+<tr><td>领域投影</td><td>外部领域文档</td><td>根层在具体领域的投影实例：数据/实验链的审计梯（L0–L5），推理链的记法（⊢/S）。投影各自登记其根源映射，不另立体系。</td></tr>
+</table>
+
+<h2>使用方法</h2>
+<ol>
+<li>遇到问题，先读 <a href="root.html">root.html</a> 判断问题的失败形态属于哪个生成学科（G1–G9 各附失败形态与机械检查）。</li>
+<li>按问题形态在 <a href="methods.html">methods.html</a> 选取方法执行。</li>
+<li>执行时按 <a href="apm-loop.html">apm-loop.html</a> 的循环与产物模板产出记录。</li>
+<li>每次产出后按 <a href="discipline.html">discipline.html</a> 的审计清单自检。</li>
+<li>两通道分歧时，按 root.html §4 的分歧定位规则处置。</li>
+<li>涉及"这方法本身立于什么之上"的问题，读 <a href="foundations-math.html">foundations-math.html</a> 与 root.html §2。</li>
+</ol>
+
+<h2>基底规则（M0，先于一切）</h2>
+<p>任何陈述属于且仅属于四类之一：<b>定义</b>（语汇约定）、<b>命题</b>（可确定
+真假的主张）、<b>证据</b>（可执行的验证及其结果）、<b>声明</b>（依承认程序被
+接受的不可验证陈述）。声明必须标注为声明；未标注的声明被当作证据使用，
+按欺诈处理。声明的地位由 T1 导出（root.html 命题 1.3）：验证塔必然终止于
+承认程序，声明是结构必需品，不是妥协。</p>
+
+<h2>免责</h2>
+<p>本手册不声称存在"适用于一切问题的单一理论"。已有的数学碎片（见
+<a href="foundations-math.html">foundations-math.html</a>）各自成熟、局部正确；
+根层的生成集是对它们的联合使用程序，而非新的统合定理。任何统合主张
+（如"一切皆范畴"）必须自行标注承诺边界。生成集自身受 T1 支配：
+其完备性不能在内部证明，完备性探询是常设议程（root.html §6）。</p>
+
+</body>
+</html>

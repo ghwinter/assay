@@ -1,0 +1,5 @@
+obligation: O-024
+status: fail
+command: cargo test --release -- --ignored --nocapture bench_p99
+date: 2026-10-05
+notes: 实测 p50=1700ns，p99=11100ns——超过 G-003 v1 预算 10000ns 约 11%。当前 mutex+condvar 实现（D-009）无法满足收紧后的尾延迟预算，D-009 面临 supersession。候选方案：自旋-回退混合（小改，保留锁语义）或 lock-free ring（重写，触发实验 C 中 predicted invalidated 集合）——D-013 待裁决。【后续】D-013 方案A 裁决：预算确认为实验道具并撤回，本义务随 D-012 superseded 转历史记录；本 fail 为当时事实，测量分布保留为资产

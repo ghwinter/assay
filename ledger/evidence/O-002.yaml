@@ -1,0 +1,5 @@
+obligation: O-002
+status: deferred
+reason: v0 以 int 为元素类型，拷贝/移动无抛异常路径；抛异常类型专项测试列入检查器升级队列
+owner: human
+date: 2026-10-03

@@ -1,0 +1,80 @@
+id: D-028
+status: accepted
+question: 如何把 Spec Ledger 与 Assay 整合成同一工程入口，并用真实项目样例验证流程？
+goal: [G-004]
+alternatives:
+  - 保留两个仓库并依赖外部 Spec Ledger 路径
+  - 在 Assay 根目录整合账本与工具，并提供自包含的 Rust 示例（本决策）
+  - 只写流程说明，不提供可运行样例
+choice: >-
+  把 Spec Ledger 当前工作树（含其未提交修改）合入 Assay 的单一 Git 根，保留一个根级账本、
+  检查器和工作流；不复制 .git 或构建缓存。冲突 README/WORKFLOW 保存为 docs 下的来源快照。
+  新 Rust 项目默认从本仓库工具初始化。提供一个自包含的内存服务纵切和验证脚本，贯通
+  Rust 测试、Spec Ledger lint/check/work-package、Assay check/run/map；示例只声明其实际覆盖的性质。
+rationale:
+  - text: 用户明确要求以 Assay 为统一项目、直接复制 Spec Ledger 工作并在 examples 验证完整工作流
+    anchor: WORKFLOW.md
+  - text: 两套工具服务互补层次；合在单仓保留目标/决策/义务与声明/检查/证据，而不把后端验证器焊进 Assay 引擎
+    anchor: UNIFIED_MODEL.md
+  - text: 当前 Spec Ledger 工作树有未提交改动；导入当前文件而非 HEAD-only 快照，才能保持此前对话产生的成果
+    anchor: docs/SPEC_LEDGER_IMPORT.md
+assumptions:
+  - text: 示例只验证可执行的进程内服务纵切，不将测试结果外推为生产级正确性或完整系统验证
+    invalidation: 示例加入外部状态/网络/发布承诺，或文档暗示测试覆盖未验证性质
+  - text: 整合快照不应带入源仓库 Git 历史和可再生构建缓存
+    invalidation: 用户需要保留可追溯 Git 历史或某一构建缓存作为交付工件
+introduces: []
+obligations:
+  - id: O-035
+    desc: 示例验证命令必须从新项目初始化、账本检查、Rust 测试、Assay 检查/运行到证据输出完整通过
+    origin: tool
+    bs_guard: []
+    bs_note: 这是本工作流示例的端到端验收义务，不是待验证系统的不变量；其覆盖范围由示例及其验证脚本显式限定。
+    checker:
+      type: test
+      cmd: pwsh -NoProfile -File examples/validate-workflow.ps1
+      ref: examples/validate-workflow.ps1
+waivers: []
+artifacts:
+  - tools/new-rust-project.ps1
+  - templates/rust-app/AGENTS.md
+  - templates/rust-app/README.md
+  - tools/prepare_work_package.py
+  - WORKFLOW.md
+  - README.md
+  - .gitignore
+  - docs/SPEC_LEDGER_README.md
+  - docs/SPEC_LEDGER_WORKFLOW.md
+  - docs/SPEC_LEDGER_IMPORT.md
+  - examples/README.md
+  - examples/validate-workflow.ps1
+  - examples/rust-service/engineering/INTENT.md
+  - examples/rust-service/AGENTS.md
+  - examples/rust-service/engineering/ARCHITECTURE.md
+  - examples/rust-service/engineering/AI_WORK_PACKAGE.md
+  - examples/rust-service/engineering/work-packages/D-001.md
+  - examples/rust-service/assay/manifest.toml
+  - examples/rust-service/assay/MAP.md
+  - examples/rust-service/assay/ratchet.toml
+  - examples/rust-service/.gitignore
+  - examples/rust-service/src/lib.rs
+  - examples/rust-service/Cargo.toml
+  - examples/rust-service/ledger/intent/G-001.yaml
+  - examples/rust-service/ledger/decisions/D-001.yaml
+  - examples/rust-service/ledger/evidence/O-001.yaml
+  - examples/rust-service/tools/ledger_lint.py
+  - examples/rust-service/tools/ledger_check.py
+  - examples/rust-service/tools/bridge_check.py
+  - examples/rust-service/tools/digest.py
+  - examples/rust-service/tools/gate.py
+  - examples/rust-service/tools/prepare_work_package.py
+  - examples/rust-service/tools/spec.py
+  - examples/rust-service/tools/trace.py
+  - examples/rust-service/tools/config.toml
+  - examples/rust-service/tools/tests/test_ledger_lint.py
+  - examples/rust-service/.githooks/pre-commit
+  - examples/rust-service/LEDGER.md
+  - ledger/intent/G-004.yaml
+  - ledger/decisions/D-028.yaml
+  - ledger/evidence/O-035.yaml
+superseded_by: null

@@ -1,0 +1,5 @@
+obligation: O-010
+status: pass
+command: ./pilot/build/test_queue.exe test
+date: 2026-10-03
+notes: 背压测试——容量 1 时第二个 push 阻塞（100ms 后仍未完成），消费释放容量后苏醒完成推送；队满行为语义 = 阻塞

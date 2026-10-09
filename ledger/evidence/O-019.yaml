@@ -1,0 +1,5 @@
+obligation: O-019
+status: pass
+command: cargo build && grep -rn "unsafe" pilot-rs/src
+date: 2026-10-04
+notes: 语言强制档——safe Rust 编译器保证内部 VecDeque 的引用不可能逃逸（对比 C++ 归档实现的 grep 审查档 O-001，此义务在 Rust 中下沉为编译器强制）

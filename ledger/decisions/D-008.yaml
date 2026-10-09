@@ -1,0 +1,13 @@
+id: D-008
+status: accepted
+question: 原 C++ 试点的处置？
+goal: [G-001, G-002, G-003]
+alternatives: [归档保留为对照基准, 删除, 与Rust并行演进]
+choice: 归档保留——第二/备选语言的现役示例与跨语言对照材料；不再演进，其义务证据为历史记录
+rationale:
+  - text: 操作者指定 C/C++/Python/Shell 为第二/备选；已全绿验证的对照实现有实验价值（实验 A 可作跨语言对照）
+    anchor: owner=human
+introduces: []
+obligations: []
+artifacts: [pilot/src/queue.hpp, pilot/tests/test_queue.cpp, pilot/build.sh]
+superseded_by: null

@@ -1,0 +1,23 @@
+# Rust build output
+target/
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Local secrets and environment-specific settings
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system metadata
+.idea/
+.DS_Store
+Thumbs.db
+
+# Spec Ledger / demo runtime state
+pilot/build/
+states/

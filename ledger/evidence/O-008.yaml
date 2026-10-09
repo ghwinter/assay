@@ -1,0 +1,5 @@
+obligation: O-008
+status: pass
+command: 人工评审 pilot/src/queue.hpp（push/pop 两处 wait）
+date: 2026-10-03
+notes: 两处 wait 均为谓词循环（closed_ / !q_.empty() 判据），虚假唤醒安全；close() 在锁内 notify_all，test_close_wakes_blocked_poppers 证实阻塞者必被唤醒

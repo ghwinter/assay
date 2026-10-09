@@ -1,0 +1,18 @@
+obligation: O-021
+status: pass
+command: D:/GitHub/workspace/verus-x86-win/verus.exe --multiple-errors 20 proofs/queue_core.rs
+date: 2026-10-04
+notes: |-
+  机器证明档就位并兑现。工具链：verus 0.2026.09.27-x86-win 发布版（操作者手动下载解压至
+  D:\GitHub\workspace\verus-x86-win，含 z3.exe 与 vstd.vir）+ rustup 工具链 1.98.1（verus.exe 运行必需）。
+  结果：4 verified, 0 errors——inv（len <= cap）在 new/push/pop 下保持；
+  push 满拒绝/追加语义；pop 队头/None 语义；main 中机器检验 FIFO 序列
+  （入 11,12 → 第三次拒绝 → 出 11,12 → None）。
+  过程教训（已沉淀）：
+  1. 规约完备性两次踩坑——new 缺 q.cap == cap、push/pop 缺 cap 保持条款；
+     规约必须完整刻画结果，否则调用链上的知识会断链。
+  2. 本版本 Verus 的 new-mut-ref 语义下，&mut self 方法的 old/final 在多次调用链上
+     存在调用方传播缺口（单个事实可证、组合不可证）；核心证明改用 owned 值传递规避。
+  分工边界：顺序核心=本档；并发协议=TLA+ 档（O-016/O-017）；竞争自由=语言强制档（O-011）
+  【后续】本义务的平行结构形态由 O-028（D-017 契约门控）继承取代，本条转历史记录
+  （义务级 superseded_by，D-023）；proofs/queue_core.rs 保留为验证入口

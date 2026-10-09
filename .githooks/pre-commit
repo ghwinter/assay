@@ -1,0 +1,7 @@
+#!/bin/sh
+# 预提交红灯（D-021 四合一门）：账不平 / 桥失衡 / LEDGER.md 漂移 / 守门人自测失败，
+# 任一即拒绝提交。门逻辑在 tools/gate.py（与 ci.yml ledger job 同一检查器集）。
+# python 路径单点 tools/config.toml（D-015）；C:/ 形态在 Git Bash 与 cmd.exe 下均可执行。
+ROOT="$(git rev-parse --show-toplevel)"
+PY="$(sed -n 's/^python = "\(.*\)"/\1/p' "$ROOT/tools/config.toml")"
+exec "$PY" "$ROOT/tools/gate.py"

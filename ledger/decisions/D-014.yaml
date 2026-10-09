@@ -1,0 +1,19 @@
+id: D-014
+status: accepted
+question: 是否引入"思维库"（盲区判例法 + 方法库）作为账本之外的元认知层？
+goal: [G-001, G-002, G-003]
+alternatives: [thinking/判例法两文件, 并入CONSTITUTION, 只在AGENTS.md列清单, 不引入]
+choice: 引入 thinking/blind_spots.md（10 条判例）与 thinking/methods.md（8 条方法），全部来自本仓库 2026-10-03 以来真实案例；判例法生长协议与触发器回写同构
+rationale:
+  - text: 起因——操作者识别出"无锚点阈值否定实际改进"的推理盲区（BS-001），追查发现三日内已积累 10 个可判例化的真实案例，全部有本仓库实例，通过交租检验
+    anchor: thinking/blind_spots.md
+  - text: 定位是最软的元认知层——一般不可机器检查；强制力来自三处：AI 必读清单、每条判例带真实实例、对策尽量硬化（BS-001 已硬化为 G-003 的锚点字段）
+    anchor: CONSTITUTION.md 中间地带非法
+  - text: 部分判例可继续硬化——"无锚点预算"未来可升级为 lint 规则（G-*.yaml 预算类条目缺锚点字段即 WARN），属软→硬迁移的元认知实例
+    anchor: CONSTITUTION.md 增长律
+  - text: 裁决记录——操作者 2026-10-07 批示"都可以做，开始执行"（与 D-020/D-021..023 批量裁决）。起草时快照为 10 判例/8 方法，入库时实为 12/12（快照数字以本条为准，choice 原文不改）；规范名定为"元认知库"（词表 thinking/glossary.md），"思维库/元认知层"退役为同义别名
+    anchor: owner=human（操作者批量裁决 2026-10-07）
+introduces: []
+obligations: []
+artifacts: [thinking/blind_spots.md, thinking/methods.md]
+superseded_by: null

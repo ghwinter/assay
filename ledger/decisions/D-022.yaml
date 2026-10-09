@@ -1,0 +1,20 @@
+id: D-022
+status: accepted
+question: 术语与命名如何治理？（词表漂移两次、收编手册编号撞名已产生真实错引、anchor/owner/synthetic 无定义）
+goal: [G-001, G-002, G-003]
+alternatives: [glossary词表+命名空间前缀读法, 改写手册HTML编号（违反冻结）, 不治理（容忍撞名）]
+choice: glossary 词表 + 命名空间前缀读法 + anchor 存在性 lint——thinking/glossary.md 规范名表（一物一名，唯一裁决处，含退役别名指向）；收编手册不改原文（冻结，M-012），引用时用命名空间前缀读法（HM0–HM9 / SG1–SG9 / AT0–AT5，仓库 L1/L2/L3 为保留字）；lint 增 anchor 存在性检查（rationale.anchor 的路径形态必须真实存在——出处指针可机械核对）
+rationale:
+  - text: 编号双系列已实弹命中——bridge.yaml 把 M-011（跨档同名）错引为 M-009（校准记账），2026-10-07 体检发现并勘误；D-020 起草文本曾把手册 G5/G9 直接写进账本 YAML（与目标账 G-001..003 撞名）。手册 HTML 冻结不转写，前缀读法把撞名成本降为零
+    anchor: ledger/bridge.yaml 头注释（勘误后引用 M-011）
+  - text: anchor 被宪法三律强制但合法形态全仓库无定义（lint 只查非空）；synthetic 被宣称"已硬化进 G-003"但 schema 无实体；owner 是自由字符串。本决策把三者的仓库形态定义入词表，anchor 升级为可机械核对（路径存在性 WARN），owner 收敛为注册值 human
+    anchor: CONSTITUTION.md 三律之二
+  - text: 「档」字六义收敛为三词——checker 类型（六值枚举）/ CI 轨道（四条）/ 证据阶梯（六级，两处措辞统一为宪法原文）；计数去数字化（AGENTS/README 改指向 LEDGER.md 单源，终止 11 vs 12、19 vs 20 式漂移）；tla/WORKFLOW 过时声明（评审+快照）勘误为桥对账
+    anchor: tools/ledger_check.py 文档串（阶梯措辞勘误）
+  - text: 裁决记录——操作者 2026-10-07 批示"都可以做，开始执行"（体检报告 D-021..D-023 批量批准）
+    anchor: owner=human（操作者批量裁决 2026-10-07）
+introduces: []
+obligations: []
+waivers: []
+artifacts: [thinking/glossary.md, ledger/bridge.yaml, thinking/methods.md, AGENTS.md, README.md, CONSTITUTION.md, tla/WORKFLOW.md, tools/ledger_check.py, ledger/decisions/D-011.yaml]
+superseded_by: null

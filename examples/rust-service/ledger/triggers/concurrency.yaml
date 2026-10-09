@@ -1,0 +1,23 @@
+trigger: shared_mutable_state
+description: 引入共享可变状态时自动产生的义务
+obligations:
+  - key: race_freedom
+    desc: 不存在数据竞争
+    suggested_checker: TSAN 等动态竞争检测
+    waive_allowed: false
+  - key: deadlock_freedom
+    desc: 不产生死锁（锁序无环、无嵌套等待）
+    suggested_checker: 锁序 lint + 人工评审
+    waive_allowed: true
+  - key: ordering_semantics
+    desc: 并发下的顺序语义被明确定义并被测试
+    suggested_checker: 时序压力测试
+    waive_allowed: true
+  - key: invariant_protection
+    desc: 共享状态的不变量在每个操作后保持
+    suggested_checker: 断言测试
+    waive_allowed: true
+  - key: contention_budget
+    desc: 锁竞争下的性能预算被定义并被测量
+    suggested_checker: benchmark
+    waive_allowed: true

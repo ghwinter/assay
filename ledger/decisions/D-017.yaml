@@ -1,0 +1,33 @@
+id: D-017
+status: accepted
+question: Verus 证明对象与运行实现是两份结构（proofs/queue_core.rs 的 QueueCore vs lib.rs 的
+  State），"证明覆盖实现"隔着手工等价性——如何单一事实源化？
+goal: [G-001, G-002]
+alternatives: [契约以cfg门控住进实现文件（单一事实源）, cargo-verus全仓验证（依赖vstd crate）, 维持平行结构+文本等价检查器]
+choice: 契约门控——队列核心抽取为 pilot-rs/src/qcore.rs（无锁纯数据流），Verus 契约以
+  cfg_attr(verus_verify, verus_spec(...)) 附着于实现本体；cargo 构建时契约不存在（纯净零依赖），
+  verus --cfg verus_verify 时契约生效。proofs/queue_core.rs 退化为验证入口（include 实现文件）
+rationale:
+  - text: 机制经 _scratch_tmp 双工具链实证：同一文件 verus 4 verified 0 errors 且 rustc 干净编译（含泛型 T、external_type_specification 桥、verus_spec 属性形式）；--cfg 由 verus 驱动透传
+    anchor: scratch 实验 2026-10-07（verus 0.2026.09.27）
+  - text: cargo-verus 全仓路线需 pilot-rs 依赖 vstd/builtin_macros crate 并以 RUSTC_WRAPPER 构建——破坏 G 级零运行时依赖与"cargo test 即开发循环"的 DX（thinking/execution_gates.md 门 2）
+    anchor: thinking/execution_gates.md 零依赖纯度门
+  - text: 平行结构+文本等价检查器不修本体只修监控——等价性由人维护、机器只能核对，违背增长律方向；门控契约把等价性还给编译器
+    anchor: CONSTITUTION.md 增长律（软→硬迁移）
+  - text: 已知边界（诚实登记）：qcore 用 Vec 而非 VecDeque（remove(0) O(n)——bench 实测 2.27M ops/s 远超预算，容量小场景无碍；若 O-015 升级须重审）；lib.rs 经 mem::take 取还 core（placeholder 锁内无人观测）；&mut self 契约形态待 verus 支持后回迁
+    anchor: pilot-rs/src/qcore.rs 头注释（D-006 备忘延续）
+introduces: []
+obligations:
+  - id: O-028
+    bs_guard: [BS-010]
+    desc: Verus 证明对象=实现本体——qcore.rs 的 inv/qnew/push/pop 契约机器验证通过
+      （继承并取代 O-021 的平行结构形态）
+    origin: tool
+    checker:
+      type: proof
+      target: proofs/queue_core.rs
+      ref: verus --cfg verus_verify proofs/queue_core.rs（4 verified 0 errors）
+waivers: []
+artifacts: [pilot-rs/src/qcore.rs, pilot-rs/src/lib.rs, proofs/queue_core.rs,
+  ledger/bridge.yaml, ledger/evidence/O-028.yaml]
+superseded_by: null

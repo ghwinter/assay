@@ -1,0 +1,11 @@
+trigger: value_type_copy
+description: 按值持有用户类型时自动产生的义务
+obligations:
+  - key: exception_safety
+    desc: 元素拷贝/移动抛异常时不破坏容器不变量
+    suggested_checker: 抛异常类型专项测试（可 deferred）
+    waive_allowed: true
+  - key: ownership_boundary
+    desc: 内部存储的引用或指针不通过 API 逃逸
+    suggested_checker: API 形态 lint + 评审
+    waive_allowed: true

@@ -1,0 +1,37 @@
+id: D-027
+status: accepted
+question: 盲区库如何从"评审清单"升为"门"——使新增不变量级检查器**不可能**在未知会判例库的情况下引入自审式/空洞式的验证关系？（依据 D-026 第①条，操作者采纳）
+goal: [G-001, G-002, G-003]
+alternatives: [账本增必填字段 bs_guard + lint 强制（本条）, 只把判例库写进评审清单并靠人记, 在评审时人工比对不强制字段]
+choice: 三件——(1) 义务 schema 增必填字段 bs_guard（判例 id 列表）与配套 bs_note（列表为空时必填，说明"不针对任何已编目判例"的理由）；(2) tools/ledger_lint.py 在义务级强制两者，且 bs_guard 引用的 id 必须真实存在于 thinking/blind_spots.md，BS-C* 候选未升库前不得引用；(3) 全部 14 个含义务的 D 文件按固定值回填，回填值逐条列出、视为待人复核的判断（不改变任何义务的证据状态或 checker 语义）。渲染进 LEDGER.md 一事另议（见 assumptions 第 3 条）
+rationale:
+  - text: 缺口①的实锤——一次真实的检查器设计在未知会判例库的情况下独立造出了 BS-012 的实例（缓存由逐条施加建立，校验由从基底重新逐条施加同一函数建立，即校验者与被校验者同体）。清单不是门，已编目的偏差可以被无摩擦地重犯
+    anchor: thinking/blind_spots.md BS-012
+  - text: 硬化形态取既有先例——BS-013 的对策就是"加 schema 字段 + lint"（义务出身 origin 与生命周期四字段，D-023），本次沿用同一形态；且"强制项必须能说明自己为何存在"与"要求写明省略理由否则拒收"的外部先例同构
+    anchor: ledger/decisions/D-023.yaml
+  - text: 为什么强制而不劝告——本仓已有判例记录过"永久 WARN 钝化"的教训（D-023 处置了 9 条永久 WARN）。因此本条落到 error 档，不落 WARN 档
+    anchor: thinking/blind_spots.md BS-013
+  - text: 反向边界（防过早公理化）——只对**不变量级**义务强制。本仓 O 账即不变量级登记（单元测试不入账），故对全部义务强制；若将来出现行为级义务，须先在本条增补边界字段再放开
+    anchor: thinking/CANDIDATES.md
+  - text: 裁决记录——操作者 2026-10-08 批示"我可以采用你的推荐做法"，推荐内容为 D-026 三件中的第①条（盲区库升为门）
+    anchor: owner=human（操作者采纳 2026-10-08）
+assumptions:
+  - text: 14 个 D 文件的 bs_guard 回填值是提出方（AI）的判断，逐条列出待人复核；其中引用具体 BS 编号者要求该编号的判例原文或实例曾点名该义务，否则写空并给 bs_note
+    invalidation: 复核指出某条回填与判例原文不符，或某条本应引用而未引用
+  - text: 字段只增加登记与核对，不改变任何义务的 checker 命令、证据档位或 pass/deferred 状态
+    invalidation: 回填后门禁报出与 bs_guard 无关的新错，或既有证据状态变化
+  - text: bs_guard 暂不渲染进 LEDGER.md（digest 不变），故它在派生视图里不可见，只在义务源文件与 lint 输出里可见
+    invalidation: 下一次需要按判例防护筛选义务时——届时应改 tools/digest.py 增一列或一行统计
+introduces: []
+obligations:
+  - id: O-034
+    desc: 每条义务声明其防护判例——bs_guard 为判例 id 列表，引用必须真实存在于判例库；列表为空时必须给 bs_note 说明理由；BS-C* 候选未升库前不得引用（盲区库由清单升为门，D-027）
+    origin: tool
+    bs_guard: [BS-012]
+    checker:
+      type: lint
+      cmd: "{PY} tools/ledger_lint.py"
+      ref: tools/ledger_lint.py（义务级 bs_guard/bs_note 检查）
+waivers: []
+artifacts: [tools/ledger_lint.py, tools/tests/test_ledger_lint.py, thinking/glossary.md, thinking/blind_spots.md, thinking/CANDIDATES.md, ledger/decisions/D-027.yaml, ledger/decisions/D-002.yaml, ledger/decisions/D-003.yaml, ledger/decisions/D-004.yaml, ledger/decisions/D-006.yaml, ledger/decisions/D-009.yaml, ledger/decisions/D-010.yaml, ledger/decisions/D-011.yaml, ledger/decisions/D-012.yaml, ledger/decisions/D-015.yaml, ledger/decisions/D-016.yaml, ledger/decisions/D-017.yaml, ledger/decisions/D-018.yaml, ledger/decisions/D-019.yaml, ledger/decisions/D-021.yaml]
+superseded_by: null

@@ -1,0 +1,5 @@
+obligation: O-015
+status: pass
+command: cargo test --release -- --ignored --nocapture bench_throughput
+date: 2026-10-04
+notes: 实测 4 生产者/4 消费者 x50000：200000 ops，2,266,315 ops/s ≥ G-003 预算 50,000 ops/s（约 45 倍余量）；Rust 1.99 stable，本机
