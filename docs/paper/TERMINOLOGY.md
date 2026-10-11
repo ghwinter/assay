@@ -125,3 +125,56 @@ split is recorded below.
 | 越位 (for over-reaching arguments) | football metaphor; replaced by 被移出承重结构的论证 |
 | 武器, 武器库 | same |
 | 全知, 博士层级, 顶级专家 | self-description of the text's own standing; removed entirely |
+
+## 7. Terms added in the first revision round
+
+The revisions introduced new concepts, and several of them would otherwise have been rendered
+into a Chinese word that is already bound to a *different* English term. Each such collision is
+resolved below; the rest are recorded so that one English term keeps exactly one Chinese form.
+
+### 7.1 Splits, where one Chinese word would have covered two English terms
+
+| English (authoritative) | Chinese | Distinct from |
+|---|---|---|
+| **break-even threshold** | 盈亏平衡阈值／盈亏平衡点 | **phase transition** = 相变. The two are now different claims: crossing a break-even makes one arrangement cheaper, while a phase transition is a structural change of regime. Only 相变 may be used where the English genuinely says *phase transition*. |
+| **identifiability** | 可辨识性 | **observability rank** = 观测秩. The rank condition is now the finite-dimensional *specialisation* of identifiability, not its general form. |
+| **authorisation**, **authorised** | 授权／被授权 | **authority** = 权威; **standing** = 资格／采用资格. Authorisation is the act, authority the standing, and 权威同构 renders *authority isomorphism*. |
+| **attestor** | 审定者 | **verifier** = 验证者. The English switches deliberately between the two where the mechanism changes; the Chinese must switch with it. |
+| **re-confirmation** (of a specification) | 重新审定 | **re-verification** (of an artefact) = 重新验证. |
+| **make-or-buy** | 自建／外购 | **adopt** (from a host) = 外借. |
+| **stratum** | 层（stratum） | **layer** = 层. The English gloss is kept in the Chinese so the geometric sense cannot be read as the paper's *layer*. |
+| **amortisation** | 摊销 | **amortised resource analysis** (the technique name) = 摊还. The two share a root but are different objects; the split is deliberate and predates this revision. |
+
+### 7.2 New terms with a single binding
+
+| English | Chinese | English | Chinese |
+|---|---|---|---|
+| unattested part | 未审定部分 | validity horizon | 有效视界 |
+| checklist obligation | 清单式义务 | re-confirmation triggers | 重新审定触发条件 |
+| deontic | 道义（道义轴） | design effect | 设计效应 |
+| non-interference | 非干扰 | covert channel | 隐蔽信道 |
+| logical depth | 逻辑深度 | bit-map encoding | 位图编码 |
+| differential entropy | 微分熵 | coding theorem | 编码定理 |
+| relational composition premise | 复合相容性包含 | boundary fidelity | 边界忠实性 |
+| safety / liveness | 安全性／活性 | progress property | 进展性质 |
+| well-foundedness | 良基性 | failure domain | 失效域 |
+| silent failure | 静默失败 | governance cost | 治理成本 |
+| switching cost | 转换成本 | zero set | 零点集 |
+| regular value | 正则值 | general position | 一般位置 |
+| compactness | 紧致性 | Pareto frontier | 帕累托前沿 |
+| ablation | 消融实验 | finite differences | 有限差分 |
+| head-of-line blocking | 队头阻塞 | taint tracking | 污点追踪 |
+| channel auditing | 信道审计 | timing channel | 时间通道 |
+| tail latency | 尾延迟 | functional property | 功能性性质 |
+| agentic generation | 智能体式生成 | interpretation bands | 解释区间 |
+| stipulated decision bands | 约定的判定区间 | liability regime | 法律责任制度 |
+| institutional fact | 制度事实 | adjudicator | 裁决者 |
+| multi-objective | 多目标 | resource algebra | 资源代数 |
+| irredundant | 冗余自由的 | rework | 返工 |
+
+### 7.3 How this section is maintained
+
+A term enters this section when it is first used in either build. If a later revision changes the
+English term, the Chinese changes with it in the same commit; the two builds are not allowed to
+drift, and the label-and-reference parity check between `en/` and `zh/` is the mechanical guard
+that catches drift in the structure even when the prose looks right.

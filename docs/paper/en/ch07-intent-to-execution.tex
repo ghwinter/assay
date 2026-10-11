@@ -963,15 +963,15 @@ If the following conditions hold simultaneously, then ``property $\varphi$ holds
 declared scope $\Sigma$'' holds:
 \begin{align}
 &\text{(i)}\quad \Pr\bigl[\Phi \text{ is faithful to } I \text{ at time } t\bigr] \;\ge\;
-1 - \varepsilon_{\text{cons}}(\Delta t),
-\qquad \varepsilon_{\text{cons}}(\cdot) \text{ from \eqref{eq:chernoff}, } q \text{ and } \bar\rho,\;
-\Delta t = t - t_{\text{attest}};\\
+1 - \varepsilon_{\text{cons}}(\Delta t);\\
 &\text{(ii)}\quad \Tr(B, E) \;\subseteq\; \Allow(\Phi);\\
 &\text{(iii)}\quad E \models A;\\
 &\text{(iv)}\quad \mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}});\\
 &\text{(v)}\quad \varphi \text{ is preserved under the interpretation relation } R \text{ in use};\\
-&\text{(vi)}\quad \Phi \text{ is authorised by a body with standing to adopt it.}
+&\text{(vi)}\quad \Phi \text{ is authorised by a body with standing to adopt it,}
 \end{align}
+where $\varepsilon_{\text{cons}}(\cdot)$ is the bound of \eqref{eq:chernoff}, governed by $q$ and
+$\bar\rho$, evaluated at $\Delta t = t - t_{\text{attest}}$.
 \end{proposition}
 
 The statement is deliberately one-directional. It was written elsewhere as an equivalence, and

@@ -60,37 +60,52 @@ system with concurrently live entities and contended finite resources, whose ope
 semantics is well defined, has already defined six functions---identity and lifecycle,
 allocation and reclamation, scheduling, naming and addressing, communication and
 synchronisation, and fault isolation and recovery; these may be built or adopted, but not
-omitted. The \term{separation thesis}: generation may be free, probabilistic and untrusted,
-while admission must be deterministic, mechanical and exhaustively inspectable; formal-layer
+omitted---and the claim is a checklist obligation, not a claim that the six are minimal or
+mutually independent. The \term{separation thesis}: generation may be free, probabilistic and
+untrusted, while admission must be deterministic, mechanical and exhaustively inspectable;
+formal-layer
 guarantees come from a minimal trusted kernel, intent-layer guarantees from adversarial
 consensus, and the two are stitched by artefact binding. The \term{design thesis}:
 architecture is manufactured separation of scales---nature obtains levels free through
 renormalisation, software must pay for them---and design is forward compression while
 comprehension is inverse compression, two reading directions of one structure.
 
-The formal results are as follows. A level's \emph{oblivious set} as the kernel of its
-abstraction map, making ``what this level may ignore'' computable and reducing the reality
-of a level to a compression ratio; Galois connections for inter-level semantic
-preservation; a \emph{contract operad} whose well-definedness reduces the composability
-of local guarantees to well-typed colouring and acyclicity of the interface graph,
-thereby explaining why feedback and retry invalidate existing composition arguments; a
-\emph{level family} distinguishing cross-domain isomorphism of the six functions from
-transport along problem shape; near-decomposability as interface sufficiency, yielding a
-diagnostic for \emph{leak pairs}; a \emph{coarse-graining criterion} making the
-convergence thesis falsifiable within a single project; an amortisation inequality
-$\Theta(nm)\to\mathcal{O}(n+m)$ giving the phase-transition threshold of internal
-infrastructuralisation; expected read-set as a measurable architectural objective, with
-invariant centralisation proved to minimise it; an \emph{observability rank} criterion
-for whether comprehension can converge at all, separating insufficient observation from
-insufficient sampling; \emph{governable complexity}
-$C=\mathbb{E}[\rho]\cdot\lambda$ against comprehension capacity $K=hb$, yielding a
-stability condition and a proof that architecture fixes the scaling exponent of required
-headcount; technical debt as a description-length gap with a rate--distortion reading of
-refactoring; a Hoeffding bound $\exp(-2n(1/2-p)^2)$ for consensus reliability, dominated
-by a correlated error mode $q$ that is in turn reduced to an incentive-design problem;
-and a consolidated assurance condition combining two-layer trust with artefact binding.
+The formal results are of three different kinds, labelled as such throughout, and the
+distinction is part of the contribution. As \emph{working definitions}: a level's
+\emph{oblivious set} as the kernel of its abstraction map, which turns ``what this level may
+ignore'' into an object that can be declared and then checked---declared rather than extracted,
+because the definition confers no computability and the checks against it are partial; a
+\emph{contract operad} whose side conditions locate exactly where composition fails, including
+the case of resource-coupled substitution that neither colouring nor acyclicity detects; expected
+read-set as a measurable architectural objective; and near-decomposability as interface
+sufficiency, yielding a differential diagnostic for \emph{leak pairs}. As \emph{conditional
+results}: composition of inter-level soundness under observation compatibility and assumption
+closure, with the relational case carrying an explicit composition premise; centralisation of
+invariants as a bound on the read-set, stated relative to those enforcement sites that no
+independent evidence settles; a break-even threshold for internal infrastructuralisation under a
+stated cost model; a \emph{level family} separating cross-domain isomorphism of the six functions
+from transport along problem shape; a \emph{coarse-graining criterion} making the convergence
+thesis falsifiable inside a single project; technical debt as a description-length gap; an
+\emph{observability} criterion for whether comprehension can converge at all, separating
+insufficient observation from insufficient sampling; \emph{governable complexity}
+$C=\mathbb{E}[\rho]\cdot\lambda$ against comprehension capacity $K=hb$, giving a stability
+condition and a scaling law for required headcount within that model; a Hoeffding bound for
+consensus reliability, dominated by a correlated error mode $q$ that is in turn reduced to an
+incentive-design problem; and a consolidated assurance condition stated as sufficient rather than
+necessary, because its conjuncts are conditions on evidence and a system may be correct without
+them. As \emph{falsifiable hypotheses}: the convergence claims, the six-function checklist, the
+reading of comprehension as compression, and the cost and scaling trajectories of
+Chapter~\ref{ch:program}.
 
-Twelve falsifiable hypotheses with operationalisations, controls, falsifiers and risks are
+The organising question is not whether individual components can be proved correct, but
+\emph{whether guarantees survive the journey} from requirements to executed artefact. A
+composition of verified components still fails if the specification omits a requirement, if the
+components' environmental assumptions are mutually incompatible, if resource costs are unproved,
+if the specification was never authorised by anyone with standing to adopt it, or if the
+deployment runs a different artefact from the one verified. Each of those is a distinct failure
+with a distinct remedy, and none of them is repaired by proving more components correct.
+
+Fourteen falsifiable hypotheses with operationalisations, controls, falsifiers and risks are
 given, together with a six-phase roadmap, a paper-centred interdisciplinary literature map,
 and an explicit list of non-claims rejecting the use of G\"odel incompleteness, Rice's
 theorem, the open status of $\mathrm{P}$ versus $\mathrm{NP}$, near-decomposability, and

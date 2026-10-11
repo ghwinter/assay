@@ -143,7 +143,7 @@ are observed throughout.
       does \emph{not} claim, including several ``authoritative theorems'' that are declined.
 \item \term{Explicit assumptions.} Any conclusion that depends on an environmental
       assumption states it, and any guarantee that has a boundary marks it.
-\item \term{Falsifiability.} Chapter \ref{ch:program} reduces the core claims to twelve
+\item \term{Falsifiability.} Chapter \ref{ch:program} reduces the core claims to fourteen
       falsifiable hypotheses with operationalisations, controls, falsifiers and risks.
 \item \term{Verification not isomorphic to the conclusion.} Where the paper argues that
       generation must be untrusted and verification independent, that rule applies to the
@@ -179,21 +179,24 @@ Formal contributions:
 \item A \emph{coarse-graining criterion} under which the convergence thesis can be
       falsified inside a single project (Definition \ref{def:coarsegrain},
       Conjecture \ref{conj:relevant}).
-\item An amortisation inequality $\Theta(nm)\to\mathcal{O}(n+m)$ giving the phase-transition
-      threshold of internal infrastructuralisation (Theorem \ref{th:integration}).
+\item An amortisation inequality comparing $\Theta(nm)$ direct interactions with
+      $\mathcal{O}(nk+m)$ substrate interactions, giving the break-even threshold of internal
+      infrastructuralisation (Theorem \ref{th:integration}).
 \item Conditional necessity of the six functions from the well-definedness of the
       operational semantics (Theorem \ref{th:six}), and the resulting build-or-adopt
       criterion (Corollary \ref{cor:buildadopt}).
 \item A criterion for over- and under-constraint that renders ``unique below, manifold
       above'' as solution-set geometry (Proposition \ref{prop:overconstrain}).
-\item Expected read-set as the measurable objective of architecture, with a proof that
-      invariant centralisation minimises it (Definition \ref{def:readset},
-      Theorem \ref{th:centralise}).
+\item Expected read-set as the measurable objective of architecture, with a bound showing
+      that invariant centralisation lowers it, stated relative to the enforcement sites that
+      no independent evidence settles (Definition \ref{def:readset}, Definition
+      \ref{def:enforce}, Theorem \ref{th:centralise}).
 \item Technical debt as a description-length gap (Definition \ref{def:debt}), with a
       rate--distortion reading of refactoring.
-\item An observability-rank criterion for whether comprehension can converge, separating
-      insufficient observation from insufficient sampling (Definition
-      \ref{def:observability}, Proposition \ref{prop:observability}).
+\item An identifiability criterion for whether comprehension can converge, separating
+      insufficient observation from insufficient sampling, of which the linear observability
+      rank is the finite-dimensional specialisation (Definition \ref{def:observability},
+      Proposition \ref{prop:observability}).
 \item A governable-complexity stability condition and a scaling law for required
       headcount (Definition \ref{def:governable}, Proposition \ref{prop:exponent}).
 \item A Hoeffding bound for consensus reliability and the proof that a correlated error
@@ -212,7 +215,7 @@ Methodological contributions:
       unfamiliar code base.
 \item A design procedure that replaces adjectival goals with an optimisable objective and
       a stability condition.
-\item Twelve falsifiable hypotheses with experimental designs.
+\item Fourteen falsifiable hypotheses with experimental designs.
 \item A cross-disciplinary research position that couples social epistemology to
       proof-carrying code, which the literature map identifies as unoccupied.
 \end{enumerate}
@@ -223,7 +226,7 @@ Chapter \ref{ch:framework} establishes the formal language: levels, abstraction 
 oblivious sets, contracts, traces, assurance and trust. Chapter \ref{ch:convergence}
 addresses Problem \ref{prob:low}, grading the convergence claim and stating its strength
 law. Chapter \ref{ch:infrastructure} addresses Problem \ref{prob:scale}, proving the
-conditional necessity of the six functions and deriving the phase-transition threshold.
+conditional necessity of the six functions and deriving the break-even threshold at which a substrate pays for itself.
 Chapter \ref{ch:comprehension} addresses the first half of Problem \ref{prob:mind}:
 comprehension as inverse compression. Chapter \ref{ch:design} addresses the second half:
 design as forward compression. Chapter \ref{ch:intent} addresses Problem \ref{prob:trust}

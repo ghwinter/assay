@@ -70,7 +70,7 @@ characters.**
 | 6 | Design | forward compression; **invariant centralisation**; leak pairs; technical debt; **governable complexity** |
 | 7 | Intent to verified execution | five dimensions of correctness; refinement chain; intent gap; **consensus bound and incentives** |
 | 8 | Levels as obligation units | L0…L∞; assurance allocation matrix |
-| 9 | Research programme | twelve falsifiable hypotheses; three directions; six-phase roadmap |
+| 9 | Research programme | fourteen falsifiable hypotheses; three directions; six-phase roadmap |
 | 10 | Literature map | six groups; five layers; the vacant intersection |
 | 11 | Objections and limits | list of non-claims; arguments removed from the load-bearing structure |
 | 12 | Conclusion | answers; compression as the single thread; core proposition |

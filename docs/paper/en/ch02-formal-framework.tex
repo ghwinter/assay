@@ -553,7 +553,8 @@ property $\varphi$ holds within scope $\Sigma$ exactly when
 \end{equation}
 \end{definition}
 
-The last conjunct---called here the \term{fourth pillar}---is frequently omitted, but it
+The last conjunct of \eqref{eq:assurance}---called here the \term{fourth pillar}---is frequently
+omitted, but it
 is not a detail: even if a verifier correctly accepts a binary, the preceding conclusion
 does not transfer if the deployment system actually runs a different file, or if loading
 changes a critical premise. Its formal expression is an identity assertion:
@@ -670,8 +671,10 @@ resulting digraph is the \term{interface graph} of $f$. If it is acyclic, $f$ is
 \end{definition}
 
 \begin{proposition}[Structural form of the composition conditions]\label{prop:operad-compose}
-Conditions (a) and (b) of Proposition \ref{prop:soundness} are respectively equivalent to
-two structural conditions on the contract operad:
+Conditions (a) and (b) of Proposition \ref{prop:soundness} correspond to two structural
+conditions on the contract operad. The correspondence is an equivalence for (a) and a
+one-directional implication for (b), and the asymmetry is deliberate---the remark following the
+proof explains why.
 \begin{enumerate}[label=(\alph*)]
 \item \term{Well-typed colouring}: observation compatibility (condition (a) of
       Proposition \ref{prop:soundness}) holds if and only if substitution is well defined
