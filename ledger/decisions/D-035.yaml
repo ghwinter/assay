@@ -1,0 +1,83 @@
+id: D-035
+status: draft
+question: >-
+  本仓库的 CI（`.github/workflows/ci.yml` 与 `release.yml`）是否保留？它从未运行过——
+  仓库没有 remote，所以两个 workflow 从写下的一刻起就是**无人执行的文本**；
+  而它们的 `artifacts` 登记让四份决策同时声称"这些文件是产物"。
+  真正在被执行的强制层只有本地 pre-commit 门。
+goal: [G-006]
+alternatives:
+  - 保留 CI，等待将来有 remote 再跑（现状）
+  - 删除 CI，并把强制层完全落在本地 pre-commit 门
+  - 保留但标为未运行（verified: false 之类），继续维护
+  - 把 CI 换成不依赖远端的本地脚本编排
+choice: >-
+  暂时整体移除两个 workflow，并在 README / engine/README / tools/gate.py / .githooks/pre-commit
+  四处说明"当前没有 CI、强制层只有本地提交门"。
+rationale:
+  - text: >-
+      "从未运行过的检查"与"没有检查"在统计上等价——这是本仓自己写在 PROTOCOL §5.4 的判据。
+      两个 workflow 自写下起没有执行面：无 remote、无 runner。保留它们等于在仓库里放两件
+      **看起来像门的文本**，而本仓已经两次栽在"门看起来装着、其实从没执行过"上
+      （AGENTS.md 里的解释器命令、以及从未设置的 core.hooksPath）。第二次的教训正是：
+      没有执行面的声明应当被移除或显式标注，而不是继续摆在原处。
+    anchor: PROTOCOL.md
+  - text: >-
+      删除把一处**虚假的完成感**换成一记**可见的缺口**。README 现在明写"当前没有 CI"及其代价
+      （门只在提交时挡本机，协作方不设 hooksPath 就不设防）。缺口可见比门面好看更重要。
+    anchor: README.md
+  - text: >-
+      没有采用"保留但标为未运行"：那需要为"未运行的产物"发明一种状态，而本仓的证据词表
+      （pass / deferred / fail）已经够用且更诚实——O-038 早已是 deferred 且写明原因，
+      所以 CI 的"未兑现"其实早已登记在案，workflow 文件本身是多余的那一层。
+    anchor: ledger/evidence/O-038.yaml
+  - text: >-
+      没有采用"换成不依赖远端的本地脚本编排"：本地编排已经存在且更严格——`assay gate` 是
+      四合一门，`assay check`/`doctor`/`next` 覆盖清单与就绪度。再造一层本地编排只是为了
+      让"CI"这个词继续存在，属于为形式付成本。
+    anchor: tools/gate.py
+  - text: >-
+      代价必须写明而不是留给读者发现：移除后**没有任何远端执行面**，且门只在提交时挡本机；
+      协作方克隆后不执行 `git config core.hooksPath .githooks` 就不会被挡。
+      这条同时是四个决策的 `artifacts` 变动的理由——D-018 / D-030 / D-031 / D-032 中指向
+      两个 workflow 的条目已移出，原处留一行指向本决策的注释。
+    anchor: ledger/decisions/D-030.yaml
+assumptions:
+  - text: >-
+      本仓库暂时不会获得需要远端的协作面（外部贡献者、发布分发）。
+    invalidation: 一旦出现远端仓库或需要按标签分发 CLI，本决策立即失去前提，应恢复 CI。
+      恢复条件：先有 remote，且外部判定器（TLA+ / Verus）有可复现的跨 runner 安装步骤——
+      否则恢复的仍会是一个跑不起来的 workflow。
+  - text: >-
+      本地提交门（`assay gate`）足以覆盖当前的强制需求：账目 lint / 桥对账 / digest 新鲜 /
+      守门人自测，共 38 个黄金用例 + 13 条清单检查。
+    invalidation: 若出现只能靠第二执行面发现的缺陷（例如只在干净克隆上复现的失败），
+      说明本地门不足，应恢复 CI 而不是继续本地化。
+obligations:
+  - id: O-053
+    bs_guard: [BS-013]
+    desc: >-
+      仓库内不存在指向已删除 workflow 的引用或产物登记：README / engine/README / gate.py /
+      pre-commit 四点均已说明"当前没有 CI"，且 D-018/D-030/D-031/D-032 的 artifacts 不再列
+      `.github/workflows/*`
+    origin: tool
+    checker:
+      type: lint
+      target: .githooks/pre-commit
+      ref: assay gate（ledger_lint 的 L1/artifacts 存在性检查会拒绝指向已删文件的登记）
+rejected_alternatives: >-
+  见 alternatives 与 rationale 逐条对应：保留待有 remote（保留一件无人执行的文本）、
+  保留但标为未运行（为多余的一层发明状态）、换成自造本地编排（为形式付成本）。
+waivers: []
+artifacts:
+  - README.md
+  - engine/README.md
+  - tools/gate.py
+  - tools/spec.py
+  - .githooks/pre-commit
+  - CONSTITUTION.md
+  - ledger/decisions/D-018.yaml
+  - ledger/decisions/D-030.yaml
+  - ledger/decisions/D-031.yaml
+  - ledger/decisions/D-032.yaml
+superseded_by: null

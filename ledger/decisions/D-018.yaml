@@ -25,6 +25,6 @@ obligations:
       name: digest
       ref: python tools/digest.py --check
 waivers: []
-artifacts: [.github/workflows/ci.yml, tools/digest.py, LEDGER.md,
-  ledger/evidence/O-029.yaml]
+# CI 的两个 workflow 已由 D-035 暂时移除，故从本清单移出；其余产物不变。
+artifacts: [tools/digest.py, LEDGER.md, ledger/evidence/O-029.yaml]
 superseded_by: null

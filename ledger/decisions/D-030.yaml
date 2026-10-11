@@ -33,7 +33,7 @@ obligations:
     bs_guard: [BS-013]
     checker:
       type: manual
-      ref: .github/workflows/ci.yml 与 .github/workflows/release.yml 的首次 GitHub Actions 运行
+      ref: 首次托管 CI 运行——**前提已变**：两个 workflow 由 D-035 暂时移除，恢复后再兑现本义务
   - id: O-039
     desc: >-
       下载论文和实现调研速记保持 Git 忽略；共享工具配置不绑定开发机绝对路径，并由自动化测试验证边界。
@@ -52,8 +52,7 @@ artifacts:
   - tools/config.toml
   - examples/rust-service/tools/config.toml
   - tools/tests/test_repository_boundary.py
-  - .github/workflows/ci.yml
-  - .github/workflows/release.yml
+  # CI 的两个 workflow 已由 D-035 暂时移除；恢复条件见该决策
   - ledger/intent/G-006.yaml
   - ledger/decisions/D-030.yaml
   - ledger/evidence/O-038.yaml

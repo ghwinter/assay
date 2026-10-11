@@ -122,8 +122,18 @@ assay check [--root <p>]
 认可的机制，并用 Assay 自己的代码、协议、测试和证据重新表达；不 vendoring 外部项目、复制
 其文档或提交下载的论文文件。`pdf/` 与实现调研速记为本地忽略项。
 
-本仓库用自身账本、清单、引擎测试和示例验证自己。GitHub Actions 的检查与版本发布入口见
-[仓库迭代流程](engine/README.md#仓库迭代与发布)。
+本仓库用自身账本、清单、引擎测试和示例验证自己。
+
+**当前没有 CI。** `.github/workflows/` 已整体移除（原因、代价与恢复条件见
+`ledger/decisions/D-035.yaml`）。强制层完全落在本地提交门上：
+
+```text
+git config core.hooksPath .githooks     # 一次性；不做这一步，门就只是一段不会被执行的文本
+assay gate                              # 四合一门：账目 lint / 桥对账 / digest 新鲜 / 守门人自测
+```
+
+移除的代价是明确的，记在这里而不是留给读者去发现：**门只在提交时挡本机**，没有第二个执行面；
+协作方克隆后若不做上面第一条配置，提交不会被挡。这正是 D-035 里"暂时"二字的含义。
 
 详见 [PROTOCOL.md §8](PROTOCOL.md) 与 [engine/README.md](engine/README.md)。
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """gate — 提交门四合一（O-032，D-021）
 
-pre-commit 薄壳与 CI ledger job 共用的同一检查器集：账目 lint / 桥对账 /
-digest 新鲜 / 守门人自测。任一失败即非零退出（红灯）。
-强制层本地化：本仓库无 remote，CI 档由本门在提交时兑现（BS-013 判例的硬化）。
+账目 lint / 桥对账 / digest 新鲜 / 守门人自测。任一失败即非零退出（红灯）。
+
+**这是本仓库当前唯一的强制层。** CI 已整体移除（D-035），本仓库无 remote，因此没有任何
+远端执行面：门只在提交时挡本机，且必须先 `git config core.hooksPath .githooks`。
+不设那一条，这个脚本就只是一段可执行文本，没有任何东西会调用它。
 """
 import subprocess
 import sys

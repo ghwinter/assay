@@ -2,7 +2,8 @@ obligation: O-032
 status: pass
 command: '"$PY" tools/gate.py（四门：ledger_lint / bridge_check / digest --check / unittest 黄金用例）'
 date: 2026-10-07
-notes: 首次运行即本提交——pre-commit 钩子升级为四合一门薄壳（config 读路径 + exec gate.py），
-  与 ci.yml ledger job 同一检查器集。强制层本地化落地：无 remote 环境下，完成定义四项中
-  的 lint/bridge/digest 三项自此有本机物理执行点（此前只有 lint 一项）；自测档 25 例
-  （含 D-022/D-023 新增 8 例）随门运行
+notes: 首次运行即本提交——pre-commit 钩子升级为四合一门薄壳（config 读路径 + exec gate.py）。
+  强制层本地化落地：无 remote 环境下，完成定义四项中的 lint/bridge/digest 三项自此有本机
+  物理执行点（此前只有 lint 一项）；自测档 25 例（含 D-022/D-023 新增 8 例）随门运行。
+  （原文提到"与 ci.yml ledger job 同一检查器集"；该 workflow 已由 D-035 暂时移除，
+  本门遂成为**唯一**强制层，故此处改写，语义更窄而非更宽。）

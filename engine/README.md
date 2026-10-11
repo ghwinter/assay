@@ -85,15 +85,15 @@ cargo install --path engine
 
 ## 仓库迭代与发布
 
-`.github/workflows/ci.yml` 在 Linux/Windows 上运行引擎、试点与示例测试，并运行 Spec Ledger
-提交门及端到端示例流程。已提交的工具配置使用 PATH 命令名，不包含开发机绝对路径。
+**当前没有 CI。** `.github/workflows/` 已整体移除（D-035）。强制层是本地提交门：
+`.githooks/pre-commit` → `tools/gate.py`（账目 lint / 桥对账 / digest 新鲜 / 守门人自测），
+要求 `git config core.hooksPath .githooks` 已设置——不设这一步，钩子只是一段文本。
 
-`.github/workflows/release.yml` 仅响应 `vX.Y.Z` 标签；标签必须与 `engine/Cargo.toml` 的包版本
-一致。流程构建各平台 CLI、生成校验和并创建 GitHub Release，不会自动发布到 crates.io。
-只有在更新 Cargo 版本与 `CHANGELOG.md` 后才创建版本标签。
+被移除的是两个 workflow：多平台矩阵的 ci.yml（引擎/试点/示例的测试、格式化与 clippy、
+三个清单的 check 与地图新鲜度）与按 `vX.Y.Z` 标签发布的 release.yml。
+恢复条件写在 D-035：需要先有远端、且外部判定器（TLA+ / Verus）有可复现的跨 runner 安装步骤。
 
-第一版 CI 暂不安装 TLA+ 或 Verus；需要先为这些外部判定器建立可复现、跨 runner 的安装步骤，
-再将对应义务接入强制门。
+已提交的工具配置使用 PATH 命令名，不包含开发机绝对路径。
 
 ## 明确不做
 

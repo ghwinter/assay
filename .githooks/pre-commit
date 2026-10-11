@@ -1,6 +1,10 @@
 #!/bin/sh
 # 预提交红灯（D-021 四合一门）：账不平 / 桥失衡 / LEDGER.md 漂移 / 守门人自测失败，
-# 任一即拒绝提交。门逻辑在 tools/gate.py（与 ci.yml ledger job 同一检查器集）。
+# 任一即拒绝提交。门逻辑在 tools/gate.py。
+#
+# **这是本仓库当前唯一的强制层**：CI 已整体移除（D-035），本仓库无 remote，
+# 所以门只在提交时挡本机，生效条件是 `git config core.hooksPath .githooks`。
+# 不设那一条，这个文件只是一段不会被执行的文本。
 #
 # **优先走唯一入口**（tools/assay-cli.ps1）。理由是一次真实摩擦：
 #   原先这里直接 `exec "$PY" tools/gate.py`，PY 取自 tools/config.toml 的

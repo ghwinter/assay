@@ -47,7 +47,7 @@ COPY_DIRS = [
 ]
 COPY_TREES = ["thinking/methodology"]
 MKDIRS = ["ledger/intent", "ledger/decisions", "ledger/evidence", "ledger/triggers",
-          "tools/tests", "thinking", "experiments", ".githooks", ".github/workflows"]
+          "tools/tests", "thinking", "experiments", ".githooks"]
 
 
 def _sh(cmd, cwd):
@@ -80,8 +80,7 @@ def cmd_init(args):
     shutil.copy(TEMPLATE / "tools" / "tests" / "test_ledger_lint.py",
                 target / "tools" / "tests" / "test_ledger_lint.py")
     shutil.copy(TEMPLATE / ".githooks" / "pre-commit", target / ".githooks" / "pre-commit")
-    shutil.copy(TEMPLATE / ".github" / "workflows" / "ci.yml",
-                target / ".github" / "workflows" / "ci.yml")
+    # CI 已暂时移除（D-035）：不再复制任何 workflow。强制层是本地提交门。
 
     # config.toml：python 用当前解释器（可移植）；重型验证器路径留待按需配置
     cfg = (TEMPLATE / "tools" / "config.toml").read_text(encoding="utf-8")

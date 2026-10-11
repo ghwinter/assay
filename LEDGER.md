@@ -1,6 +1,6 @@
 # LEDGER — 账本世界模型（机械生成，勿手改）
 
-> 由 `tools/digest.py` 生成于账本状态 7G/34D/52O/47E。变更账本后必须重跑；`--check` 漂移即 CI 红灯。
+> 由 `tools/digest.py` 生成于账本状态 7G/35D/53O/47E。变更账本后必须重跑；`--check` 漂移即 CI 红灯。
 > AI 会话入口：本文件 + `AGENTS.md` + `CONSTITUTION.md` + `thinking/`。
 
 ## 目标账
@@ -51,6 +51,7 @@
 | D-032 | accepted | 如何把现有并行直方图示例迭代成包含调度与运行边界的真实小型系统？ → 继续在 examples/parallel-histogram 内演进，不增加第二个示例。… | G-007 |
 | D-033 | draft | 仓里已经有协议（PROTOCOL）、引擎（Rust 哑执行器）、账本工具（7 … → 入口做进引擎：新增只读子命令 `doctor`（就绪度诊断）与 `next`（有序动作表）… | G-005, G-007 |
 | D-034 | draft | 常驻注入的 `AGENTS.md` 没有预算，也没有任何东西阻止它驻留机器相关… → 最后一项：新增 `RUNBOOK.md`（按需加载，承载命令/路径/版本），`AGENTS… | G-005, G-007 |
+| D-035 | draft | 本仓库的 CI（`.github/workflows/ci.yml` 与 `r… → 暂时整体移除两个 workflow，并在 README / engine/README /… | G-006 |
 
 ## 历史决策
 
@@ -115,6 +116,7 @@
 | O-050 | L1 的产物全集由 git 定义（.gitignore 说了算）：未跟踪且未忽略的新文… | lint | 缺失 | D-033 |
 | O-051 | 唯一入口 `assay`（tools/assay-cli.ps1 + assay.cm… | manual | 缺失 | D-033 |
 | O-052 | 常驻注入的 AGENTS.md 不超过机器判定的字符上限，且不含机器相关的命令头（解释… | lint | 缺失 | D-034 |
+| O-053 | 仓库内不存在指向已删除 workflow 的引用或产物登记：README / engi… | lint | 缺失 | D-035 |
 
 ## 触发器库
 
@@ -289,6 +291,9 @@ flowchart LR
     G-005 --> D_034
     G-007 --> D_034
     D_034 --> O_052
+    D_035['D-035']
+    G-006 --> D_035
+    D_035 --> O_053
     O_001[O-001]
     class O_001 hist
     O_002[O-002]
@@ -393,6 +398,8 @@ flowchart LR
     class O_051 miss
     O_052[O-052]
     class O_052 miss
+    O_053[O-053]
+    class O_053 miss
     classDef ok fill:#d4edda,stroke:#3c763d
     classDef def fill:#fff3cd,stroke:#856404
     classDef miss fill:#f8d7da,stroke:#a94442

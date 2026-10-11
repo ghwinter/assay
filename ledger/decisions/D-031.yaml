@@ -90,5 +90,5 @@ artifacts:
   - examples/parallel-histogram/assay/manifest.toml
   - examples/parallel-histogram/assay/MAP.md
   - examples/parallel-histogram/.gitignore
-  - .github/workflows/ci.yml
+  # CI workflow 已由 D-035 暂时移除
 superseded_by: null

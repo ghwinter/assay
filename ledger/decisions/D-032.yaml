@@ -99,5 +99,5 @@ artifacts:
   - examples/parallel-histogram/tla/BoundedPipeline.cfg
   - examples/parallel-histogram/tla/check.py
   - examples/parallel-histogram/.gitignore
-  - .github/workflows/ci.yml
+  # CI workflow 已由 D-035 暂时移除
 superseded_by: null
