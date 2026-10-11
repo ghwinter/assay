@@ -1,0 +1,9 @@
+obligation: O-041
+status: pass
+command: cargo bench --locked --manifest-path examples/parallel-histogram/Cargo.toml
+date: 2026-10-10
+notes: >-
+  Exploratory benchmark on Windows with rustc 1.99.0, 4 MiB deterministic input, and 5 iterations:
+  sequential 1.196 ms; 1 worker 1.203 ms; 2 workers 1.027 ms; 4 workers 0.659 ms; 16 workers
+  1.063 ms. This run is machine- and load-specific; it suggests four workers helped this input here,
+  while more workers did not, and establishes no portable speed guarantee.

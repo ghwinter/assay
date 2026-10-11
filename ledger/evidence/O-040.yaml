@@ -1,0 +1,7 @@
+obligation: O-040
+status: pass
+command: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+date: 2026-10-10
+notes: >-
+  4 tests passed on the current Windows host: empty input, invalid zero workers, all 256 byte values,
+  and oracle equivalence plus count conservation across 13 lengths and 7 worker-count choices.

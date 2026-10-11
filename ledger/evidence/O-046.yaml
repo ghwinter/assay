@@ -1,0 +1,5 @@
+obligation: O-046
+status: pass
+command: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+date: 2026-10-10
+notes: CLI integration tests passed for JSON output, invalid configuration, and missing input file.

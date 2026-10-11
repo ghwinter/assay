@@ -1,0 +1,5 @@
+obligation: O-047
+status: pass
+command: pwsh -NoProfile -File examples/validate-workflow.ps1
+date: 2026-10-10
+notes: Windows end-to-end workflow passed initializer smoke test, work-package generation, Rust tests, TLC model checking, Assay manifest checks, evidence execution, and map generation.

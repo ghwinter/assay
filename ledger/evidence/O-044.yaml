@@ -1,0 +1,5 @@
+obligation: O-044
+status: pass
+command: python examples/parallel-histogram/tla/check.py
+date: 2026-10-10
+notes: TLC 2.19 checked the finite bounded pipeline model with 120 distinct states and found no safety or liveness violations.

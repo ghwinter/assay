@@ -1,0 +1,7 @@
+obligation: O-038
+status: deferred
+reason: >-
+  本地 CI 工作流和发布定义已完成，但当前仓库没有 GitHub remote 或远端 assay 项目，
+  因而无法执行首次托管 Actions 运行。操作者确认仓库身份与可见性并推送后，应以真实运行结果替换此 deferred 证据。
+owner: human
+date: 2026-10-10

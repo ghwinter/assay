@@ -1,0 +1,8 @@
+id: G-005
+status: active
+title: 本地增量保证 CLI
+description: >-
+  Assay 提供一个可在目标 Git 仓库上运行的本地 CLI，能够根据显式登记的检查输入范围，
+  解释并执行本次变化所需的检查；遇到范围未知时保守退回全量检查。CLI 与清单协议分别
+  版本化，不声称自动推断代码的语义依赖。
+verification: [O-036, O-037]

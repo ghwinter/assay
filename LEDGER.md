@@ -1,6 +1,6 @@
 # LEDGER — 账本世界模型（机械生成，勿手改）
 
-> 由 `tools/digest.py` 生成于账本状态 4G/28D/35O/35E。变更账本后必须重跑；`--check` 漂移即 CI 红灯。
+> 由 `tools/digest.py` 生成于账本状态 7G/34D/52O/47E。变更账本后必须重跑；`--check` 漂移即 CI 红灯。
 > AI 会话入口：本文件 + `AGENTS.md` + `CONSTITUTION.md` + `thinking/`。
 
 ## 目标账
@@ -11,6 +11,9 @@
 | G-002 | 并发安全——无竞争、无死锁、必然苏醒 | O-011, O-012, O-016 |
 | G-003 | 性能预算——聚合吞吐与尾延迟 | O-015 |
 | G-004 | 可复验的 AI 辅助工程纵切 | O-035 |
+| G-005 | 本地增量保证 CLI | O-036, O-037 |
+| G-006 | 仓库自我验证与版本发布流程 | O-038, O-039 |
+| G-007 | 智能体工程闭环的迭代样本 | O-040, O-041, O-042, O-043, O-044, O-045, O-046, O-047 |
 
 ## 活跃决策
 
@@ -42,6 +45,12 @@
 | D-026 | draft | 元认知层与跨仓约束的三处缺口如何补？（①盲区库停在"评审清单"档而非"门"；②… → 一条元决策承载三件，全部是结构性对策，不改动 pilot 代码——(1) 盲区库从"清单"… | G-001, G-002, G-003 |
 | D-027 | accepted | 盲区库如何从"评审清单"升为"门"——使新增不变量级检查器**不可能**在未知… → 三件——(1) 义务 schema 增必填字段 bs_guard（判例 id 列表）与配套… | G-001, G-002, G-003 |
 | D-028 | accepted | 如何把 Spec Ledger 与 Assay 整合成同一工程入口，并用真实项… → 把 Spec Ledger 当前工作树（含其未提交修改）合入 Assay 的单一 Git … | G-004 |
+| D-029 | accepted | Assay 的第一个增量保证 CLI 版本应提供什么能力和边界？ → 第一版继续以 engine/ 下的 Rust 可执行程序作为 Assay CLI，目标工程… | G-005 |
+| D-030 | accepted | Assay 仓库如何自我验证、管理发布，并界定外部研究材料的归属？ → 通过 GitHub Actions 对 Assay CLI、Rust 试点、示例、Spec… | G-006 |
+| D-031 | accepted | 在 Assay examples 中增加什么小型真实计算项目，以检验智能体协作… → 在 examples/parallel-histogram 实现无第三方依赖的 Rust … | G-007 |
+| D-032 | accepted | 如何把现有并行直方图示例迭代成包含调度与运行边界的真实小型系统？ → 继续在 examples/parallel-histogram 内演进，不增加第二个示例。… | G-007 |
+| D-033 | draft | 仓里已经有协议（PROTOCOL）、引擎（Rust 哑执行器）、账本工具（7 … → 入口做进引擎：新增只读子命令 `doctor`（就绪度诊断）与 `next`（有序动作表）… | G-005, G-007 |
+| D-034 | draft | 常驻注入的 `AGENTS.md` 没有预算，也没有任何东西阻止它驻留机器相关… → 最后一项：新增 `RUNBOOK.md`（按需加载，承载命令/路径/版本），`AGENTS… | G-005, G-007 |
 
 ## 历史决策
 
@@ -89,6 +98,23 @@
 | O-033 | 证据复跑档本机可执行——config python 路径经 cmd.exe 可调用，l… | test | pass | D-021 |
 | O-034 | 每条义务声明其防护判例——bs_guard 为判例 id 列表，引用必须真实存在于判例… | lint | pass | D-027 |
 | O-035 | 示例验证命令必须从新项目初始化、账本检查、Rust 测试、Assay 检查/运行到证据… | test | pass | D-028 |
+| O-036 | 本地计划必须基于明确 base 的 Git 差异；登记输入范围命中时选择相应检查，未登… | test | pass | D-029 |
+| O-037 | CLI 提供可测试的帮助、版本、版本信息子命令和无效参数错误；Cargo 包版本与清单… | test | pass | D-029 |
+| O-038 | GitHub 工作流在 Linux/Windows 上验证 Rust 产物与 Assa… | manual | deferred | D-030 |
+| O-039 | 下载论文和实现调研速记保持 Git 忽略；共享工具配置不绑定开发机绝对路径，并由自动化… | test | pass | D-030 |
+| O-040 | 并行直方图对空输入、完整字节域、分块边界及多种 worker 数产生与串行 oracl… | test | pass | D-031 |
+| O-041 | release benchmark 能在可配置输入大小和 worker 数下运行，打印… | test | pass | D-031 |
+| O-042 | 示例 Assay 清单将功能等价声明绑定到可运行 Rust 测试，且 Assay ch… | test | pass | D-031 |
+| O-043 | 仓库端到端脚本能对该示例执行 Rust 测试、Assay run/check/map，… | test | pass | D-031 |
+| O-044 | 有界流水线 TLA+ 模型通过 TLC 检查队列不超过容量、每项工作在任一时刻至多处于… | test | pass | D-032 |
+| O-045 | 流式流水线对任意测试字节输入与串行 oracle 一致，队列容量为 1 时仍完成；短读… | test | pass | D-032 |
+| O-046 | CLI 可从文件运行并输出机器可读的完整 256 桶结果；无效参数、缺失文件和运行失败… | test | pass | D-032 |
+| O-047 | Assay 清单覆盖流式行为、TLA+ 模型与 CLI；CI 和端到端脚本运行其测试、… | test | pass | D-032 |
+| O-048 | `assay doctor` 报出清单里声明的命令首词解析不到，并**点名**是哪个检… | lint | 缺失 | D-033 |
+| O-049 | `assay next` 报出"证据与当前检查定义不符"并给出**具体**原因（命令已… | lint | 缺失 | D-033 |
+| O-050 | L1 的产物全集由 git 定义（.gitignore 说了算）：未跟踪且未忽略的新文… | lint | 缺失 | D-033 |
+| O-051 | 唯一入口 `assay`（tools/assay-cli.ps1 + assay.cm… | manual | 缺失 | D-033 |
+| O-052 | 常驻注入的 AGENTS.md 不超过机器判定的字符上限，且不含机器相关的命令头（解释… | lint | 缺失 | D-034 |
 
 ## 触发器库
 
@@ -114,6 +140,9 @@ flowchart LR
     G-002(('G-002'))
     G-003(('G-003'))
     G-004(('G-004'))
+    G-005(('G-005'))
+    G-006(('G-006'))
+    G-007(('G-007'))
     D_002['D-002']
     G-001 --> D_002
     D_002 --> O_001
@@ -229,6 +258,37 @@ flowchart LR
     D_028['D-028']
     G-004 --> D_028
     D_028 --> O_035
+    D_029['D-029']
+    G-005 --> D_029
+    D_029 --> O_036
+    D_029 --> O_037
+    D_030['D-030']
+    G-006 --> D_030
+    D_030 --> O_038
+    D_030 --> O_039
+    D_031['D-031']
+    G-007 --> D_031
+    D_031 --> O_040
+    D_031 --> O_041
+    D_031 --> O_042
+    D_031 --> O_043
+    D_032['D-032']
+    G-007 --> D_032
+    D_032 --> O_044
+    D_032 --> O_045
+    D_032 --> O_046
+    D_032 --> O_047
+    D_033['D-033']
+    G-005 --> D_033
+    G-007 --> D_033
+    D_033 --> O_048
+    D_033 --> O_049
+    D_033 --> O_050
+    D_033 --> O_051
+    D_034['D-034']
+    G-005 --> D_034
+    G-007 --> D_034
+    D_034 --> O_052
     O_001[O-001]
     class O_001 hist
     O_002[O-002]
@@ -299,6 +359,40 @@ flowchart LR
     class O_034 ok
     O_035[O-035]
     class O_035 ok
+    O_036[O-036]
+    class O_036 ok
+    O_037[O-037]
+    class O_037 ok
+    O_038[O-038]
+    class O_038 def
+    O_039[O-039]
+    class O_039 ok
+    O_040[O-040]
+    class O_040 ok
+    O_041[O-041]
+    class O_041 ok
+    O_042[O-042]
+    class O_042 ok
+    O_043[O-043]
+    class O_043 ok
+    O_044[O-044]
+    class O_044 ok
+    O_045[O-045]
+    class O_045 ok
+    O_046[O-046]
+    class O_046 ok
+    O_047[O-047]
+    class O_047 ok
+    O_048[O-048]
+    class O_048 miss
+    O_049[O-049]
+    class O_049 miss
+    O_050[O-050]
+    class O_050 miss
+    O_051[O-051]
+    class O_051 miss
+    O_052[O-052]
+    class O_052 miss
     classDef ok fill:#d4edda,stroke:#3c763d
     classDef def fill:#fff3cd,stroke:#856404
     classDef miss fill:#f8d7da,stroke:#a94442

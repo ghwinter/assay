@@ -1,0 +1,5 @@
+obligation: O-042
+status: pass
+command: cargo run --locked --quiet --manifest-path engine/Cargo.toml -- check --root examples/parallel-histogram
+date: 2026-10-10
+notes: Assay v0.7 parsed the claim/check binding, its Rust test command, input scopes, and negative control successfully.

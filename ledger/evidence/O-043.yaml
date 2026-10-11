@@ -1,0 +1,7 @@
+obligation: O-043
+status: pass
+command: pwsh -NoProfile -File examples/validate-workflow.ps1
+date: 2026-10-10
+notes: >-
+  End-to-end script passed project initialization, work-package generation, both examples' Rust and
+  ledger checks, Assay run/check/map, and map regeneration on Windows.

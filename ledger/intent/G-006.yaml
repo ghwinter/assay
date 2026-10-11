@@ -1,0 +1,7 @@
+id: G-006
+status: active
+title: 仓库自我验证与版本发布流程
+description: >-
+  Assay 仓库用自身的 Rust 测试、账本门禁、清单检查和示例工作流验证每次变更；
+  版本标签与引擎 SemVer 一致，并可生成可复验的跨平台 CLI 发布产物。外部研究材料不进入仓库。
+verification: [O-038, O-039]

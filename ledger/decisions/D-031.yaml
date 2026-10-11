@@ -1,0 +1,94 @@
+id: D-031
+status: accepted
+question: 在 Assay examples 中增加什么小型真实计算项目，以检验智能体协作和证据闭环？
+goal: [G-007]
+alternatives:
+  - 新增较大服务，覆盖网络、持久化和部署但同时引入大量外部变量
+  - 新增依赖输入分块与结果归并的并行直方图模块，以串行参考实现作独立对照（本决策）
+  - 只添加过程文档，不引入可运行项目
+choice: >-
+  在 examples/parallel-histogram 实现无第三方依赖的 Rust 字节直方图。公开 API 接受非零
+  worker 数；空输入返回 256 个零计数；非空输入使用最多 min(workers, input length) 个
+  scoped worker，各自统计互不共享的局部 256 桶数组，主线程确定性归并。提供串行实现作为
+  参考 oracle。测试覆盖空输入、边界、各 worker 数与串行 oracle 等价、计数和等于输入长度。
+  提供可手动运行的 release benchmark 输出吞吐，不设机器无关的速度阈值，不宣称并行在小
+  输入或所有平台上更快。通过父仓库的 Assay manifest、Spec Ledger 和端到端示例脚本验证。
+rationale:
+  - text: 操作者授权我选择并规划一个置于 examples 的小型 Rust 项目；并行直方图将工作切分、局部状态、归并和独立 oracle 收敛到可运行的有限问题。
+    anchor: owner=human（操作者授权选择并开展 examples 项目）
+  - text: 规格、架构、执行工作包、测试、Assay 记录构成的阶段边界适合检验“AI 提案与执行，独立工具判定”的工程回路。
+    anchor: examples/rust-service/engineering/INTENT.md
+  - text: 未给出生产负载或目标硬件，因此只采集 benchmark 数据，不把合成速度阈值写成验收条件。
+    anchor: thinking/blind_spots.md#BS-001
+assumptions:
+  - text: 字节域固定为 0..=255，直方图总是恰有 256 个桶；输入切片在调用期间不可变。
+    invalidation: 产品需求要求任意范围分桶、流式输入或在线更新。
+  - text: 第一版以标准库 scoped threads 和每线程局部计数作为足够的并行方案；不保证对所有输入规模都加速。
+    invalidation: 基准在声明的目标工作负载上显示显著瓶颈或共享内存方案不满足明确性能预算。
+  - text: 单次测试与本机 benchmark 分别只证明测试用例和测量环境下的性质，不代表所有输入、架构或负载。
+    invalidation: 出现测试覆盖范围无法满足的高风险使用场景或正式性能预算。
+introduces: []
+obligations:
+  - id: O-040
+    desc: >-
+      并行直方图对空输入、完整字节域、分块边界及多种 worker 数产生与串行 oracle 完全相同
+      的 256 桶结果；计数总和等于输入长度，零 worker 被拒绝。
+    origin: tool
+    bs_guard: [BS-008, BS-009, BS-010, BS-011]
+    checker:
+      type: test
+      cmd: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+      ref: examples/parallel-histogram/src/lib.rs::tests
+  - id: O-041
+    desc: >-
+      release benchmark 能在可配置输入大小和 worker 数下运行，打印串行/并行耗时与吞吐；
+      结果仅为该次机器和负载的观察，不以固定阈值判定性能优劣。
+    origin: tool
+    bs_guard: [BS-001, BS-008, BS-013]
+    checker:
+      type: test
+      cmd: cargo bench --locked --manifest-path examples/parallel-histogram/Cargo.toml
+      ref: examples/parallel-histogram/benches/scaling.rs
+  - id: O-042
+    desc: >-
+      示例 Assay 清单将功能等价声明绑定到可运行 Rust 测试，且 Assay check 能解析该清单。
+    origin: tool
+    bs_guard: [BS-010, BS-013]
+    checker:
+      type: test
+      cmd: cargo run --locked --quiet --manifest-path engine/Cargo.toml -- check --root examples/parallel-histogram
+      ref: examples/parallel-histogram/assay/manifest.toml
+  - id: O-043
+    desc: >-
+      仓库端到端脚本能对该示例执行 Rust 测试、Assay run/check/map，并完成 map 生成；CI
+      同时格式化、测试、lint 并检查生成地图无漂移。
+    origin: tool
+    bs_guard: [BS-009, BS-013]
+    checker:
+      type: test
+      cmd: pwsh -NoProfile -File examples/validate-workflow.ps1
+      ref: examples/validate-workflow.ps1
+waivers: []
+artifacts:
+  - ledger/intent/G-007.yaml
+  - ledger/decisions/D-031.yaml
+  - ledger/evidence/O-040.yaml
+  - ledger/evidence/O-041.yaml
+  - ledger/evidence/O-042.yaml
+  - ledger/evidence/O-043.yaml
+  - examples/README.md
+  - examples/validate-workflow.ps1
+  - examples/parallel-histogram/AGENTS.md
+  - examples/parallel-histogram/Cargo.toml
+  - examples/parallel-histogram/Cargo.lock
+  - examples/parallel-histogram/src/lib.rs
+  - examples/parallel-histogram/benches/scaling.rs
+  - examples/parallel-histogram/engineering/INTENT.md
+  - examples/parallel-histogram/engineering/ARCHITECTURE.md
+  - examples/parallel-histogram/engineering/VERIFICATION_PLAN.md
+  - examples/parallel-histogram/engineering/work-packages/D-031.md
+  - examples/parallel-histogram/assay/manifest.toml
+  - examples/parallel-histogram/assay/MAP.md
+  - examples/parallel-histogram/.gitignore
+  - .github/workflows/ci.yml
+superseded_by: null

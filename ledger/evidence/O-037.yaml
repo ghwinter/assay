@@ -1,0 +1,7 @@
+obligation: O-037
+status: pass
+command: cargo test --manifest-path engine/Cargo.toml
+date: 2026-10-10
+notes: >-
+  CLI 集成测试验证 help/version、未知参数失败、plan 与 run 的解析及选择；清单单元测试
+  验证 v0.7 inputs 与 v0.6 兼容边界。cargo clippy --all-targets -- -D warnings 通过。

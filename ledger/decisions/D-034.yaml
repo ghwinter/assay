@@ -1,0 +1,94 @@
+id: D-034
+status: draft
+question: >-
+  常驻注入的 `AGENTS.md` 没有预算，也没有任何东西阻止它驻留机器相关的命令。
+  本机实测的后果：`AGENTS.md` 里写着 `python tools/gate.py`，而 PATH 上的 `python` 是
+  Microsoft Store 的 App Execution Alias 占位符、且没有解释器装 PyYAML——
+  **四道门一次都没执行过，而状态板一路全绿**。同一份文件里还有几十行具体命令、
+  路径与版本号，它们全部是会腐化的声明。
+goal: [G-005, G-007]
+alternatives:
+  - 不设上限，靠编辑自觉控制长度
+  - 设上限，但把数字写在 AGENTS.md 里（"本文件当前 N 字符"）
+  - 把上限与命令头检查放进 `tools/gate.py`（Python 侧），不进清单
+  - 保留全部命令在 AGENTS.md，只补一句"注意命令可能过期"
+  - 把命令搬进按需加载的 `RUNBOOK.md`，AGENTS.md 只留唯一入口，并给预算配机器判定
+choice: >-
+  最后一项：新增 `RUNBOOK.md`（按需加载，承载命令/路径/版本），`AGENTS.md` 只留唯一入口
+  与规则；预算与"零机器相关命令头"由 `S-13` 机器判定，上限只住在 `S-13` 一处。
+  同时把吸收自外部实践的一批规则并进去，并**净减少**字符数。
+rationale:
+  - text: >-
+      "靠自觉控制长度"不成立：加一条规则的收益当场可见，上下文变贵的成本要等会话开始漂移
+      才显形——这个不对称保证了规则文件只会单向变长。**靠自觉的预算等于没有预算。**
+    anchor: AGENTS.md
+  - text: >-
+      数字不写进 AGENTS.md：会腐化的数字不进口径文件。已有先例——外部实践里同一份文件
+      一边写"上限 5000 字符"一边写"本文件当前 4615 字符"，那个现值从写下的一刻起就在过期。
+      上限住在 `S-13` 的 `$Ceiling`，现值由检查每次打印（"3582/6000，余量 2418"）。
+    anchor: assay/selfcheck/S-13-injected-doc-has-budget.ps1
+  - text: >-
+      不放进 `tools/gate.py`：gate 是"账目/桥/摘要/自测"四合一，判的是账本与实现；
+      常驻文件的预算是**清单声明的性质**，应当与其它声明一样走 claim/check/出生证明，
+      这样它才有棘轮、有红得了的证明、有强度档。放进 gate 就只有一行 if。
+    anchor: PROTOCOL.md
+  - text: >-
+      "只补一句注意命令可能过期"不成立：那正是 BS-011 的形态——用流畅的提醒替代锚点。
+      实测里那句提醒并不存在，而即便存在也拦不住任何事；会腐化的东西必须**搬走**，不是标注。
+    anchor: thinking/blind_spots.md
+  - text: >-
+      命令头检查的判据刻意窄，只管"命令头"（解释器/构建器），不管阅读指针。
+      测试中发现一个真实假阳性：`PowerShell 的降序区间是反向切片` 里的产品名 `PowerShell`
+      被当成命令头。处理办法不是放宽判据，而是**把那句机制说明搬进 RUNBOOK.md**——
+      常驻文件只需要规则（"绝不用数组区间重写文件"），机制细节属于按需加载。
+    anchor: RUNBOOK.md
+  - text: >-
+      净效果是字符数下降：3722 → 3582，同时多吸收了角色分工、派发契约、证据与诚实、
+      外部交互、机械操作、反模式、明确不吸收等七组规则。**这证明"先搬走"不是修辞**：
+      搬走一段长命令块腾出的空间，比新加的全部内容还多。
+    anchor: AGENTS.md
+  - text: >-
+      新项目一律拿到模板版而不是本仓这份：本仓 AGENTS.md 里写着 pilot-rs/、tla/ 这类
+      试点专属路径，不该被继承（README 的既有承诺）。`spec.py` 原先直接复制本仓那份，
+      与 WORKFLOW.md"复制模板版"的说法不一致——本次一并改成映射复制。
+    anchor: tools/spec.py
+assumptions:
+  - text: >-
+      上限 6000 字符对一份常驻规则文件是合理量级：外部实践的同类文件为 4615 字符（上限 5000），
+      且它解决的问题与本仓同构（做重活的会忘掉总路线）。
+    invalidation: 若实测中 6000 字符仍让会话开始漂移，或约束到必须频繁提额，
+      则该量级不适用，应改为按 token 计并重新定标。
+  - text: >-
+      "命令头"可以用一张窄词表（python/pwsh/bash/cargo/java/node…）识别，
+      且不会误伤阅读指针（`ledger/`、`thinking/*.md` 这类）。
+    invalidation: 出现一个合法的、必须驻留在常驻文件里的解释器命令时，本判据需要重新划界——
+      届时应先问"它为什么不能进 RUNBOOK"，而不是先放宽词表。
+obligations:
+  - id: O-052
+    bs_guard: [BS-011]
+    desc: >-
+      常驻注入的 AGENTS.md 不超过机器判定的字符上限，且不含机器相关的命令头（解释器/构建器）；
+      超限即红，并打印当前用量与余量（数字由检查打印，不写进文件）
+    origin: tool
+    checker:
+      type: lint
+      target: assay/selfcheck/S-13-injected-doc-has-budget.ps1
+      ref: pwsh -NoProfile -File assay/selfcheck/S-13-injected-doc-has-budget.ps1
+rejected_alternatives: >-
+  见 alternatives 与 rationale 逐条对应：不设上限（靠自觉）、把数字写进文件（会腐化）、
+  放进 gate（失去棘轮与出生证明）、只加提醒（BS-011 形态）。
+  另记一条**部分吸收**：外部实践里"上限必须在同一次改动里写出理由"这一条，
+  本仓用 `[[change]].reason` 承接，不新增字段——理由已经有一个家，不再造第二个。
+waivers: []
+artifacts:
+  - AGENTS.md
+  - RUNBOOK.md
+  - templates/rust-app/AGENTS.md
+  - templates/rust-app/RUNBOOK.md
+  - assay/selfcheck/S-13-injected-doc-has-budget.ps1
+  - assay/selfcheck/inject/R-13.ps1
+  - tools/assay-cli.ps1
+  - tools/new-rust-project.ps1
+  - tools/spec.py
+  - assay/manifest.toml
+superseded_by: null

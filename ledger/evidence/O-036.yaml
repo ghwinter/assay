@@ -1,0 +1,8 @@
+obligation: O-036
+status: pass
+command: cargo test --manifest-path engine/Cargo.toml
+date: 2026-10-10
+notes: >-
+  增量计划与执行共享路径选择算法。单元和 CLI 集成测试覆盖明确 Git base、输入范围匹配、
+  无范围检查保留、未命中范围时全量回退、staged/unstaged/deleted/untracked 路径，
+  JSON 计划以及默认行为边界。

@@ -1,0 +1,78 @@
+id: D-029
+status: accepted
+question: Assay 的第一个增量保证 CLI 版本应提供什么能力和边界？
+goal: [G-005]
+alternatives:
+  - 只完善现有 run/map/check 命令的帮助与版本信息
+  - 在现有 Rust 引擎中实现本地差异计划、显式输入范围和同计划执行（本决策）
+  - 先实现中心服务、数据库和远程任务调度
+choice: >-
+  第一版继续以 engine/ 下的 Rust 可执行程序作为 Assay CLI，目标工程通过 --root 使用它，
+  不复制引擎也不要求部署服务端。采用结构化子命令解析，提供 help、全局 --version 和 version 子命令；
+  将 Cargo 包版本与清单协议版本分开管理，程序版本升级到 0.6.0，清单协议升级到 v0.7，
+  同时继续读取 v0.6。v0.7 的 [[check]].inputs 显式声明检查器所依赖的仓库相对路径；
+  assay plan --base <rev> 展示 Git 变化、输入范围命中和检查选择，assay run --base <rev>
+  使用同一个选择算法执行。精确文件路径和以斜线结尾的目录前缀是唯一支持的路径语法；
+  未登记输入的检查始终纳入，有任何未命中检查范围的变化时退回全量检查。默认 assay run
+  仍执行全量检查。计划只反映人为登记的路径关系，不宣称自动推断语义依赖，也不复用旧证据。
+rationale:
+  - text: 操作者明确同意在 Assay 内开始构建基础版本，要求先做 CLI、完成版本管理并按需参考成熟仓库实现
+    anchor: owner=human（操作者明确授权本地 CLI 第一版）
+  - text: 现有 CLI 已支持 --root、变更记录和声明到检查的路由；在同一 Rust 引擎内增量扩展可复用已有协议和证据链
+    anchor: engine/src/main.rs
+  - text: CLI 采用类型化子命令与解析测试；只保留满足 Assay 本地需求的接口，不复制外部项目框架或源码
+    anchor: engine/src/cli.rs
+assumptions:
+  - text: inputs 是由项目维护者审阅的保守输入范围，不足以自动证明检查器依赖图完整
+    invalidation: 试点发现一个已登记范围未覆盖的实际检查输入，或出现可靠的自动依赖来源
+  - text: 未登记范围与未匹配路径回退全量检查，避免静默漏跑；全量执行仍是发布和 CI 的默认模式
+    invalidation: 负例测试发现未知变化可以导致某项检查被跳过，或项目决定将计划用于发布门禁
+  - text: 第一版单机使用现有 Git 与本地命令，不需要远程调度、共享数据库或多用户审批服务
+    invalidation: 至少一个真实试点需要跨用户共享状态或远程执行，且本地 CLI 无法满足
+introduces: []
+obligations:
+  - id: O-036
+    desc: >-
+      本地计划必须基于明确 base 的 Git 差异；登记输入范围命中时选择相应检查，未登记范围的检查
+      始终运行，任何变化未命中范围时选择全量检查；plan 与 run 共用选择算法，支持 JSON 计划，
+      不改变默认全量 run 语义。
+    origin: tool
+    bs_guard: [BS-010, BS-013]
+    checker:
+      type: test
+      cmd: cargo test --manifest-path engine/Cargo.toml
+      ref: engine/src/planner.rs
+  - id: O-037
+    desc: >-
+      CLI 提供可测试的帮助、版本、版本信息子命令和无效参数错误；Cargo 包版本与清单协议版本
+      分开显示和校验，协议 v0.7 支持输入范围，v0.6 仍可读取且不接受 v0.7 专属字段。
+    origin: tool
+    bs_guard: [BS-011, BS-013]
+    checker:
+      type: test
+      cmd: cargo test --manifest-path engine/Cargo.toml
+      ref: engine/src/cli.rs
+waivers: []
+artifacts:
+  - ledger/intent/G-005.yaml
+  - ledger/decisions/D-029.yaml
+  - ledger/evidence/O-036.yaml
+  - ledger/evidence/O-037.yaml
+  - engine/Cargo.toml
+  - engine/Cargo.lock
+  - engine/src/main.rs
+  - engine/src/cli.rs
+  - engine/src/planner.rs
+  - engine/VENDOR.md
+  - engine/tests/cli.rs
+  - PROTOCOL.md
+  - engine/README.md
+  - CHANGELOG.md
+  - assay/manifest.toml
+  - assay/MAP.md
+  - templates/rust-app/assay/manifest.toml
+  - examples/rust-service/assay/manifest.toml
+  - examples/rust-service/assay/MAP.md
+  - examples/README.md
+  - README.md
+superseded_by: null

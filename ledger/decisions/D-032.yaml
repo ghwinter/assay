@@ -1,0 +1,103 @@
+id: D-032
+status: accepted
+question: 如何把现有并行直方图示例迭代成包含调度与运行边界的真实小型系统？
+goal: [G-007]
+alternatives:
+  - 另建一个系统示例，保留现有直方图不变
+  - 在原项目中演进为有界流式直方图 CLI，显式处理背压、EOF 关停和 I/O/worker 错误（本决策）
+  - 只增加并行线程数或 SIMD 优化，仍保持单次内存切片函数
+choice: >-
+  继续在 examples/parallel-histogram 内演进，不增加第二个示例。保留现有纯切片 API，拆分模块并
+  增加流式 Reader -> 有界同步任务队列 -> 多 worker 局部计数 -> 确定性归并的流水线，以及
+  文件 CLI。配置显式包含非零 worker 数、chunk 大小和队列容量；EOF 后关闭发送端，worker
+  排空队列再退出；读取失败时仍关闭队列并 join 所有 worker，最后返回错误且不返回部分结果。
+  对输入字节数、分块数、各桶计数做溢出检查；验证 worker 报告总字节/任务数与生产者一致。
+  使用 std::sync::mpsc::sync_channel 提供有界背压，不引入外部依赖、重试、持久化、取消或远端
+  调度。添加有限 TLA+ 协议模型检查队列容量、工作唯一归属和关闭后排空；添加 Rust 对拍、
+  I/O 故障、CLI 与 Assay/CI 检查。性能继续作为场景化观察，不设无依据的固定阈值。
+rationale:
+  - text: 操作者要求不新增单一示例，而在现有 examples 项目上迭代出更复杂样本；明确授权我规划下一步范围。
+    anchor: owner=human（操作者明确要求迭代既有示例并授权规划）
+  - text: 有界队列、多个 worker 与关闭协议会引入可枚举的并发状态；因此加入 TLA+ 检查协议，而用真实 Rust 测试覆盖 Reader、I/O 故障和 CLI。
+    anchor: thinking/methods.md#M-007
+  - text: 只声明并运行模型、代码和环境各自实际覆盖的性质；不把队列模型通过解释为实现已证明。
+    anchor: thinking/blind_spots.md#BS-010
+assumptions:
+  - text: 生产者在调用线程同步读取；队列容量限制等待中的 chunk 数，读取和 worker 私有计数内存另行随 chunk 大小及 worker 数增长。
+    invalidation: 真实使用需要异步 I/O、全局内存上限或多个生产者。
+  - text: 同步 Reader 的阻塞调用不可被本 API 中断；第一版只保证 EOF 与错误后的关闭和 worker join。
+    invalidation: 用户需要可取消长时间阻塞的输入源或优雅时间预算。
+  - text: 模型只验证有限工作数和有限 worker 数下抽象队列协议；不覆盖 Rust channel 实现、OS 调度、文件系统或 CLI 的正确性。
+    invalidation: 模型与实现对账发现状态/动作不匹配，或性质需覆盖更多运行机制。
+introduces: []
+obligations:
+  - id: O-044
+    desc: >-
+      有界流水线 TLA+ 模型通过 TLC 检查队列不超过容量、每项工作在任一时刻至多处于排队、
+      执行或完成之一，以及关闭后所有已提交工作最终完成。
+    origin: tool
+    bs_guard: [BS-009, BS-010, BS-013]
+    checker:
+      type: test
+      cmd: python examples/parallel-histogram/tla/check.py
+      ref: examples/parallel-histogram/tla/BoundedPipeline.tla
+  - id: O-045
+    desc: >-
+      流式流水线对任意测试字节输入与串行 oracle 一致，队列容量为 1 时仍完成；短读正确，
+      结束时已提交/已处理任务数及读取/计数字节数相符，I/O 错误不会遗留未 join worker 或
+      返回部分结果，零值配置被拒绝。
+    origin: tool
+    bs_guard: [BS-008, BS-009, BS-010, BS-013]
+    checker:
+      type: test
+      cmd: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+      ref: examples/parallel-histogram/src/pipeline.rs::tests
+  - id: O-046
+    desc: >-
+      CLI 可从文件运行并输出机器可读的完整 256 桶结果；无效参数、缺失文件和运行失败返回
+      非零退出码且向 stderr 给出诊断。
+    origin: tool
+    bs_guard: [BS-011, BS-013]
+    checker:
+      type: test
+      cmd: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+      ref: examples/parallel-histogram/tests/cli.rs
+  - id: O-047
+    desc: >-
+      Assay 清单覆盖流式行为、TLA+ 模型与 CLI；CI 和端到端脚本运行其测试、模型检查、清单
+      检查、证据记录和地图新鲜度门。
+    origin: tool
+    bs_guard: [BS-010, BS-013]
+    checker:
+      type: test
+      cmd: pwsh -NoProfile -File examples/validate-workflow.ps1
+      ref: examples/validate-workflow.ps1
+waivers: []
+artifacts:
+  - ledger/intent/G-007.yaml
+  - ledger/decisions/D-032.yaml
+  - ledger/evidence/O-044.yaml
+  - ledger/evidence/O-045.yaml
+  - ledger/evidence/O-046.yaml
+  - ledger/evidence/O-047.yaml
+  - examples/README.md
+  - examples/validate-workflow.ps1
+  - examples/parallel-histogram/Cargo.toml
+  - examples/parallel-histogram/src/lib.rs
+  - examples/parallel-histogram/src/histogram.rs
+  - examples/parallel-histogram/src/pipeline.rs
+  - examples/parallel-histogram/src/bin/histogram.rs
+  - examples/parallel-histogram/tests/cli.rs
+  - examples/parallel-histogram/benches/scaling.rs
+  - examples/parallel-histogram/engineering/INTENT.md
+  - examples/parallel-histogram/engineering/ARCHITECTURE.md
+  - examples/parallel-histogram/engineering/VERIFICATION_PLAN.md
+  - examples/parallel-histogram/engineering/work-packages/D-032.md
+  - examples/parallel-histogram/assay/manifest.toml
+  - examples/parallel-histogram/assay/MAP.md
+  - examples/parallel-histogram/tla/BoundedPipeline.tla
+  - examples/parallel-histogram/tla/BoundedPipeline.cfg
+  - examples/parallel-histogram/tla/check.py
+  - examples/parallel-histogram/.gitignore
+  - .github/workflows/ci.yml
+superseded_by: null

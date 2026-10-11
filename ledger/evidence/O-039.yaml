@@ -1,0 +1,5 @@
+obligation: O-039
+status: pass
+command: python -m unittest tools.tests.test_repository_boundary
+date: 2026-10-10
+notes: 验证本地论文目录与外部实现调研笔记被 Git 忽略，根项目和示例的工具配置均使用 PATH 命令而非开发机绝对路径。

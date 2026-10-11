@@ -1,0 +1,5 @@
+obligation: O-045
+status: pass
+command: cargo test --locked --manifest-path examples/parallel-histogram/Cargo.toml
+date: 2026-10-10
+notes: All streaming pipeline unit tests passed, including capacity-one backpressure, short reads, accounting, and injected I/O failure.

@@ -1,0 +1,61 @@
+id: D-030
+status: accepted
+question: Assay 仓库如何自我验证、管理发布，并界定外部研究材料的归属？
+goal: [G-006]
+alternatives:
+  - 只依赖本地 pre-commit 门，不增加远端 CI
+  - 增加 GitHub CI 与按 SemVer 标签发布 CLI 的流水线，并只跟踪 Assay 自有产物（本决策）
+  - 直接自动发布 crates.io 包并纳入参考项目、论文副本与外部研究资料
+choice: >-
+  通过 GitHub Actions 对 Assay CLI、Rust 试点、示例、Spec Ledger 和自身清单做持续检查；
+  按 vX.Y.Z 标签构建 Windows、Linux、macOS CLI，标签必须与 Cargo 包版本一致，发布校验和并创建 GitHub Release，
+  暂不自动推送 crates.io。仓库只保留 Assay 自己的源码、协议、账本、模板、示例与其解释文档；
+  外部代码仓库、下载论文与实现调研速记只作为本地学习输入，不作为提交资产。共享工具配置使用 PATH 命令名。
+rationale:
+  - text: 操作者要求将 Assay 推送到 GitHub 以保存，并建立 CI/CD 支持持续迭代；同时明确要求仓库自引用，不携带外部项目或研究数据
+    anchor: owner=human（操作者明确授权配置 GitHub 工作流并限定仓库内容）
+  - text: 仓库已有 Rust CLI、示例验证脚本与 Spec Ledger gate，CI 可以复用它们而不引入第二套判定逻辑
+    anchor: tools/gate.py
+  - text: 版本发行从 engine/Cargo.toml 读取 SemVer，并在创建发布前校验标签；自动发布限定为 GitHub 二进制产物
+    anchor: engine/Cargo.toml
+assumptions:
+  - text: GitHub Actions 是本次请求的远端 CI 平台，GitHub Release 足以作为第一阶段 CLI 分发点
+    invalidation: 操作者选择其他 CI 服务或要求发布 crates.io 后
+  - text: 外部 PDF 与 CLI 实现参考笔记是本地研究输入，不属于 Assay 源码仓库
+    invalidation: 操作者明确指定某项资料为 Assay 的受控项目文档或测试数据
+introduces: []
+obligations:
+  - id: O-038
+    desc: >-
+      GitHub 工作流在 Linux/Windows 上验证 Rust 产物与 Assay 清单，运行账本门禁和端到端示例；
+      vX.Y.Z 标签经 Cargo 版本校验后，构建跨平台 CLI 并创建带校验和的 GitHub Release。
+    origin: tool
+    bs_guard: [BS-013]
+    checker:
+      type: manual
+      ref: .github/workflows/ci.yml 与 .github/workflows/release.yml 的首次 GitHub Actions 运行
+  - id: O-039
+    desc: >-
+      下载论文和实现调研速记保持 Git 忽略；共享工具配置不绑定开发机绝对路径，并由自动化测试验证边界。
+    origin: tool
+    bs_guard: [BS-011, BS-013]
+    checker:
+      type: test
+      cmd: python -m unittest tools.tests.test_repository_boundary
+      ref: tools/tests/test_repository_boundary.py
+waivers: []
+artifacts:
+  - .gitignore
+  - README.md
+  - engine/README.md
+  - docs/AI_ENGINEERING_RUNTIME.md
+  - tools/config.toml
+  - examples/rust-service/tools/config.toml
+  - tools/tests/test_repository_boundary.py
+  - .github/workflows/ci.yml
+  - .github/workflows/release.yml
+  - ledger/intent/G-006.yaml
+  - ledger/decisions/D-030.yaml
+  - ledger/evidence/O-038.yaml
+  - ledger/evidence/O-039.yaml
+superseded_by: null
