@@ -27,11 +27,20 @@ import yaml
 TEMPLATE = Path(__file__).resolve().parent.parent
 
 COPY_FILES = [
-    "CONSTITUTION.md", "AGENTS.md", "WORKFLOW.md", ".gitignore",
+    "CONSTITUTION.md", "WORKFLOW.md", ".gitignore",
     "experiments/protocol.md",
+    # 唯一入口：新项目开箱就有可跑的 assay，而不是照着文档手敲 python
+    "assay.cmd",
+]
+# 从模板目录映射过来的文件：新项目拿到的是**模板版**，不是本仓自己那份。
+# 本仓的 AGENTS.md 里写着 pilot-rs/、tla/ 这类试点专属路径，不该被继承
+# （README 的既有承诺：新项目不继承参考队列试点的专属代码路径和规则）。
+COPY_MAPPED = [
+    ("templates/rust-app/AGENTS.md", "AGENTS.md"),
+    ("templates/rust-app/RUNBOOK.md", "RUNBOOK.md"),
 ]
 COPY_TOOL_PY = ["ledger_lint.py", "ledger_check.py", "bridge_check.py", "digest.py",
-                "trace.py", "gate.py", "spec.py", "config.toml"]
+                "trace.py", "gate.py", "spec.py", "config.toml", "assay-cli.ps1"]
 COPY_DIRS = [
     ("thinking", ["*.md"]),
     ("ledger/triggers", ["*.yaml", "*.md"]),
@@ -58,6 +67,8 @@ def cmd_init(args):
         (target / d).mkdir(parents=True, exist_ok=True)
     for f in COPY_FILES:
         shutil.copy(TEMPLATE / f, target / f)
+    for src, dst in COPY_MAPPED:
+        shutil.copy(TEMPLATE / src, target / dst)
     for f in COPY_TOOL_PY:
         shutil.copy(TEMPLATE / "tools" / f, target / "tools" / f)
     for sub, pats in COPY_DIRS:

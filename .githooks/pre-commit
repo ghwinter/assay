@@ -1,7 +1,21 @@
 #!/bin/sh
 # 预提交红灯（D-021 四合一门）：账不平 / 桥失衡 / LEDGER.md 漂移 / 守门人自测失败，
 # 任一即拒绝提交。门逻辑在 tools/gate.py（与 ci.yml ledger job 同一检查器集）。
-# python 路径单点 tools/config.toml（D-015）；C:/ 形态在 Git Bash 与 cmd.exe 下均可执行。
+#
+# **优先走唯一入口**（tools/assay-cli.ps1）。理由是一次真实摩擦：
+#   原先这里直接 `exec "$PY" tools/gate.py`，PY 取自 tools/config.toml 的
+#   `python = "python"`。若 PATH 上的 python 是 Microsoft Store 的 App Execution
+#   Alias 占位符，或该解释器没有 PyYAML（七个账本工具都 import yaml），这行会失败——
+#   而失败发生在 hook 里，很容易被当成"本地环境问题"忽略。
+#   后果不是"门偶发失灵"，是**四道门一次都没执行过，而仓里看起来一切正常**：
+#   `assay check` 全绿，绿的是清单，不是工作。
+#   入口脚本会解析出真正能跑的解释器（必要时用 uv 现场准备）并打印它用了哪一个。
+# 保留裸 PY 回退：只复制了 Python 工具、没有入口脚本的下游项目仍然可用。
 ROOT="$(git rev-parse --show-toplevel)"
+
+if [ -f "$ROOT/tools/assay-cli.ps1" ] && command -v pwsh >/dev/null 2>&1; then
+    exec pwsh -NoProfile -ExecutionPolicy Bypass -File "$ROOT/tools/assay-cli.ps1" gate
+fi
+
 PY="$(sed -n 's/^python = "\(.*\)"/\1/p' "$ROOT/tools/config.toml")"
 exec "$PY" "$ROOT/tools/gate.py"

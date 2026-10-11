@@ -1,20 +1,34 @@
-# Spec Ledger 机器配置单点（D-015）
+# 机器路径单点（D-015）
 # 所有仓库外工具路径收敛于此；换机只改本文件。
 # ledger_check.py / digest.py / CI 读取；文档（AGENTS.md）引用本文件而非复制路径。
+#
+# python 保持**裸名**（可移植性由 tools/tests/test_repository_boundary.py 强制）：
+# 共享配置里不写绝对路径，否则换机与 CI 都断。
+#
+# 本机实测的坑（这条注释就是为它写的）：
+#   PATH 上的 `python` 可能是 Microsoft Store 的 App Execution Alias 占位符
+#   （0 字节重解析点）。它"存在"但跑不了——于是 pre-commit 的四道门
+#   一次都没真正执行，而 `assay check` 仍然全绿：**绿的是清单，不是工作**。
+#   `python` 还会缺 PyYAML，而七个账本工具都 import yaml。
+#
+# 对策不在本文件里，在入口：**用 `assay` 而不是直接调 python**。
+#   assay gate / lint / bridge / digest / ledger / trace / spec / wp
+#   `assay bootstrap` 会准备 tools/.venv（含 PyYAML）并打印解析结果；
+#   解析优先级：config 裸名 → tools/.venv → uv 现场建 → uv 临时环境 → 任何带 yaml 的解释器。
+#   引擎那一半完全不需要 Python：assay doctor / next / check / run / plan / map。
 
 [tools]
-# Verus 发布版（proofs 档；运行需 rustup 工具链 1.98.1-x86_64-pc-windows-msvc）
-verus = "D:/GitHub/workspace/verus-x86-win/verus.exe"
+# Verus executable, resolved from PATH.
+verus = "verus"
 # verus 验证时注入的 cfg（契约门控开关，见 pilot-rs/src/qcore.rs）
 verus_cfg = "verus_verify"
 # TLA+ 检查器（随 git 固定）
 tla2tools = "tools/tla2tools.jar"
 java = "java"
-# Python 解释器（工作流脚本）——C:/ 驱动盘符形态：cmd.exe（ledger_check 的 shell=True）
-# 与 Git Bash（pre-commit 钩子）均可直接执行；/c/ 形态经 cmd.exe 必然 path not found（BS-013）
-python = "C:/Users/xzxxn/envs/v312/Scripts/python.exe"
-# cdb（Windows 调试器，运行时诊断档 O-022/O-023 使用）
-cdb = 'C:\Program Files (x86)\Windows Kits\10\Debuggers\x64\cdb.exe'
+# Shared executable names resolve through PATH in local shells and CI runners.
+python = "python"
+# cdb (Windows debugger; runtime diagnostics O-022/O-023).
+cdb = "cdb"
 
 [pilot-rs]
 # 主实现目录（相对仓库根）

@@ -20,6 +20,7 @@ G 账 status 必填（active|withdrawn|superseded）。
 """
 import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -104,6 +105,37 @@ def load_all(directory, pattern):
 
 def as_list(x):
     return x if isinstance(x, list) else ([] if x is None else [x])
+
+
+def git_visible_files(root: Path):
+    """git 眼中的仓库文件集：已跟踪 ∪ 未跟踪但**未被忽略**。
+
+    为什么 L1 要用它而不是直接 glob（一次真实摩擦）：
+      原先 L1 的产物全集由上面的 CODE_PATTERNS 手工 glob 决定，完全不看 .gitignore。
+      于是 `tools/.venv/`（一个本地虚拟环境，已被 .gitignore 忽略）里的
+      `tools/**/*.py` 命中了几百个 site-packages 文件，L1 当场爆出几百条
+      "无主产物"。后果不是"多了几条噪音"，而是**L1 的判定取决于这台机器上
+      恰好存在什么未跟踪文件**——同一份提交在两台机器上可以一红一绿，
+      这与本仓"证据可复跑"的前提直接冲突。
+      对策：产物全集交给 git 定义。.gitignore 说了算，而不是维护一张例外清单。
+      （空作用域类盲区 BS-C1 的近亲：作用域由枚举决定，就一定会有漏网与误伤。）
+
+    git 不可用时**不静默降级**：返回 None，由调用方标 WARN。
+    """
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(root), "ls-files", "--cached", "--others",
+             "--exclude-standard"],
+            capture_output=True, text=True, check=True,
+        )
+    except Exception:  # noqa: BLE001 —— git 缺席不是本 lint 能判定的事
+        return None
+    files = set()
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if line:
+            files.add(Path(line).as_posix())
+    return files
 
 
 def run(root: Path) -> Rep:
@@ -334,11 +366,20 @@ def run(root: Path) -> Rep:
             rep.warn(f"{o['id']}: satisfies 引用未知触发器义务键 {o['satisfies']!r}")
 
     # ---------- L1：没有无主的代码 ----------
+    # 产物全集 = CODE_PATTERNS ∩ git 可见文件（见 git_visible_files 的说明）。
+    visible = git_visible_files(root)
+    if visible is None:
+        rep.warn("L1 — git 不可用，产物全集退化为文件系统 glob；"
+                 "此时判定取决于本机存在哪些未跟踪文件，**不可复跑**")
     code_files = set()
     for pat in CODE_PATTERNS:
         for f in root.glob(pat):
-            if f.is_file():
-                code_files.add(f.relative_to(root).as_posix())
+            if not f.is_file():
+                continue
+            rel = f.relative_to(root).as_posix()
+            if visible is not None and rel not in visible:
+                continue  # 被 .gitignore 忽略（.venv/、target/、构建产物…）
+            code_files.add(rel)
     for f in sorted(code_files):
         if f not in owned_artifacts:
             rep.error(f"L1 — 无主产物: {f}（没有任何 accepted/draft 决策认领）")
