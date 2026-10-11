@@ -45,10 +45,15 @@ then $(\Obs_i, \Conc_i)$ is a \term{Galois connection}, written $\Obs_i \dashv \
 \end{definition}
 
 A Galois connection states precisely what abstraction discards and what it retains, and is
-the central tool of the abstract-interpretation framework \cite{cousot1977}. Where an
-inter-level relation can be expressed as a Galois connection, the semantic-preservation
-condition becomes mechanically decidable; where it cannot, one must fall back on
-simulation relations or on an explicit human argument.
+the central tool of the abstract-interpretation framework \cite{cousot1977}. Its role here is
+exact but narrower than it is sometimes taken to be: a Galois connection makes the
+semantic-preservation condition a \emph{well-defined obligation with a canonical proof shape}, not
+an automatically decidable one. Deciding it still requires that the two domains have effective
+representations, that the relation between them is computable, that the property in question lies in
+a decidable fragment, and that the analysis terminates. Where a Galois connection cannot be
+established, one must fall back on simulation relations, bisimulations, contextual equivalences or
+an explicit human argument---each with its own composition obligations, as Remark
+\ref{rmk:relational-compose} sets out.
 
 \begin{definition}[Inter-level soundness]\label{def:soundness}
 Let $A \in \Env_i$ be an environmental assumption declared at the upper level, and let
@@ -80,6 +85,41 @@ behaviour set, so that \eqref{eq:soundness} can be applied level by level. Condi
 ensures that the composite observation agrees with the level-by-level observations, so
 that the conclusion holds at the top level.
 \end{proof}
+
+\begin{remark}[Condition (a) in the relational case]\label{rmk:relational-compose}
+Proposition \ref{prop:soundness} is stated for functional observation maps, because condition (a)
+is an equality of composites, $\Obs_i \circ \Obs_{i+1} = \Obs_i^{(i+2)}$. Remark \ref{rmk:source}
+records that on several transition edges the inter-level relation is a general relation
+$R_i \subseteq \Beh_{i+1} \times \Beh_i$ rather than a function. The two are not interchangeable
+here, and the difference is worth stating exactly rather than leaving to the reader.
+
+In the relational case the natural replacement for condition (a) is the
+\emph{composition-compatibility inclusion}
+\begin{equation}\label{eq:relcompose}
+R_{i+1} \circ R_i \;\subseteq\; R_i^{(i+2)},
+\end{equation}
+with $R_i^{(i+2)}$ the direct relation from $\Beh_{i+2}$ to $\Beh_i$, and
+$b_{i+2}\,(R_{i+1} \circ R_i)\,b_i$ holding when some $b_{i+1}$ satisfies
+$b_{i+2} R_{i+1} b_{i+1}$ and $b_{i+1} R_i b_i$.
+
+Three things must be said about \eqref{eq:relcompose}.
+\begin{enumerate}[label=(\alph*)]
+\item It is an \emph{inclusion}, not an equality. Inclusion is what the inductive step uses;
+      equality would be a strictly stronger and unnecessary premise.
+\item It is \emph{not implied} by the functional condition, and it does not follow from each $R_i$
+      being, say, a simulation. Composition compatibility is a separate closure property of the
+      family $\{R_i\}$, to be assumed or proved.
+\item Consequently Proposition \ref{prop:soundness} is proved here for the functional case only.
+      Its relational version is conditional: it holds under \eqref{eq:relcompose}, which is an
+      additional premise rather than a consequence.
+\end{enumerate}
+
+The reading that matters for Chapter \ref{ch:intent} is this: moving from a functional abstraction
+to a forward simulation, a backward simulation, a bisimulation or a contextual equivalence acquires
+the obligation to establish \eqref{eq:relcompose} for the family in use. In practice that obligation
+is discharged by the composition lemma of the respective theory---which is precisely why the
+requirement is easy to overlook when the relation is written down informally.
+\end{remark}
 
 \begin{remark}[Why composition fails]\label{rmk:why-compose-fails}
 Proposition \ref{prop:soundness} is the precise form of ``how do local guarantees compose
@@ -157,6 +197,95 @@ The third item has the deepest consequence: it makes ignorance a property that c
 declared, checked and held to account. A module that has never declared its oblivious set
 has an incomplete contract.
 
+\begin{remark}[The oblivious set is relative to a task and a property]\label{rmk:oblivious-relative}
+Definition \ref{def:oblivious} defines $\Obl(\Lambda_i)$ from a single object, the observation map
+$\Obs_i$. That is the right definition---it is what makes Proposition \ref{prop:oblivious} true---but
+it compresses a dependency that matters in use, because $\Obs_i$ is not given by the system. It is
+\emph{chosen}, and it is chosen relative to a task: an implementation detail may be entirely
+irrelevant to a business outcome and decisive for tail latency, for a security boundary or for
+energy, as the same change demonstrates every time a refactoring improves one and degrades another.
+
+Where the dependence matters, the notation should show it, and this paper writes
+$\Obl(\Lambda; T)$ for the oblivious set of level $\Lambda$ under task $T$, and
+$\Obl(\Lambda; \varphi)$ for the differences that may be ignored with respect to a property
+$\varphi$ that is to be guaranteed. The unparameterised $\Obl(\Lambda)$ then denotes the
+intersection over the tasks under consideration, which is what a module's declared oblivious set
+should be if the declaration is to hold for callers it has not met.
+
+There is a slogan worth extracting from this, because the slogan people actually use is wrong.
+Effective abstraction is not the removal of as much information as possible; it is the removal of
+those differences that cannot affect the conclusion to be drawn. A level that hides a great deal and
+preserves the properties asked of it is better than one that hides more and preserves fewer, and
+$\kappa$ alone cannot distinguish them---which is why the compression ratio is a measurement and the
+objective is the constrained optimisation of Definition \ref{def:mdl}, not the ratio.
+\end{remark}
+
+\begin{remark}[What the kernel definition does and does not give]\label{rmk:kernel-limits}
+Proposition \ref{prop:oblivious} is a statement about a kernel, and it is worth being exact about
+what follows from it, because two things are commonly assumed to follow and do not.
+
+It does \emph{not} give computability. That $\Obl(\Lambda_i)$ is an equivalence relation follows from
+$\Obs_i$ being a function; that the relation is \emph{decidable}, or that its classes can be
+enumerated, requires in addition that $\Obs_i$ be effectively computable and that equality of its
+outputs be decidable. For a level whose observation map is defined by an operational semantics over an
+infinite behaviour set, neither is automatic. The definition is therefore a specification of what an
+oblivious set \emph{is}, not an algorithm for producing one.
+
+Neither does it supply a construction. Nothing in this section says how to obtain $\Obs_i$ for a real
+system from its execution semantics, its interfaces and its observed behaviour, nor how to compute or
+approximate which differences the level hides. That work is not deferred here for reasons of space; it
+is a separate problem, and the honest statement of the paper's position is that the oblivious set is a
+\emph{design artefact to be declared and then checked}, not an analysis artefact to be extracted. The
+declaration is the artefact; the checks available against it are the two boundary criteria of
+Principle \ref{pr:two-criteria}---sufficiency, tested by leak pairs, and completeness, tested by
+non-interference---and both are partial. A declaration that passes both is not proved correct, only
+not yet refuted.
+\end{remark}
+
+\begin{remark}[The declaration can be incomplete: the second boundary criterion]\label{rmk:noninterference}
+Definition \ref{def:oblivious} defines $\Obl(\Lambda_i)$ as the kernel of the \emph{declared}
+observation map $\Obs_i$. Everything the level cannot see is by construction invisible to
+$\Obs_i$, so no failure can be located inside $\Obl(\Lambda_i)$ itself. The failure that can occur
+sits one level up, in the declaration: $\Obs_i$ may fail to be the whole of what the level above
+can actually observe. If a difference that $\Lambda_i$ declared ignorable nevertheless changes
+timing, resource occupancy or failure behaviour---three things visible from above but absent from
+$\Obs_i$---then the declaration is false even though every statement made with $\Obs_i$ remains
+true. Two behaviours would be equal under $\Obs_i$ and distinguishable in practice.
+
+This problem is old, and naming it buys a body of technique. Let $D \subseteq \Obl(\Lambda_i)$ be a
+set of differences the level declares ignorable, and let the observation apparatus actually
+available above be $\mathcal{J}$, which may be strictly larger than $\Obs_i$. Requiring that no
+difference in $D$ be visible through $\mathcal{J}$ is exactly the \emph{non-interference} condition
+of Goguen and Meseguer \cite{goguen1982}: variation in one domain must produce no variation in
+another's observations. In the present vocabulary:
+
+\begin{center}
+\small
+\begin{tabular}{L{4.2cm}L{10.0cm}}
+\toprule
+\textbf{Information-flow notion} & \textbf{Here} \\
+\midrule
+high-level input & a difference declared ignorable, $D \subseteq \Obl(\Lambda_i)$ \\
+low-level observation & the apparatus actually available above, $\mathcal{J}$ \\
+non-interference & $D$ leaves $\mathcal{J}$-observations unchanged: the declaration is \emph{complete} \\
+covert channel & a $\mathcal{J}$-path outside $\Obs_i$ along which $D$ is nevertheless visible \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Chapter \ref{ch:comprehension} supplies the other half of boundary fidelity---whether the interface
+is \emph{sufficient} for external behaviour, tested by seeking a leak pair. The present remark
+supplies what sufficiency cannot, because a leak pair is a statement about $\Obs_i$ and says nothing
+about what $\Obs_i$ leaves out. Section \ref{sec:neardecomp} states the two criteria side by side.
+
+The practical consequence is a borrowed toolkit rather than a new theory: differential testing is
+the instrument for the sufficiency direction, and taint tracking, channel auditing and
+timing-channel analysis are the instruments for the completeness direction. The
+already-catalogued antipattern of enforcing multi-tenant isolation with a type system
+(Example \ref{ex:wrong-language}(d)) is the completeness failure in its natural habitat: the type
+system constrains the declared channel while the undeclared ones remain open.
+\end{remark}
+
 \begin{remark}[A criterion for pattern realism]\label{rmk:dennett}
 Proposition \ref{prop:oblivious} is isomorphic to an independent philosophical criterion.
 Dennett's criterion for a \emph{real pattern} states that a pattern is real exactly when
@@ -164,6 +293,21 @@ describing the system in terms of it is more economical than describing the raw 
 \cite{dennett1991}. Under that criterion, whether a level exists is not an ontological
 question but a question of compression ratio---precisely the quantity measured by
 Definition \ref{def:compression}.
+
+The criterion has since been given a sharper, explicitly information-theoretic formulation, and it
+is worth citing because it is closer to Definition \ref{def:compression} than Dennett's original
+statement. Ladyman and Ross hold that ``to be is to be a real pattern'', a pattern being real only
+if it has a model carrying information about some structure in an encoding of lower \emph{logical
+depth} than the bit-map encoding of that structure, and they take Occam's razor to counsel counting
+as real only those patterns that minimise the logical depth attributed to the world
+\cite{ladyman2007}. That is a compression criterion of existence stated in encoding terms rather
+than in informal economy, and the compression ratio of Definition \ref{def:compression} is the
+quantity it asks about. The identification cuts both ways and is not costless: if a level is real
+exactly when admitting it compresses, then a level that does not compress is not merely inconvenient
+but unreal, which is a stronger claim than this paper needs and one it does not make. The weaker
+reading used here is the conditional one---\emph{if} a level's declared observation map compresses,
+its kernel is a real equivalence; how much compression is enough is a design decision, not an
+ontological threshold.
 
 Three consequences follow, and are used in later chapters.
 \begin{enumerate}[label=(\alph*)]
@@ -179,17 +323,44 @@ Three consequences follow, and are used in later chapters.
 \end{remark}
 
 \begin{definition}[Compression ratio]\label{def:compression}
-Let $\mu$ be a reference measure on $\Beh_{i+1}$ and let $\Entropy$ denote the
-corresponding entropy functional. The \term{compression ratio} of level $\Lambda_i$ is the
-information annihilated:
+Let the level below be observed through a \emph{finite encoded} behaviour description: a measurable
+map $\mathrm{enc} : \Beh_{i+1} \to \mathcal{X}$ into a countable set $\mathcal{X}$, with $\mu$ a
+probability distribution on $\mathcal{X}$ and $\Entropy$ the Shannon entropy of a discrete
+distribution. The \term{compression ratio} of level $\Lambda_i$ is the information annihilated:
 \begin{equation}\label{eq:compression}
-\kappa_i \;=\; \Entropy_{\mu}\bigl(\Beh_{i+1}\bigr) \;-\;
-\Entropy_{\Obs_i \# \mu}\bigl(\Obs_i(\Beh_{i+1})\bigr),
+\kappa_i \;=\; \Entropy_{\mu}\bigl(\mathrm{enc}\bigr) \;-\;
+\Entropy_{\Obs_i \# \mu}\bigl(\Obs_i \circ \mathrm{enc}\bigr)
+\;=\; \Entropy_{\mu}\bigl(\mathrm{enc} \mid \Obs_i \circ \mathrm{enc}\bigr),
 \end{equation}
-that is, the information that cannot be recovered under $(\Obs_i, \Conc_i)$. The wording
-is borrowed from information theory \cite{shannon1948} and algorithmic information theory
-\cite{kolmogorov1965}.
+the last equality holding because $\Entropy(X) - \Entropy(f(X)) = \Entropy(X \mid f(X))$ for a
+function $f$ of a discrete random variable. That is the information that cannot be recovered under
+$(\Obs_i, \Conc_i)$. The wording is borrowed from information theory \cite{shannon1948} and
+algorithmic information theory \cite{kolmogorov1965}.
 \end{definition}
+
+Three qualifications belong to the definition, because each of them is a place where the quantity is
+easily misused.
+
+First, the encoding is part of the data, not a presentation detail. $\kappa_i$ is defined relative
+to a fixed $\mathrm{enc}$, a fixed $\mu$ and a fixed unit of counting; change any of the three and it
+changes. Behaviour sets are sets of traces, hence infinite objects, and no entropy is defined on them
+directly: what is measured is the entropy of a finite description. Where the report says below that a
+level ``compresses'' or that one abstraction is better than another, the comparison is relative to a
+stated encoding and a stated task distribution, or it is not a comparison at all.
+
+Second, the identity in \eqref{eq:compression} does not survive the passage to continuous variables
+or to a change of representation space. For differential entropy the analogue of
+$\Entropy(X)-\Entropy(f(X)) = \Entropy(X \mid f(X))$ fails---differential entropy is not invariant
+under reparametrisation---so a reader who substitutes a continuous state space silently changes the
+quantity. Nothing here prevents that substitution; it requires a separate definition.
+
+Third, $\kappa_i$ is not a description length and must not be identified with one. The report uses
+description length $\DL$ elsewhere (Definition \ref{def:mdl} and the technical-debt gap of
+Chapter \ref{ch:design}) in the minimum-description-length sense, where the object measured is a
+\emph{model} under a fixed encoding. The quantity annihilated by an abstraction and the length of the
+shortest description of a model are different functionals on different arguments; results about one
+do not transfer to the other. The two are related only through the coding theorem, and only under
+conditions this paper does not establish.
 
 Compression is not itself the objective: a system that guarantees nothing attains
 arbitrarily large $\kappa$. The objective is to maximise $\kappa$ \emph{subject to
@@ -280,28 +451,47 @@ M^{\star} \;=\; \arg\min_{M} \; \DL(M)
 or equivalently the Lagrangian form $\min_M \; \DL(M) + \lambda\, L_T(M)$.
 \end{definition}
 
-\begin{proposition}[Stopping rule for descent]\label{prop:stopping}
-Parameterise the model family by descent depth, $M_0 \succ M_1 \succ \cdots$, with
-increasing index meaning increasing retention of lower-level detail, and suppose
-$\DL(M_{k+1}) \ge \DL(M_k)$ and $L_T(M_{k+1}) \le L_T(M_k)$. Then the optimal depth
-$k^{\star}$ satisfies the stationarity condition
+\begin{proposition}[Stopping rule for descent, under a continuous relaxation]\label{prop:stopping}
+Suppose the model family is parameterised not by discrete descent depth but by a real parameter
+$t \in [0,1]$, with $M_t$ retaining more lower-level detail as $t$ increases, and suppose
+$\DL(M_t)$ and $L_T(M_t)$ are differentiable in $t$ with
+$\mathrm{d}\DL/\mathrm{d}t \ge 0$ and $\mathrm{d}L_T/\mathrm{d}t \le 0$. Then at an interior optimum
+$t^{\star}$ of the Lagrangian $\DL + \lambda L_T$ the stationarity condition
 \begin{equation}\label{eq:stopping}
-\left.\frac{\partial L_T}{\partial \DL}\right|_{k^{\star}} \;=\; -\frac{1}{\lambda} ,
+\left.\frac{\partial L_T}{\partial \DL}\right|_{t^{\star}} \;=\; -\frac{1}{\lambda}
 \end{equation}
-and once $\partial L_T / \partial \DL = 0$ beyond some depth, further descent is strictly
-dominated.
+holds; and if $\mathrm{d}L_T/\mathrm{d}t = 0$ on an interval while $\mathrm{d}\DL/\mathrm{d}t > 0$,
+further descent is strictly dominated.
 \end{proposition}
 
 \begin{proof}
-The Lagrangian is $\mathcal{L}(k) = \DL(M_k) + \lambda L_T(M_k)$. First-order optimality
-gives $\mathrm{d}\DL/\mathrm{d}k + \lambda\, \mathrm{d}L_T/\mathrm{d}k = 0$, that is
-$\mathrm{d}L_T/\mathrm{d}\DL = -1/\lambda$. If
-$\mathrm{d}L_T/\mathrm{d}\DL = 0$ on an interval while $\mathrm{d}\DL/\mathrm{d}k > 0$,
-then $\mathrm{d}\mathcal{L}/\mathrm{d}k = \mathrm{d}\DL/\mathrm{d}k > 0$ and the objective
-increases monotonically, so further descent is strictly dominated.
+Differentiating $\mathcal{L}(t) = \DL(M_t) + \lambda L_T(M_t)$ and setting it to zero gives
+$\mathrm{d}\DL/\mathrm{d}t + \lambda\,\mathrm{d}L_T/\mathrm{d}t = 0$, hence
+$\mathrm{d}L_T/\mathrm{d}\DL = -1/\lambda$ wherever $\mathrm{d}\DL/\mathrm{d}t \ne 0$. If
+$\mathrm{d}L_T/\mathrm{d}t = 0$ on an interval while $\mathrm{d}\DL/\mathrm{d}t > 0$, then
+$\mathrm{d}\mathcal{L}/\mathrm{d}t = \mathrm{d}\DL/\mathrm{d}t > 0$ there and the objective is
+increasing, so continuing is strictly dominated.
 \end{proof}
 
-Proposition \ref{prop:stopping} yields a rule usable in practice.
+The restriction to a continuous relaxation is deliberate, and it is the whole content of the
+proposition. Descent depth in a real code base is discrete: one either reads a module or one does
+not, and there is no half-way depth at which description length varies smoothly. Over a discrete
+family the derivative in \eqref{eq:stopping} does not exist, the Lagrangian need not be convex, and
+first-order optimality is not defined; what remains true is only the second half of the proposition,
+that a depth beyond which task loss stops improving while description length keeps growing is
+dominated. That weaker statement needs no differentiability at all, and it is what
+Principle \ref{pr:descent} uses. The rate--distortion objective \eqref{eq:ratedistortion} is
+unaffected by the restriction; it is the differential form that is conditional, not the optimisation
+problem.
+
+Two consequences for practice follow, and they are also what the reported experiments should do.
+First, the family is better treated as a discrete set of candidate models whose $(\DL, L_T)$ pairs
+lie on or near a Pareto frontier, with the choice among frontier points a judgement about $D_T$ rather
+than a derivative. Second, comparing two adjacent depths is a measurement, not a calculation: the
+marginal predictive gain of descending one level further is estimated by finite differences,
+leave-one-level-out ablation, or the observed cost of past changes, and the differential rule of
+\eqref{eq:stopping} is then read as a description of the frontier's shape rather than as a
+computational recipe.
 
 \begin{principle}[Descent depth]\label{pr:descent}
 To make a change correctly it suffices to descend until the invariant governing that change
@@ -458,6 +648,18 @@ Substitution is required to be associative and unital. Informally, a colour is w
 promises, an operation is how parts are assembled, and substitution refines a part without
 altering the promise of the whole. The definition is the standard one for an operad,
 coloured by contracts \cite{leinster2004}.
+
+Associativity and unitality hold, however, only for families of subcomponents whose
+\emph{resource occupations are disjoint}, and this is a genuine restriction of the object rather
+than a technicality of its presentation. The resource component $R$ of \eqref{eq:contract} is not
+an additive quantity. When two subcomponents draw on the same resource, merging their budgets
+involves amortisation and interference---caching, contention, head-of-line blocking---and
+$f \circ (g_1, g_2)$ and $(f \circ g_1) \circ g_2$ may then assign different budgets to the same
+composite. Associativity fails, and with it the claim that the structure is an operad for those
+composites at all. Two honest responses exist: refine the colours to carry a resource-occupation
+vector and supply a resource algebra under which merging is associative, or restrict the operad to
+resource-disjoint families. This paper takes the second, having no resource algebra to offer, and
+records the first as work in progress.
 \end{definition}
 
 \begin{definition}[Interface graph and freeness]\label{def:interface-graph}
@@ -475,10 +677,14 @@ two structural conditions on the contract operad:
       Proposition \ref{prop:soundness}) holds if and only if substitution is well defined
       on colours, that is, the composite never demands of a subcomponent an observation its
       colour does not declare;
-\item \term{Environmental closure}: assumption closure (condition (b) of
-      Proposition \ref{prop:soundness}) holds if and only if the interface graph is
-      acyclic, that is, the composite can be built uniquely bottom-up from its
-      subcomponents.
+\item \term{Environmental closure}: acyclicity of the interface graph is \emph{sufficient} for
+      assumption closure (condition (b) of Proposition \ref{prop:soundness}), and sufficient
+      \emph{only relative to a topological proof strategy}---the one that builds the composite
+      bottom-up in a topological order. It is not necessary. Where the graph has a cycle, a
+      well-founded construction is unavailable, but the composite is not thereby meaningless: it
+      can be given a fixed-point semantics, or the contract satisfaction relation can be
+      strengthened so that each component's guarantee is required to hold against all admissible
+      behaviours of its environment rather than against the particular one the cycle supplies.
 \end{enumerate}
 \end{proposition}
 
@@ -494,10 +700,40 @@ along that order yields the unique construction, with assumption closure verifie
 level. Conversely, if there is a cycle $u_1 \to u_2 \to \cdots \to u_k \to u_1$, then the
 assumption of $u_1$ depends on the guarantee of $u_k$, whose guarantee depends (around the
 cycle) on the assumption of $u_1$; the two sides of the substitution define each other and
-the composite has no well-founded construction. To give it meaning one must supply a
-fixed-point semantics, that is, a separate existence-and-uniqueness condition for that
-cycle.
+the composite has no well-founded construction \emph{by that order}. To give it meaning one
+must supply a fixed-point semantics, that is, a separate existence-and-uniqueness condition for that
+cycle---or strengthen the satisfaction relation, as the remark below sets out.
 \end{proof}
+
+\begin{remark}[Acyclicity is sufficient, not necessary]\label{rmk:cycles-composable}
+Cycle-free interconnection is the condition under which the simplest compositional argument
+works---topological order, one component at a time, each discharging its assumptions against
+guarantees already established. It is not a condition on contract composition in general, and
+writing it as one overstates the result in a way that matters for practice, because systems with
+feedback are the normal case rather than a pathology.
+
+The distinction is a known one in the contract literature and has a standard shape. Contract
+frameworks typically admit at least two satisfaction relations: a \emph{weak} one, under which a
+component's guarantee must hold only against the behaviours its environment actually exhibits, and a
+\emph{strong} one, under which the guarantee must hold against every behaviour the environment is
+permitted to exhibit; the general framework is surveyed in \cite{benveniste2018}. The distinction is
+not decorative, and it settles the point at issue. For interconnections forming a directed acyclic
+graph, weak satisfaction suffices and composes by topological order; for interconnections containing
+cycles, weak satisfaction is no longer sufficient and strong satisfaction is required
+\cite{agcontracts2021}. The same work makes the corresponding condition explicit for continuous-time
+systems: the interconnection must be \emph{well posed}, and well-posedness is a condition on the cycle
+discharged by a fixed-point argument rather than by excluding the cycle.
+
+What follows for this paper is a narrowing of two claims rather than a change of direction.
+First, Proposition \ref{prop:operad-compose}(b) establishes sufficiency under the topological
+strategy, and the paper's use of it---retry, cache write-back and event loops invalidate the existing
+composition argument---remains correct as stated, because what such an edit destroys is that argument,
+not composition as such. Second, the open question is not ``how to avoid cycles'' but the one
+Chapter \ref{ch:program} already poses in another form: how to bring functional properties,
+environmental assumptions, resource budgets, failure recovery and retry semantics into a single
+contract system whose composition rules cover cyclic interconnections. Treating a cycle as the
+failure and stopping there would close the question prematurely.
+\end{remark}
 
 Part (b) accounts for two of the three composition failures in \S\ref{sec:composition}, and
 explains why two established practices must introduce an additional hypothesis:
@@ -510,6 +746,27 @@ explains why two established practices must introduce an additional hypothesis:
       graph into a cyclic interface graph, and the colouring is not re-verified once the
       cycle appears.
 \end{itemize}
+
+\begin{remark}[A fourth class of composition failure]\label{rmk:resource-coupling}
+Chapter \ref{ch:intent} classifies three composition failures: a colour whose extension is too
+small, a changed interface graph, and a missing contract component. The side condition in
+Definition \ref{def:operad} identifies a fourth, and it is not a special case of those three.
+The resource component \emph{is} in the colour, the interface graph \emph{is} acyclic, every
+subcomponent \emph{does} meet its own budget, and yet the composite does not---because two
+subcomponents draw on the same resource.
+
+A latency budget is the clean instance. Let $g_1$ and $g_2$ each satisfy a $10\,\mu$s budget in
+isolation and let $f$ satisfy its own budget whenever either one is installed; run both and the
+composite misses, because the two contend for one cache. No colouring check and no acyclicity
+check sees this, and re-verifying every colour will not see it either.
+
+Chapter \ref{ch:intent} reads the cache-contention example as a missing contract component, and
+that reading is correct as far as it goes: the resource component had never entered the colour at
+all. The fourth class is what remains \emph{after} that first repair. Having put $R$ into the
+colour, one still has composites whose budgets do not compose, and the algebra that was supposed to
+make composition well defined is exactly what fails. This is why the restriction belongs in the
+definition rather than in a footnote to the composition theorem.
+\end{remark}
 
 \begin{remark}[Feedback is a structural change]\label{rmk:feedback}
 Proposition \ref{prop:operad-compose} reduces composability to acyclicity of the interface

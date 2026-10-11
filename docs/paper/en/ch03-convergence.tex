@@ -54,25 +54,55 @@ $g_1, \dots, g_c : \mathcal{D} \to \mathbb{R}$, and its \term{solution set} is
 $\mathcal{S} = \{x \in \mathcal{D} : g_j(x) = 0,\; j = 1..c\}$.
 \end{definition}
 
-\begin{proposition}[Over- and under-constraint]\label{prop:overconstrain}
-Under the notation of Definition \ref{def:constraint}, if the constraints are mutually
-independent and transversal, then
+\begin{proposition}[Over- and under-constraint, under a regularity hypothesis]\label{prop:overconstrain}
+Let $\mathcal{S} \subseteq \mathcal{D}$ be described as the zero set of a map
+$g : \mathcal{D} \to \mathbb{R}^{c}$, with $0$ a regular value of $g$ and the $c$ components of $g$
+independent. Then
 \begin{enumerate}[label=(\alph*)]
-\item when $c \ge d$, $\mathcal{S}$ is generically a finite set (or empty);
-\item when $c < d$, $\mathcal{S}$ is generically a submanifold of dimension
-      $\ge d - c$;
-\item when $c \ll d$, the dimension of $\mathcal{S}$ tends to $d$, that is, the solution
-      set is almost unconstrained.
+\item when $c < d$, if $\mathcal{S} \ne \emptyset$ it is a submanifold of dimension $d - c$;
+\item when $c = d$, $\mathcal{S}$ is discrete---zero-dimensional---and is finite only under an
+      additional hypothesis such as compactness of $\mathcal{S}$;
+\item when $c > d$, $\mathcal{S}$ is empty in general position.
 \end{enumerate}
 \end{proposition}
 
 \begin{proof}
-Under transversality, each independent constraint lowers the codimension by $1$. By the
-transversality theorem (Thom), codimension is additive:
-$\mathrm{codim}\,\mathcal{S} = c$, hence $\dim \mathcal{S} = d - c$ (when $d-c \ge 0$);
-when $c \ge d$ the dimension is $0$, that is, a discrete point set; when $c < d$ the
-dimension is positive, that is, a submanifold.
+Under transversality of $g$ to $\{0\}$, each independent component of $g$ lowers the codimension of
+$\mathcal{S}$ by one, so $\mathrm{codim}\,\mathcal{S} = c$ by the transversality theorem (Thom). This
+gives dimension $d - c$ when $d - c > 0$; gives a discrete set when $c = d$; and is impossible when
+$c > d$, since a subset of a $d$-manifold cannot have codimension exceeding $d$---so the preimage is
+empty in general position. Finiteness at $c = d$ does not follow from the dimension count: a
+zero-dimensional closed subset of a non-compact manifold may be infinite, and compactness of
+$\mathcal{S}$ (or of $\mathcal{D}$) must be assumed separately.
 \end{proof}
+
+Two corrections to the reading of this proposition are needed, and both matter more than the
+proposition itself.
+
+First, the case $c \ge d$ does \emph{not} yield ``generically finite or empty''. Zero dimension
+gives discreteness, and discreteness gives finiteness only with compactness. The weaker and correct
+general statement is that at $c \ge d$ the solution set has no interior---it is a lower-dimensional
+stratum rather than an open region---which is all the argument needs and all it supports.
+
+Second, and more substantially, the hypothesis is strong and the domain is not what the hypothesis
+describes. Transversality plus independence is a condition on a smooth map between manifolds, and a
+software design space is neither: it is discrete, its constraints are frequently inequalities,
+enumerations, compatibility relations and dependencies on one another, and its feasible set is
+typically a finite or countable set of candidates rather than a manifold. The proposition is
+therefore a \emph{model} of the low-level situation---a useful one, because it explains why adding
+constraints removes freedom and why the low level feels pinned---and not a theorem about software
+architecture. It should be read as: \emph{where} the design space admits a smooth description and
+\emph{where} the constraints are independent, the freedom shrinks linearly in the number of
+constraints and vanishes at $c = d$.
+
+What the chapter actually claims about heights survives this reduction intact, because it was never
+the dimension count that carried the argument. The empirical claim is that at low levels the
+constraints originate in objects that already exist and are consequently independent of one another,
+while at high levels several apparent constraints are restatements of one preference and therefore
+fail independence (Appendix \ref{app:proofs} makes the same point, and extends it). The dimension
+count is a picture of that asymmetry, not its proof; the testable form of the asymmetry is
+Hypothesis $H_2$, which asks whether a measured domain-binding quantity predicts similarity
+monotonically---a question about data, not about transversality.
 
 Proposition \ref{prop:overconstrain} gives a clean explanation of ``unique below, manifold
 above'', but the wording must be handled with care. It does \emph{not} say that the low

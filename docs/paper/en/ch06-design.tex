@@ -34,7 +34,13 @@ modularity'' is not.
 Let $\Inv$ be the set of invariants of the system. For $\iota \in \Inv$, its
 \term{enforcement-site set} $\mathrm{S}(\iota) \subseteq \Mod$ is the set of all modules
 that \emph{must be implemented correctly for $\iota$ to be guaranteed}. Enforcement is
-\term{effective} if $\iota$ is not violated in any execution.
+\term{effective} if $\iota$ is not violated in any execution. Its \term{unattested part}
+$\mathrm{S}_{\mathrm{un}}(\iota) \subseteq \mathrm{S}(\iota)$ is the subset of those sites whose
+correctness cannot be established without reading them: sites with no machine-checked proof, no
+enforced type-level constraint, no separately checkable contract and no accepted certificate. Sites
+outside $\mathrm{S}_{\mathrm{un}}(\iota)$ are still \emph{necessary}---if they were wrong the
+invariant would fail---but they are \emph{substitutable by their evidence}, in the sense that an
+agent may rely on the guarantee without inspecting the implementation.
 \end{definition}
 
 \begin{theorem}[Centralisation of invariants]\label{th:centralise}
@@ -42,29 +48,48 @@ Suppose that enforcement of invariant $\iota$ is effective and that a change $c$
 $\iota$, that is, there exists a legal sequence of changes that breaks $\iota$ in the
 absence of an understanding of $\mathrm{S}(\iota)$. Then
 \begin{equation}\label{eq:central}
-|\rho(c)| \;\ge\; \bigl|\mathrm{S}(\iota)\bigr| .
+|\rho(c)| \;\ge\; \bigl|\mathrm{S}_{\mathrm{un}}(\iota)\bigr| .
 \end{equation}
 Hence, other things equal, minimising $\mathbb{E}[|\rho|]$ requires minimising
-$\sum_{\iota \in \Inv} |\mathrm{S}(\iota)|$, whose lower bound is attained by enforcing
-each invariant in a \emph{single module}.
+$\sum_{\iota \in \Inv} |\mathrm{S}_{\mathrm{un}}(\iota)|$, whose lower bound is attained when every
+enforcement site is either the only one or independently checkable.
 \end{theorem}
 
 \begin{proof}
-If $c$ may break $\iota$, an agent executing $c$ must know where and how $\iota$ is
-guaranteed; otherwise it cannot judge whether $c$ is safe. Every element of
-$\mathrm{S}(\iota)$ is a necessary source of evidence for that judgement, so
-$\rho(c) \supseteq \mathrm{S}(\iota)$, which gives \eqref{eq:central}.
-Summing over $\iota$: $\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}(\iota)|]$,
-with equality in the optimistic case in which the $\mathrm{S}(\iota)$ are disjoint, where
-the right-hand side is $\sum_\iota |\mathrm{S}(\iota)|$.
-Every non-empty $\mathrm{S}(\iota)$ contains at least one module, so the lower bound is
-attained at $|\mathrm{S}(\iota)| = 1$.
+If $c$ may break $\iota$, an agent executing $c$ must be able to judge whether the change is safe.
+For each site in $\mathrm{S}_{\mathrm{un}}(\iota)$ that judgement requires reading that site, since
+by definition no other evidence settles it; hence
+$\rho(c) \supseteq \mathrm{S}_{\mathrm{un}}(\iota)$, which gives \eqref{eq:central}. Sites in
+$\mathrm{S}(\iota) \setminus \mathrm{S}_{\mathrm{un}}(\iota)$ may be relied upon through their
+evidence and need not be read. Summing over $\iota$:
+$\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}_{\mathrm{un}}(\iota)|]$, with equality
+in the optimistic case in which those sets are disjoint. The bound is attained at
+$|\mathrm{S}_{\mathrm{un}}(\iota)| = 0$, that is, when every enforcement site carries evidence that
+can be checked without being read---a type system, a private constructor, a capability token, a
+database constraint or a proof.
 \end{proof}
 
+The change from $|\mathrm{S}(\iota)|$ to $|\mathrm{S}_{\mathrm{un}}(\iota)|$ is not a weakening
+introduced for safety. It is the correction of a genuine conflation, and the distinction it draws
+was missing from the argument. Three different sets were being treated as one: the modules whose
+correct behaviour is necessary for $\iota$ (that is $\mathrm{S}(\iota)$); the evidence needed to
+show a given change safe; and the source files an agent must actually read. The first does not bound
+the third except through the second, and the second is exactly what $\mathrm{S}_{\mathrm{un}}$
+isolates. A module that has a machine-checked proof or a stable, independently checkable interface
+does not enter the read-set, no matter how necessary its correctness is.
+
+Two consequences follow, and they are the practically useful ones. First, the bound explains why
+encoding invariants in types has engineering value beyond expressiveness, and does so quantitatively:
+it lowers $|\mathrm{S}_{\mathrm{un}}(\iota)|$ rather than merely relocating the invariant. Second, it
+tells a maintainer where the read-set actually comes from: not from the number of places an invariant
+matters, but from the number of those places whose correctness rests on nothing checkable. That is a
+smaller and more actionable number, and it is the one a refactoring should target.
+
 \begin{corollary}[Optimal location of enforcement sites]\label{cor:site}
-Among all candidates satisfying the effectiveness constraint, the optimal enforcement sites
-are the modules of \emph{least fan-in}, that is, those on which fewest other modules depend
-and which are therefore least likely to be circumvented by modification.
+Among all candidates satisfying the effectiveness constraint, the enforcement sites that minimise
+the expected read-set of \eqref{eq:central} are the modules of \emph{least fan-in}, that is, those on
+which fewest other modules depend and which are therefore least likely to be circumvented by
+modification. The scope of this optimality is the read-set objective alone; see the remark below.
 \end{corollary}
 
 \begin{remark}[Limits of Theorem \ref{th:centralise}]\label{rmk:central-limit}
@@ -77,8 +102,28 @@ cost; where invariants can genuinely be centralised (for instance by a type syst
 constructors, capability tokens or database constraints that make circumvention impossible),
 centralisation is strictly better than scattering.}
 This explains why ``encoding invariants in types'' has engineering value beyond
-expressiveness: it lowers $|\mathrm{S}(\iota)|$ to $1$ without increasing the risk of
-circumvention.
+expressiveness: it lowers $|\mathrm{S}_{\mathrm{un}}(\iota)|$ towards $0$ without increasing the risk
+of circumvention. The two mechanisms are independent and both matter---types remove the need to read,
+effective enforcement removes the need to trust.
+\end{remark}
+
+\begin{remark}[Centralisation optimises one objective among several]\label{rmk:central-multi}
+Corollary \ref{cor:site} identifies the read-set-optimal enforcement site. It should not be read as
+identifying the best site, because the read-set is one objective among several, and the others are
+not represented in the model at all. Moving an invariant into a single module also moves \emph{load}
+onto that module, adds a hop to every operation that would otherwise be local, concentrates
+\emph{failure impact}---if the enforcement site fails, every dependent fails together---and creates a
+\emph{change bottleneck}, since every change touching the invariant now serialises through one
+owner.
+
+These are the same dimensions the paper insists must not be collapsed elsewhere
+(Principle \ref{pr:crosscutting}), and the honest statement of the corollary is therefore
+conditional: \emph{given} that effectiveness is achievable at the site in question and \emph{given}
+that the other four dimensions are acceptable there, least fan-in is optimal for the read-set. When
+they are not acceptable, the correct problem is a multi-objective one---correctness, change impact,
+latency, and failure domain---and the read-set bound is a constraint within it rather than the
+objective. A design review that treats ``centralise the invariant'' as an unconditional
+recommendation is applying the corollary outside its scope.
 \end{remark}
 
 \section{Near-decomposability}\label{sec:neardecomp}
@@ -146,6 +191,31 @@ By Corollary \ref{cor:diagnose}, the testable objective of design can be written
 \emph{for every claimed module boundary, the interface observation should be a sufficient
 statistic for external behaviour; the existence of a leak pair is the failure of that
 boundary.}
+\end{principle}
+
+\begin{principle}[Two criteria for a claimed boundary, not one]\label{pr:two-criteria}
+A claimed boundary between a module and its environment makes two separate claims, and they fail
+separately.
+\begin{enumerate}[label=(\alph*)]
+\item \term{Sufficiency}: the interface observation determines the external behaviour. This is
+      Definition \ref{def:neardecomp}; its failure is a leak pair (Proposition \ref{prop:leakpair}),
+      found by differential testing (Corollary \ref{cor:diagnose}).
+\item \term{Completeness}: the observation map the boundary declares is the whole of what is
+      observable across it. Its failure is a difference the boundary declared irrelevant becoming
+      visible anyway---through timing, resource occupancy or failure behaviour---and it is found by
+      the techniques of information-flow analysis rather than by differential testing
+      (Remark \ref{rmk:noninterference}).
+\end{enumerate}
+The two are independent, in both directions. A boundary can be sufficient and incomplete: every pair
+of interface-identical executions has the same external behaviour, and yet a declared-irrelevant
+difference is readable from above through a timing channel. It can equally be complete and
+insufficient: nothing leaks through undeclared channels, while the declared interface is too coarse
+to determine the behaviour.
+
+Corollary \ref{cor:diagnose} and Principle \ref{pr:design-eq} address the first criterion only.
+The second is the one that fails silently, because a boundary that leaks through an undeclared
+channel passes every differential test written against the declared interface---the test never
+constructs the offending pair, since the pair differs in something the boundary said did not matter.
 \end{principle}
 
 \section{Technical debt}\label{sec:debt}
@@ -224,19 +294,20 @@ comprehension bandwidth of one person (module-reads per unit time). The system i
 \term{governable state} if $C(t) \le K$ for all relevant $t$.
 \end{definition}
 
-\begin{proposition}[Architecture fixes the scaling exponent]\label{prop:exponent}
+\begin{proposition}[The scaling exponent of required headcount, under the capacity model]\label{prop:exponent}
 Let a system have $n$ features, each changing independently at rate $\lambda_0$, so that
 $\lambda \propto n$. Let the read-set $\mathbb{E}[\rho]$ scale as $n^{\alpha}$ in $n$, with
-$\alpha \ge 0$ fixed by the architecture, $\alpha = 0$ corresponding to complete
+$\alpha \ge 0$ a parameter of the model, $\alpha = 0$ corresponding to complete
 localisation and $\alpha = 1$ to unconstrained coupling. Then the governable complexity
 scales as
 \begin{equation}\label{eq:exponent}
 C \;\propto\; n^{1+\alpha}.
 \end{equation}
-From $C \le K$, the required headcount scales as $h \propto n^{1+\alpha}$. Therefore:
+From $C \le K$ and $K = hb$ with $b$ constant, the headcount needed to keep the system governable
+scales as $h \propto n^{1+\alpha}$. Therefore, \emph{within this model}:
 \begin{enumerate}[label=(\alph*)]
-\item if the architecture presses $\alpha$ to $0$, headcount grows linearly with system
-      size and the system can persist indefinitely;
+\item if $\alpha$ is pressed to $0$, headcount grows linearly with system size and the system can
+      persist indefinitely;
 \item if $\alpha = 1$, headcount must grow as the \emph{square} of size, and the system must
       become unstable at some size.
 \end{enumerate}
@@ -248,6 +319,19 @@ $\lambda = n\lambda_0$ and $\mathbb{E}[\rho] = \Theta(n^{\alpha})$ gives
 $C = \Theta(n^{1+\alpha})$. From $C \le K = hb$ it follows that
 $h \ge C/b = \Theta(n^{1+\alpha})$.
 \end{proof}
+
+Two things the proposition does not establish, and that the earlier title---\emph{architecture fixes
+the scaling exponent}---asserted by implication. First, it does not show that the exponent is fixed
+by the architecture; it \emph{assumes} that $\mathbb{E}[\rho]$ scales as a power of $n$ and treats
+$\alpha$ as the parameter of that scaling. Whether $\alpha$ is architecture-determined, and whether
+the read-set proxy used to estimate it is valid, are both empirical questions---the second is
+Hypothesis $H_4$, and the first is what Hypothesis $H_{14}$ asks directly. Second, it does not show
+that real organisations' headcount follows the exponent. It shows that headcount must follow it
+\emph{if} the organisation is to remain governable under the stated capacity model, which is a
+conditional statement about a model of comprehension capacity, not a forecast about hiring. The
+empirical content is that systems with higher estimated $\alpha$ should require disproportionately
+more coordination effort per unit of growth; that is testable, and Chapter \ref{ch:program} proposes
+how.
 
 \begin{corollary}[The actual role of architecture]\label{cor:arch-role}
 Proposition \ref{prop:exponent} assigns architecture a precise duty: it does not lower the

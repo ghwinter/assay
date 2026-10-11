@@ -227,29 +227,56 @@ modules should be affected''), make a minimal change or run a test, then observe
 prediction error. \emph{The error is the part of the structure you cannot see.}
 
 \begin{proposition}[The advantage of active probing]\label{prop:active}
-Let comprehension be an iterative update of a model $M$, in which each observation $o$
-supplies information $I(\text{structure}; o \mid M)$ about the true structure. The observation
-distribution of passive reading does not depend on $M$, so its expected information gain is
-constant in $M$; the observation distribution of active probing depends on the current
-prediction $\hat{y}(M)$, and its expected information gain is proportional to the prediction
-error $\mathbb{E}\,|y - \hat{y}(M)|$. Hence, wherever the prediction error is non-zero, active
-probing has strictly higher marginal information gain.
+Let comprehension be an iterative update of a model $M$ over a hypothesis class $\mathcal{H}$, and
+let a \emph{design} $d$ be a choice of observation to perform, drawn from a design space
+$\mathcal{D}$ that contains the designs available to passive reading. Write
+$I(\mathcal{H}; o \mid d, M)$ for the expected information gain of design $d$ about the hypothesis
+under the current model. Then:
+\begin{enumerate}[label=(\alph*)]
+\item the optimal design does at least as well as any passive design, since passive designs are in
+      $\mathcal{D}$;
+\item the optimal design does \emph{strictly} better if and only if $\mathcal{D}$ contains a design
+      that separates competing hypotheses at the current state of knowledge---that is, if and only
+      if the available designs are \emph{identifying} for the distinction at issue.
+\end{enumerate}
 \end{proposition}
 
 \begin{proof}[Argument]
-The samples drawn by passive reading are independent of $M$, hence $p(o \mid M) = p(o)$ and
-the information gain is constant. Active probing selects the observations that maximise
-predictive disagreement (D-optimal or uncertainty sampling in experimental design), so
-$p(o \mid M)$ concentrates on the region where the current predictions of $M$ are uncertain;
-by the definition of information gain $I = \mathbb{E}[\log p(o\mid M) - \log p(o)]$, that
-quantity is non-negative and vanishes when $p(o\mid M) = p(o)$, that is, when prediction and
-truth agree. Hence active probing is strictly better wherever the prediction error is non-zero.
+Part (a) is immediate: maximising over a set that contains the passive designs cannot do worse than
+any member of it. For (b), if every design in $\mathcal{D}$ induces the same likelihood over
+observations for two hypotheses $h \ne h'$ that remain live under $M$, then no design distinguishes
+them and the expected information gain is identical for all designs, active or passive; conversely,
+if some design distinguishes them, selecting that design yields strictly positive gain where an
+uninformative design yields none.
 \end{proof}
 
-For AI the conclusion carries more weight: the advantage of AI is not that it can ``read'' more
+The reformulation is not cosmetic, and the two things it removes are both overclaims. First, it no
+longer asserts a proportionality between expected information gain and prediction error
+$\mathbb{E}|y - \hat{y}(M)|$: no such proportionality holds in general. A probe can be easy to
+provoke a large prediction error with---an unusual input the model handles badly---while doing
+nothing to separate the hypotheses actually in competition, and a probe with small average error can
+substantially reduce uncertainty about a parameter that matters. What governs the gain is whether the
+design discriminates, not how wrong the current model is. Second, it makes the advantage
+\emph{conditional} on an identifiability property of the design space, which is a premise that can
+fail: if the agent may only run observations that all hypotheses predict identically, probing buys
+nothing however energetically it is pursued. That is the same failure as the observability-rank
+deficiency of \S\ref{sec:observability}, reached from the design side rather than the observation
+side.
+
+What survives unchanged is the practical claim, which is the one the rest of this section needs:
+active probing is the better instrument wherever a discriminating design exists and can be afforded,
+and its advantage grows with the number of live hypotheses to be separated. For AI the conclusion
+carries more weight than for a human reader: the advantage of AI is not that it can ``read'' more
 code but that it can \emph{probe} at high throughput, generating hypotheses, running tests,
 making minimal changes, inspecting co-changes, reading incident records, and then updating the
 model. That is a frequency humans cannot match.
+
+The testable form of the claim is correspondingly a research design rather than a theorem. State the
+candidate models and their uncertainties; choose operations that distinguish competing hypotheses;
+measure expected information gain, experimental cost and actual model improvement; and compare
+against passive reading, random probing and conventional debugging. The claim to be tested is that
+deliberate discrimination beats undirected observation at equal cost---not that information gain is
+proportional to prediction error.
 
 \section{The Observability Criterion}\label{sec:observability}
 
@@ -271,33 +298,51 @@ results, runtime metrics). Define the \term{observability rank} on $\mathcal{T}$
 \dim \mathcal{J}\bigl(\mathcal{T}\bigr),
 \end{equation}
 the dimension of the task-relevant differences that remain distinguishable after
-$\mathcal{J}$. The construction is isomorphic to the observability criterion of linear system
-theory \cite{kalman1960}.
+$\mathcal{J}$. Where the behaviour space and the observation space are finite-dimensional linear
+spaces and $\mathcal{J}$ is linear, \eqref{eq:obsrank} specialises to the observability rank of
+linear system theory \cite{kalman1960}; the general case below does not presuppose that structure.
 \end{definition}
 
 \begin{proposition}[The observability criterion]\label{prop:observability}
 An agent can identify the system to $T$-sufficiency (Definition \ref{def:sufficient}) if and
-only if
+only if the observation operator is \emph{identifying} for the task: for all behaviours
+$b, b'$ distinct on the task-relevant subspace,
 \begin{equation}\label{eq:obscond}
-\mathrm{rank}_{\mathcal{T}}\mathcal{J} \;=\; \dim \mathcal{T}.
+\mathcal{J}(b) = \mathcal{J}(b') \;\Longrightarrow\; q(b) = q(b') \quad \text{for every query } q \in Q .
 \end{equation}
-When \eqref{eq:obscond} fails, the kernel of $\mathcal{J}$ on $\mathcal{T}$ is non-trivial:
-there exist two executions $e_1, e_2$ whose available observations are all identical while
-their task-relevant behaviour differs. In that case \emph{no number of additional observations
-can reduce task loss}, because new observations still lie in the range of the same
-$\mathcal{J}$.
+When \eqref{eq:obscond} fails, there exist two executions $e_1 \ne e_2$ whose available
+observations are all identical while their task-relevant behaviour differs, and in that case no
+number of additional observations of the same kind can reduce task loss, because new observations
+still lie in the range of the same $\mathcal{J}$.
 \end{proposition}
 
 \begin{proof}
-If \eqref{eq:obscond} holds, then $\mathcal{J}$ is injective on $\mathcal{T}$, task-relevant
-differences are uniquely recoverable from observations, and $T$-sufficiency follows from
-Definition \ref{def:sufficient}. If it fails, then
-$\Ker \mathcal{J} \cap \mathcal{T} \ne \{0\}$; take a pair of executions $e_1 \ne e_2$
-corresponding to a non-zero element of that kernel (in the task-relevant sense). The two are
-indistinguishable under $\mathcal{J}$, so every $\mathcal{J}$-measurable decision rule gives
-the same answer and is wrong on at least one of them. Adding observations does not change
-$\mathcal{J}$, and therefore does not change that kernel.
+If \eqref{eq:obscond} holds, every query's value is a function of the observation, so the model
+built from observations answers each query as the system does, which is $T$-sufficiency by
+Definition \ref{def:sufficient}. If it fails, there are $e_1 \ne e_2$ with $\mathcal{J}(e_1) =
+\mathcal{J}(e_2)$ and some $q$ with $q(e_1) \ne q(e_2)$; every $\mathcal{J}$-measurable decision
+rule gives the same answer on both and is therefore wrong on at least one. Adding observations of
+the same kind does not change $\mathcal{J}$, and therefore does not separate them.
 \end{proof}
+
+The rank form of the criterion is the specialisation of \eqref{eq:obscond} to the case where
+$\mathcal{T}$ is a finite-dimensional vector space, $\mathcal{J}$ is linear and $\dim$ is dimension,
+in which case $\mathcal{J}(b) = \mathcal{J}(b')$ holds exactly when $b - b' \in \Ker \mathcal{J}$ and
+\eqref{eq:obscond} reduces to $\operatorname{rank}_{\mathcal{T}}\mathcal{J} = \dim \mathcal{T}$.
+Stating the general criterion as a rank condition would be a category error for software: traces,
+logs, test outcomes and source observations do not naturally form vector spaces, and there is no
+dimension to compute. The rank formulation is retained because it is useful where it applies---in
+finite-state models, in linear abstractions of resource behaviour, and as an intuition about
+counting the independent directions an observation apparatus can resolve---and not because it is the
+general case.
+
+One further distinction belongs here, because an earlier phrasing of this section blurred it.
+Failure of \eqref{eq:obscond} is a property of the \emph{observation mechanism}, not of the sample:
+no quantity of data of a kind that cannot separate two behaviours will separate them. This is
+different from collecting too few samples of an observation that \emph{can} separate them, where
+more data does help, and where the relevant bound is the sample complexity of
+Remark \ref{rmk:sample-complexity}. Only the first case licenses the conclusion that further reading
+is futile.
 
 Proposition \ref{prop:observability} separates ``insufficient comprehension'' into two cases
 that are entirely different in engineering terms:

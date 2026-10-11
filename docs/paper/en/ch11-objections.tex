@@ -57,6 +57,18 @@ claims below.
 \item The paper does \emph{not} claim that ``no violation detected'' equals ``every
       execution satisfies''. Three states must be distinguished (Principle
       \ref{pr:three-states}).
+\item The paper does \emph{not} claim to determine who is authorised to adopt a specification.
+      Principle \ref{pr:authority} establishes that authorisation is a failure axis independent of
+      reliability; which body holds the standing is an institutional fact that the framework
+      locates but does not settle.
+\item The paper does \emph{not} claim a model of how specification fidelity decays over time.
+      Section \ref{sec:spec-binding} argues that the quantity must be time-indexed and that a
+      re-confirmation rule is forced by Proposition \ref{prop:three-grounds}(i); the form of
+      $\varepsilon_{\text{cons}}(\cdot)$ is left open.
+\item The paper does \emph{not} claim that the design-effect expression \eqref{eq:design-effect} is a
+      theorem about majority error. It is the standard approximation for a mean under exchangeable
+      correlation, and is used here to make Corollary \ref{cor:diversity} quantitative, not to
+      establish a bound.
 \end{enumerate}
 
 \section{Arguments Removed from the Load-Bearing Structure}
@@ -220,10 +232,12 @@ The following questions are open:
       gives sufficient conditions, but whether those conditions can be satisfied
       simultaneously in systems containing nondeterminism, real-time constraints and
       reflexivity is not known.
-\item \term{How to measure $q$ for the consensus layer}. Proposition \ref{th:correlated}
+\item \term{How to measure $q$ for the consensus layer}\label{op:q}. Proposition \ref{th:correlated}
       attributes reliability to the correlated error mode, but gives no operational method
       for estimating $q$. This is the crux of whether the direction can be put into
-      practice.
+      practice. Section \ref{sec:consensus} supplies a companion quantity, the mean pairwise
+      error correlation $\bar\rho$, which is estimable from data the framework already collects;
+      $q$ remains the limit that is not.
 \item \term{Whether a joint semantics of resources and function is decidable}. A costed
       trace semantics can express joint constraints, but the size of its decidable fragment
       and the tightness of its bounds are unsettled.
@@ -246,6 +260,19 @@ The following questions are open:
       text should therefore be treated as a \emph{second-hand report awaiting re-checking};
       several entries with recent nominal years are retained as recorded in the original
       source, and no independent checking was done here.
+      A verification round was carried out for the first revision. The five empirical
+      citations supporting Hypothesis $H_7$ were checked against the primary abstract pages:
+      the four figures quoted (189 Lean tasks; $72.6\%$, $52.3\%$ and $4.9\%$ for the best
+      model) and the 245 operating-system tasks in the second benchmark were all found
+      \emph{in the abstracts themselves}, not merely in secondary summaries. Two venue
+      corrections were made as a result: the traceable-refinement work is a workshop poster
+      rather than a main-conference paper, and the mutation-driven method is an unrefereed
+      preprint. Newly added citations were checked to the same depth, and the two entries
+      whose full text was not read are marked ``metadata only'' in the bibliography.
+      What the round did \emph{not} establish: no number was re-derived from a paper's tables
+      or figures, and no full text was read end to end, so the grade of the numeric claims is
+      still ``quoted from a primary abstract'', one step above the original second-hand
+      report and short of independent replication.
 \item The formalisation in this paper consists of \emph{working definitions established for
       the purposes of this paper}, and should not be mistaken for an existing unified
       standard. In particular, the three items ``oblivious set'', ``level contract

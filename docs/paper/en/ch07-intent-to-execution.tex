@@ -289,6 +289,38 @@ find contradictions and check a specification for internal consistency, whereas 
 specification is finally adopted, and whether it fully expresses the goal, still requires an
 identifiable accountable party.
 
+\begin{remark}[Three questions, not one, and what automation can do for each]\label{rmk:three-questions}
+The intent gap is often discussed as a single obstacle. It is three, they need different
+instruments, and separating them makes clear that the framework denies mechanisability to a smaller
+region than it is usually taken to.
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Semantic expression}: given requirements that have in fact been settled, can they be
+      written as a formal specification? In bounded domains this is largely automatable, and the
+      instruments are the type system, the theorem prover and the specification-synthesis methods
+      discussed in Chapter \ref{ch:literature}. Nothing in Proposition \ref{prop:three-grounds}
+      denies this, and treating it as denied would be an over-reading.
+\item \term{Requirement discovery}: has the interested party found and expressed everything that
+      matters? This is Proposition \ref{prop:three-grounds}(i), and its remedy is interaction:
+      counterexamples, scenarios, and the probing loop of Chapter \ref{ch:comprehension}. Partially
+      automatable, in the sense that machines can generate the probes; not automatable in the sense
+      that the answers must come from someone with something at stake.
+\item \term{Normative choice}: when requirements conflict---latency against safety, privacy against
+      analytical power, cost against performance---who has the standing to decide? This is not an
+      epistemic question at all; it is the authority axis of \S\ref{sec:authority}, and the
+      instruments are procedural: a designated accountable body and a record of the decision.
+\end{enumerate}
+Reading the gap this way also corrects a common over-statement in the opposite direction. Because
+(a) is largely mechanisable, ``some intent can be precisely defined and automatically checked'' is
+true; what cannot be mechanised is the residue---preferences not yet activated, conflicts not yet
+surfaced, and decisions nobody has the standing to make alone. The precise claim this paper defends
+is therefore narrower than ``intent cannot be formalised'': \emph{a formal proof of implementation
+correctness cannot by itself establish whether the specification serves the goals of all relevant
+parties}, and the open-world remainder must be handled by an independent validation process. That
+process may use automated tools; it may not treat a tool's internal consistency as evidence that the
+goal was right.
+\end{remark}
+
 \begin{remark}[The intent gap is the frame problem]\label{rmk:frame}
 The three grounds of Proposition \ref{prop:three-grounds} are not three independent
 findings; they point jointly to an older problem. To formalise an intent one must first
@@ -309,6 +341,42 @@ problem. The identification has two consequences:
       requirements layer.
 \end{enumerate}
 Interactive refinement is therefore forced, not selected from among candidate approaches.
+\end{remark}
+
+\begin{remark}[The oblivious set is where the frame problem is paid for, level by level]\label{rmk:frame-per-level}
+Remark \ref{rmk:frame} identifies the intent gap with the frame problem, and stops there. The
+identification can be pushed one step further, and doing so joins two parts of the paper that have so
+far been separate.
+
+The frame problem, in the form used here, is the difficulty of \emph{deciding relevance}: of saying
+which facts bear on a conclusion before knowing what is to be concluded. An oblivious set
+(Definition \ref{def:oblivious}) is a relevance judgement of exactly that shape, made explicit and
+local: $\Obl(\Lambda_i)$ names the differences that $\Lambda_i$ declares not to bear on it. The
+relation between the two is therefore not analogy but scale---and it is worth being precise about
+what is and is not obtained.
+
+What is obtained is a \emph{localisation}. A frame problem posed for a system as a whole is not
+smaller for being posed for one of its levels; but it is bounded by that level's declared
+observation map, and it is discharged in a currency the level can state. The global question, which
+facts are relevant to the system's purpose, still has no general solution, and nothing in this paper
+claims one. What the level structure buys is that the global question is never asked all at once:
+each level answers its own bounded version and publishes the answer.
+
+What is obtained second is \emph{testability}. A relevance judgement that is merely held cannot be
+criticised; one that is written down can. Section \ref{sec:neardecomp} gives the two ways a declared
+judgement can be wrong---the interface may be insufficient for external behaviour, or the observation
+map may be incomplete with respect to what is observable in fact. Both are checks, not opinions. In
+this sense the oblivious set is the frame problem's engineering form: not a solution to it, but a
+place to pay for it where the payment can be audited.
+
+Two consequences follow, and they are the reason the remark is here rather than in Chapter
+\ref{ch:comprehension}. First, it explains why the descent protocol of Principle \ref{pr:descent} has
+the stopping rule it has: one descends until the invariant governing the change becomes visible,
+because that is the depth at which the relevant oblivious sets have been consulted, and descending
+further buys relevance that no obligation depends on. Second, it makes the intent layer's
+difficulty legible in the same terms as a module boundary's: the intent gap is a frame problem at
+$\Lk{\infty}$, which is exactly the level at which no oblivious set can be declared for the machine,
+because declaring one would already be deciding the purpose.
 \end{remark}
 
 \section{The Asymmetry Between Verification and Generation}\label{sec:asymmetry}
@@ -645,6 +713,73 @@ why ``reviewing with another model from the same source'' does not constitute a 
 structurally.
 \end{remark}
 
+\begin{remark}[What the consensus model is, and what it is not]\label{rmk:consensus-status}
+Theorem \ref{th:condorcet}, Proposition \ref{th:correlated} and the design-effect approximation
+below are statements \emph{within} stated probability models. They should not be read as predictions
+of the reliability of a real review process, and the gap between model and practice is worth being
+explicit about, because it is where the framework is most likely to be misused.
+
+Three caveats. First, the models assume a common proposition to be judged, independent error sources
+modulo $q$, and a fixed individual competence. Real attestation exercises violate all three: what
+counts as a faithful specification is itself under negotiation, attestors influence one another by
+talking, and competence varies with the clause being judged. The literature on jury theorems is
+largely a study of how fragile these premises are---in particular, independence and competence are
+not simultaneously justifiable under any single notion of probability \cite{dietrich2008}---and a
+shared body of evidence is the most natural mechanism by which apparent independence fails, since it
+makes the attestors' errors share a common cause \cite{dietrich2004}. The second of those results is
+the formal counterpart of what Principle \ref{pr:q-decomposition} calls information isomorphism.
+
+Second, a single parameter $q$ does not characterise dependence in general. Two attestors can be
+correlated in one clause and independent in another, correlated through shared training in one
+subdomain and through shared incentives in another, and a one-dimensional summary averages over all
+of it. $q$ is the right parameter for the bound and a lossy summary of the phenomenon.
+
+Third, and most consequentially, $p$ and $q$ are not estimable from data unless ``faithful to the
+intent'' has a stable standard of evaluation, a designated adjudicator and a specification of what
+counts as an error. Where those exist---bounded domains with observable acceptance criteria---the
+quantities can be estimated from outcomes, which is the case Hypotheses $H_8$ and $H_{11}$ address.
+Where they do not, the bound remains a conditional statement and no quantity of attestation data
+supplies the missing standard. The honest summary is that the model tells you what to measure if the
+measurement is possible, and tells you the shape of the answer if it is.
+\end{remark}
+
+\begin{remark}[Partial correlation: the design effect]\label{rmk:design-effect}
+Theorem \ref{th:condorcet} and Proposition \ref{th:correlated} describe two extremes: independent
+errors, giving a bound that improves exponentially in $n$, and a common error mode, giving a floor
+$q$ that no $n$ can breach. A real attestation network sits between them, with errors partially
+correlated in pairs. The standard statistical instrument applies, and is worth writing down because
+it makes Corollary \ref{cor:diversity} quantitative rather than rhetorical.
+
+Let $\bar\rho$ be the mean pairwise correlation of attestor errors. The customary
+\emph{design-effect} approximation \cite{kish1965} replaces the nominal attestor count by an
+effective one,
+\begin{equation}\label{eq:design-effect}
+n_{\mathrm{eff}} \;=\; \frac{n}{1 + (n-1)\bar\rho},
+\end{equation}
+and one reads the bound of Theorem \ref{th:condorcet} at $n_{\mathrm{eff}}$ in place of $n$. Two
+consequences follow.
+\begin{enumerate}[label=(\alph*)]
+\item As soon as $n\bar\rho \gg 1$, \eqref{eq:design-effect} gives
+      $n_{\mathrm{eff}} \to 1/\bar\rho$, \emph{independent of $n$}. Beyond that point additional
+      attestors buy nothing; the ceiling is set by the correlation alone.
+\item Lowering $\bar\rho$ raises that ceiling, and the trade is explicit: once $n\bar\rho$ is large,
+      halving $\bar\rho$ roughly doubles the achievable $n_{\mathrm{eff}}$. Diversity is a budget
+      line, not a slogan.
+\end{enumerate}
+The relation to Proposition \ref{th:correlated} is that $q$ is the degenerate case
+$\bar\rho \to 1$: with complete correlation $n_{\mathrm{eff}} \to 1$ and \eqref{eq:design-effect}
+reproduces the floor.
+
+Two caveats belong with the remark. First, \eqref{eq:design-effect} is the standard approximation
+for the variance of a mean under exchangeable correlation, not a theorem about majority error; a
+rigorous bound for the intermediate regime needs an explicit correlation model, and none is claimed
+here. Second---and this is what makes the approximation usable---$\bar\rho$ is \emph{estimable} from
+data the framework already collects: the historical pairwise correlation of attestor errors, settled
+against subsequently observed defects and rework. This does not answer the open problem
+\ref{op:q} of measuring $q$; it supplies a companion quantity that is measurable, while $q$ remains
+the limit that is not.
+\end{remark}
+
 \section{The Incentive Structure of the Intent Layer}\label{sec:mechanism}
 
 Proposition \ref{th:correlated} attributes consensus reliability to the parameter $q$ but
@@ -665,7 +800,9 @@ The common error mode decomposes into three sources:
 The three sources correspond to three different interventions: admitting heterogeneous
 participants (for (a)), changing the payoff structure (for (b)), and introducing independent
 information channels (for (c)). Acting on the first alone is the common practice and the
-least effective.
+least effective. \S\ref{sec:authority} identifies a fourth co-occurrence of the same family,
+\emph{authority isomorphism}, and explains why it is not a fourth term of this decomposition but a
+separate failure axis.
 \end{principle}
 
 \begin{principle}[Proper scoring rules]\label{pr:scoring}
@@ -687,6 +824,120 @@ This section closes the gap left by \S\ref{sec:consensus}. The bound there is co
 and its condition (independence) is here reduced to a quantity that can be designed,
 measured and paid for. Chapter \ref{ch:program} writes it as hypothesis $H_{11}$.
 
+\section{Who May Attest: the Deontic Axis}\label{sec:authority}
+
+Sections \ref{sec:consensus} and \ref{sec:mechanism} treat attestation as an epistemic problem: is
+the specification faithful to the intent, and how reliable is the majority that says so. A second
+question exists, and the framework's own assurance condition already contains it without having
+connected it. The second conjunct of \eqref{eq:assurance} requires that \emph{the contract is
+explicit and authorised}. Authorisation is not a matter of reliability: a specification can be
+faithfully attested, by a large and genuinely independent panel, and still be one that nobody had
+the standing to adopt.
+
+\begin{principle}[Authorisation is a separate failure axis]\label{pr:authority}
+The reliability of an attestation network concerns whether its verdict is \emph{likely correct}.
+Authorisation concerns whether the verdict \emph{decides anything}. The two are independent.
+\begin{enumerate}[label=(\alph*)]
+\item A verdict can be reliable and unauthorised: a competent panel drawn entirely from one
+      stakeholder class, agreeing on a requirement that another class had the standing to refuse.
+\item A verdict can be authorised and unreliable: a single accountable owner making an uninformed
+      judgement.
+\end{enumerate}
+Consequently no improvement in $q$, in $n_{\mathrm{eff}}$, or in the incentive structure can repair an
+authorisation failure. The failure is not that everyone is wrong together, but that everyone together
+is not the body entitled to decide.
+\end{principle}
+
+This is why authority belongs \emph{beside} the three sources of $q$ rather than inside them.
+Principle \ref{pr:q-decomposition} decomposes the common error mode into cognitive, interest and
+information isomorphism---three ways for attestors to be wrong in the same way. A fourth
+co-occurrence is easy to name, and call \term{authority isomorphism}: all attestors drawn from a
+single stakeholder class. It does raise $q$, because one class tends to share both premises and
+interests. But lowering $q$ does not address it. A perfectly diverse panel of outsiders is exactly
+the case in which the authorisation failure is cleanest: they may be right and still lack standing.
+
+The distinction has a well-worn institutional form, worth one sentence and no more. Distributed
+ledger systems separate the mechanism that establishes \emph{what is true} from the mechanism that
+establishes \emph{who may decide what counts as true}; consensus and governance are different
+protocols, and a system with excellent consensus and no governance is not thereby legitimate. The
+analogy is offered as an analogy. What it points at is a gap in this paper rather than a result in it.
+
+\begin{remark}[Two consequences for the design of the intent layer]\label{rmk:authority-design}
+\begin{enumerate}[label=(\alph*)]
+\item The attestation record of \S\ref{sec:consensus} should carry the \emph{stakeholder class} of
+      each attestor beside its provenance. That costs one field, makes authority isomorphism
+      observable, and lets an authorisation failure be distinguished after the fact from a
+      reliability failure---the two have different remedies.
+\item The choice of the authorised body is not derivable from the framework. It is an institutional
+      fact about who bears the consequences of the decision, and is fixed by the same argument that
+      assigns $\Lk{\infty}$ to human bearers in Chapter \ref{ch:levels}---an argument whose premise
+      is the prevailing liability regime, as that chapter states explicitly.
+\end{enumerate}
+\end{remark}
+
+\section{Specification Binding}\label{sec:spec-binding}
+
+The fourth pillar of \eqref{eq:assurance} binds the verified artefact to the executed artefact.
+Nothing so far binds the specification to the intent it was meant to express, and the asymmetry
+matters, because the two have opposite behaviour over time. A binary is byte-identical or it is not:
+its binding is static and decidable once and for all. A specification is faithful to an intent that
+moves. Proposition \ref{prop:three-grounds}(i) is the reason---requirements are generative, and
+preferences are activated by situations that did not exist when the specification was written---so
+fidelity is not a property a specification has but a quantity that decays.
+
+Table \ref{tab:evidence-package} already requires item 10, re-verification rules, of every artefact:
+which changes trigger recomputation of the affected evidence. The specification side has no
+counterpart, and condition (i) of Proposition \ref{prop:assurance} is stated as though it needed none. The
+repair is to make the specification carry its own binding record.
+
+\begin{definition}[Specification binding]\label{def:spec-binding}
+A \term{specification binding} is a four-tuple
+\[
+\mathrm{SB}(\Phi) \;=\; \bigl(\text{specification version},\; \text{attestation record},\;
+\text{validity horizon},\; \text{re-confirmation triggers}\bigr),
+\]
+where the attestation record is the consensus artefact of \S\ref{sec:consensus} that established
+$\Phi$'s fidelity when it was written, the validity horizon is the interval over which that
+attestation is to be treated as current, and the re-confirmation triggers are the events that
+invalidate it before the horizon expires.
+\end{definition}
+
+The triggers are the interesting part, and they are not arbitrary. Proposition \ref{prop:three-grounds}
+names three sources of drift, and each suggests its own trigger.
+\begin{enumerate}[label=(\alph*)]
+\item \emph{Generative requirements}: a new class of user, scenario or deployment environment appears,
+      which is precisely the situation that activates a preference nobody had expressed.
+\item \emph{Lossy compression}: the domain model, ontology or controlled language in which $\Phi$ was
+      written changes, so that the same text denotes something else.
+\item \emph{Validation}: an observed incident whose resolution is not derivable from $\Phi$, which is
+      evidence that $\Phi$ under-specifies the intent rather than that the implementation erred.
+\end{enumerate}
+Trigger (c) is worth singling out because it is available for free: an incident that required a human
+judgement call is, by construction, an incident the specification did not settle.
+
+Condition (i) of Proposition \ref{prop:assurance} should therefore be read with a time index. Writing
+$\varepsilon_{\text{cons}}(\Delta t)$ for the consensus error after an interval $\Delta t$ since
+attestation,
+\begin{equation}\label{eq:spec-decay}
+\Pr\bigl[\Phi \text{ is faithful to } I \text{ at time } t\bigr] \;\ge\;
+1 - \varepsilon_{\text{cons}}(\Delta t),
+\qquad \Delta t = t - t_{\text{attest}},
+\end{equation}
+which reduces to the original condition at $\Delta t = 0$. This paper does not give the form of
+$\varepsilon_{\text{cons}}(\cdot)$: no decay model is proposed, and the quantity is left as a
+measurable object rather than a modelled one. What the section establishes is the structural
+symmetry---a specification needs a re-confirmation rule exactly as a binary needs a re-verification
+rule---and that the symmetry is forced by Proposition \ref{prop:three-grounds}(i) rather than added
+for completeness.
+
+\begin{remark}[The specification-side dual of the artefact-binding gap]\label{rmk:spec-h9}
+Hypothesis $H_9$ concerns the measurable risk of the artefact-binding gap. Its specification-side
+dual is the risk of executing against a stale-but-attested specification: the attestation record is
+still inside its horizon, the binary still matches its digest, and both are wrong together because
+the intent moved. The two gaps are independent, and a deployment can close either while leaving the
+other open.
+\end{remark}
+
 \section{The Consolidated Assurance Condition}\label{sec:assurance-final}
 
 Combining the parts of this chapter yields a complete, conditional statement of assurance.
@@ -705,24 +956,65 @@ between the two layers, the record of the consensus, and the traceability of the
 are guaranteed mechanically by cryptographically anchored infrastructure.
 \end{definition}
 
-\begin{theorem}[Consolidated assurance condition]\label{th:assurance}
+\begin{proposition}[Consolidated assurance: sufficient conditions]\label{prop:assurance}
 Let $I$ be an intent, $\Phi$ an attested specification, $B$ a candidate implementation
 (binary) and $E$ a runtime environment, with $A$ the declared environmental assumptions.
-Then ``property $\varphi$ holds within the declared scope $\Sigma$'' holds if and only if
-the following conditions hold simultaneously:
+If the following conditions hold simultaneously, then ``property $\varphi$ holds within the
+declared scope $\Sigma$'' holds:
 \begin{align}
-&\text{(i)}\quad \Pr\bigl[\Phi \text{ is faithful to } I\bigr] \;\ge\; 1 - \varepsilon_{\text{cons}},
-\qquad \varepsilon_{\text{cons}} \text{ determined by \eqref{eq:chernoff} and } q;\\
+&\text{(i)}\quad \Pr\bigl[\Phi \text{ is faithful to } I \text{ at time } t\bigr] \;\ge\;
+1 - \varepsilon_{\text{cons}}(\Delta t),
+\qquad \varepsilon_{\text{cons}}(\cdot) \text{ from \eqref{eq:chernoff}, } q \text{ and } \bar\rho,\;
+\Delta t = t - t_{\text{attest}};\\
 &\text{(ii)}\quad \Tr(B, E) \;\subseteq\; \Allow(\Phi);\\
 &\text{(iii)}\quad E \models A;\\
 &\text{(iv)}\quad \mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}});\\
-&\text{(v)}\quad \varphi \text{ is preserved under the interpretation relation } R \text{ in use}.
+&\text{(v)}\quad \varphi \text{ is preserved under the interpretation relation } R \text{ in use};\\
+&\text{(vi)}\quad \Phi \text{ is authorised by a body with standing to adopt it.}
 \end{align}
-\end{theorem}
+\end{proposition}
 
-Condition (i) is probabilistic, and its reliability is governed by $q$; conditions (ii)--(v)
-are mechanical, and their strength is limited by $\TCB$ and by the semantic model.
-Equation \eqref{eq:twolayer} and Theorem \ref{th:assurance} together give the complete
+The statement is deliberately one-directional. It was written elsewhere as an equivalence, and
+that was wrong, for a reason worth stating because it recurs wherever a framework of this shape is
+proposed. The six conditions are \emph{evidence} conditions: they say what must be in hand. They are
+not truth conditions, and truth does not wait for them. A property can hold although no evidence for
+it has been assembled, so the converse direction fails on the elementary ground that a system may be
+correct and undocumented. What the proposition asserts is the useful direction---that holding all six
+is enough---and what it deliberately does not assert is that holding fewer is impossible.
+
+Each conjunct carries its own caveat, and none of them is mechanical in the same sense as the
+others.
+\begin{enumerate}[label=(\alph*)]
+\item Condition (i) is a probability with no natural definition until faithfulness is defined, an
+      adjudicator identified, and a class of errors specified. Until those exist, $\varepsilon$ is a
+      parameter of a model rather than a measured frequency. Its reliability is governed by $q$ and
+      by the correlation $\bar\rho$ of \S\ref{sec:consensus} and \S\ref{sec:mechanism}, and both are
+      conditional-model quantities.
+\item Condition (ii) is a semantic property, not a routine check. $\Tr(B,E) \subseteq \Allow(\Phi)$
+      is decidable outright only for restricted languages, finite models or programs carrying
+      checkable certificates; for general programs in general environments it is a proof obligation,
+      discharged---when it is discharged at all---by a combination of typing, model checking,
+      contract verification and testing of graded strength.
+\item Conditions (iii) and (iv) are the mechanical pair, and their strength is limited by the trusted
+      computing base and by the model of the environment, not by anything in this chapter.
+\item Condition (v) is where the relational premise of Remark \ref{rmk:relational-compose} is spent.
+\item Condition (vi) is deontic and is not a matter of reliability at all (\S\ref{sec:authority}).
+\end{enumerate}
+Three of the six conjuncts of Definition \ref{def:assurance} are therefore mechanical, one is
+probabilistic, one is deontic, and one---the requirement that the contract be explicit---is what the
+rest of the chapter is for.
+
+One further distinction the consolidated statement must carry is the classical one between safety and
+liveness. Condition (ii) constrains finite traces: nothing forbidden happens. Progress properties---a
+request is eventually answered, a lock is eventually released, a queue eventually drains---are
+liveness properties, they are not instances of ``no finite prefix violates $\Phi$'', and they are not
+obtained by the same argument. Where a system's contract includes liveness, the obligations belong at
+the levels and to the devices that can express them: fairness assumptions and well-foundedness
+arguments for the protocol model, and monitoring with a bounded horizon for the deployed system. A
+consolidated statement that quietly absorbed liveness into trace inclusion would be wrong in a way
+that is easy to miss, and this one does not.
+
+Equation \eqref{eq:twolayer} and Proposition \ref{prop:assurance} together give the complete
 answer to Problem \ref{prob:trust}:
 
 \begin{principle}[Answer to Problem \ref{prob:trust}]\label{pr:answer}

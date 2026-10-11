@@ -218,12 +218,23 @@ questions that admit no answer, such as ``do we need formal verification''.
 
 \section{The Bearer of Responsibility}\label{sec:linf}
 
-\begin{principle}[Responsibility cannot be transferred]\label{pr:responsibility}
+\begin{principle}[Responsibility cannot be transferred]\label{pr:responsibility}\textbf{[A]}
 Deciding what is wanted and bearing the consequences of that decision are two facets of one
 act of agency. Hence $\Lk{\infty}$ does not belong to machines, not because machines are not
 intelligent enough, but because responsibility must be borne by a subject capable of bearing
 consequences.
 \end{principle}
+
+The strength label is \textbf{[A]}, and the assumption it rests on must be stated, because the
+argument is otherwise the one place in this paper that carries no premise at all. The premise is:
+\emph{under the prevailing liability regime}. What the argument uses is not a metaphysical property
+of persons but an institutional one---the capacity to be held to account, to be sued, sanctioned or
+otherwise made to answer. That capacity is constructed by law and convention rather than given by
+biology: legal personality has historically been extended and withheld, and it is extended to
+non-natural persons today. If a regime were to attach liability to an artificial agent, the
+premise would change and the conclusion would have to be re-derived. What survives the change is the
+structural point: whatever occupies $\Lk{\infty}$ must be a thing that can bear consequences, and
+the question of which things those are is answered by institutions, not by the framework.
 
 This principle must be made precise by the results of \S\ref{sec:consensus}. The residual
 responsibility of humans is \emph{not individual but collective}: not ``one person reviews
@@ -259,6 +270,13 @@ wrong level.
 \item Solving multi-tenant isolation with a type system, because isolation is a cross-cutting
       concern (Principle \ref{pr:crosscutting}) and a type system can express only part of it.
 \end{enumerate}
+Form (d) has a second reading, and it is the sharper one. The type system constrains the channel the
+level \emph{declared}---the data path it can name---while the channels it cannot name (allocation
+timing, cache occupancy, error behaviour) remain open. That is not a failure of sufficiency, which
+differential testing would catch, but of completeness: the declared observation map is not the
+whole of what is observable (Principle \ref{pr:two-criteria}, Remark \ref{rmk:noninterference}).
+Read this way, (d) is not an example of choosing the wrong language for a level; it is an example of
+a level whose oblivious set is untrue, and no amount of type-level expressiveness repairs it.
 \end{example}
 
 The antipattern of Example \ref{ex:wrong-language}(d) has a more serious form: it is not

@@ -33,14 +33,14 @@ By Principle \ref{pr:demote}, the claims of this paper fall into three classes:
 \item \term{Argued under explicit assumptions}: principles \ref{th:compression},
       \ref{th:necessity}, \ref{th:separation}, \ref{th:design}; propositions
       \ref{prop:no-godel}, \ref{prop:three-grounds}.
-\item \term{Advanced as falsifiable hypotheses}: the hypotheses $H_1$--$H_{12}$ below. In
+\item \term{Advanced as falsifiable hypotheses}: the hypotheses $H_1$--$H_{14}$ below. In
       addition, the structural proposal of Remark \ref{rmk:fibration-status} (promoting the
       level family to a strict fibration) and the renormalisation analogy of Remark
       \ref{rmk:rg} are not counted among the theorems; their status is that of a proposal
       and a heuristic.
 \end{itemize}
 
-\section{Twelve Falsifiable Hypotheses}
+\section{Fourteen Falsifiable Hypotheses}
 
 \begin{hypothesis}[Structural convergence above a random baseline]\label{hyp:h1}
 After controlling for system size, domain, platform, programming language and framework,
@@ -208,6 +208,50 @@ defect rate and change failure rate on them.
 variables such as the size of the change.
 \end{hypothesis}
 
+\begin{hypothesis}[The trajectory of proof cost per unit of code]\label{hyp:h13}
+Chapter \ref{ch:objections} declines to claim that formal verification becomes cheap automatically
+and asks instead for a measurable cost metric. The hypothesis is that the ratio
+\[
+\kappa_{\text{proof}} \;=\; \frac{\text{effort to establish a stated guarantee}}{\text{size of the code carrying it}}
+\]
+is on a measurable trajectory, and that the trajectory---not its current value---decides whether
+mechanised verification becomes routine engineering or remains confined to safety-critical work.
+\emph{Initial evidence}: the seL4 functional-correctness proof is reported at about eleven
+person-years for about 8{,}500 lines of C, or roughly $1.3$ person-years per thousand lines,
+\emph{excluding} investment in reusable tools and frameworks \cite{klein2009}; figures that include
+that investment are several times larger. The two figures differ by a factor worth stating, because
+the reusable-tools share is precisely the part that should fall if the hypothesis holds.
+\emph{Operationalisation}: for a fixed class of properties and a fixed prover, record
+$\kappa_{\text{proof}}$ per project and per year, separating the reusable-infrastructure share from
+the per-project share; fit the trajectory over the observation window.
+\emph{Falsification condition}: no measurable trend, or a trend attributable entirely to the
+reusable-infrastructure share while the per-project share is flat. Since the paper declines to
+predict which way this goes, both outcomes are informative.
+\emph{Risk}: the denominator is contentious---lines of code, of specification, or of proof---and the
+choice must be pre-registered or the trajectory is not comparable across projects.
+\emph{Interpretation bands}: the thresholds conventionally proposed for reading the trajectory, such
+as $0.1$ for ``routine'' and $0.5$--$1$ for ``specialist'', are stipulated decision bands rather
+than measured quantities, and are labelled as such here.
+\end{hypothesis}
+
+\begin{hypothesis}[Agentic generation can lower the read-set scaling exponent]\label{hyp:h14}
+Proposition \ref{prop:exponent} makes the read-set scaling exponent $\alpha$ the quantity that
+decides whether a system's governance cost grows linearly or quadratically in its size. Every
+hypothesis above concerns systems built by people or by human-directed tools. This one asks the
+AI-era question directly: can an agentic generator, given licence to restructure, \emph{discover}
+architectures with a lower $\alpha$ than the human baseline, or does it only move constants within
+an architecture it inherits? The distinction is not cosmetic---it is the difference between
+automation that accelerates work and automation that changes what remains possible at scale.
+\emph{Operationalisation}: start an agent and a human control group from the same code base with the
+same feature backlog and the same freedom to refactor; track $\mathbb{E}[\rho]$ and the fitted
+$\alpha$ against system size over the same window; compare trajectories.
+\emph{Falsification condition}: $\alpha$ does not differ significantly between arms, or the apparent
+difference is explained entirely by the volume of code written rather than by its structure.
+\emph{Risk}: $\alpha$ is estimated through the read-set proxy of Definition \ref{def:readset}, whose
+validity is itself hypothesis $H_4$; a failure of $H_4$'s proxy would make this hypothesis
+unfalsifiable rather than false, and the two must not be confused.
+\end{hypothesis}
+
 \begin{table}[htbp]
 \centering
 \footnotesize
@@ -243,6 +287,12 @@ $H_{11}$ & Incentive structure reduces correlated error &
   Experimental ethics and cost of incentive schemes \\
 $H_{12}$ & Rate--distortion slope predicts refactoring benefit &
   Regression of defect rate before and after refactoring & Estimability of the slope \\
+$H_{13}$ & Proof cost per unit of code follows a measurable trajectory &
+  Fitted trajectory of $\kappa_{\text{proof}}$, tools share separated &
+  Contentious denominator; comparability across projects \\
+$H_{14}$ & Agentic generation can lower the read-set exponent $\alpha$ &
+  Trajectory of fitted $\alpha$ against system size, two arms &
+  Depends on the read-set proxy of $H_4$ \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -442,3 +492,46 @@ must be independently checkable and must not depend on any unproved conjecture. 
 \ref{rmk:q1q8} and the list of non-claims in Chapter \ref{ch:objections} are the concrete
 results of that self-examination.
 \end{remark}
+
+\section{Minimum Viable Subset and the Adoption Risk}\label{sec:mvs}
+
+The hypotheses above share a failure mode that none of them covers. They are each refuted or
+confirmed by experiment, and the framework can also simply fail to be adopted, in which case no
+experiment is run at all. The risk is worth stating explicitly because it is orthogonal to
+falsifiability, and because it has a specific shape: the formal objects cost something to
+maintain---declarations must be written, kept current and defended---and if that cost exceeds the
+benefit, the practice dies of neglect rather than of refutation.
+
+\begin{principle}[Minimum viable subset]\label{pr:mvs}
+If only three elements of the framework can be adopted, they should be:
+\begin{enumerate}[label=(\alph*)]
+\item \term{the oblivious-set declaration}: each level or module states what it is permitted never to
+      care about (Definition \ref{def:oblivious});
+\item \term{the leak-pair test}: for each claimed boundary, a differential test seeking two executions
+      with equal interface traces and different external behaviour (Proposition \ref{prop:leakpair},
+      Corollary \ref{cor:diagnose});
+\item \term{the level attribution of verification obligations}: each property is assigned to the
+      lowest level that can express it, which decides whether it is mechanically decidable,
+      monitorable, or a matter for attestation (Definition \ref{def:obligation-assign}).
+\end{enumerate}
+These three form the smallest closed loop in the framework: a declaration, a test of the declaration,
+and a routing decision that consumes both. The contract operad of \S\ref{sec:operad} and the consensus
+bound of \S\ref{sec:consensus} are refinement layers---valuable where the corresponding difficulty is
+present, dispensable where it is not. Principles \ref{pr:descent} and \ref{pr:two-criteria} are what
+make the loop usable: the first says how deep to look, the second says what the declaration has to
+satisfy.
+\end{principle}
+
+The measurable form of the adoption claim is deliberately modest, and it is the metric Chapter
+\ref{ch:levels} already proposes for its own empirical content: the rate at which properties that
+should be assured mechanically are instead left to manual review, and the rate at which claimed
+boundaries fail their own tests. If adopting the three elements above does not move those rates in a
+real project, then the framework's problem is not that a hypothesis was false but that the remedy
+costs more than the disease.
+
+Stating the adoption risk as a fifteenth hypothesis would also be defensible, with adoption rate and
+cost-to-benefit ratio as its measurements. This paper does not, for a reason that is itself part of
+the framework's discipline: the falsification of a hypothesis should turn on an observation about the
+world, whereas non-adoption turns on a decision by practitioners, and letting one word cover both
+would blur the distinction between verification and validation that Chapter \ref{ch:intent} works to
+keep sharp. The choice is recorded here rather than made silently.

@@ -93,38 +93,80 @@ Assume:
       cost of the substrate is $F$ (design, implementation and long-term maintenance).
 \end{enumerate}
 Then the number of interacting pairs is $\Theta(nm)$ without a substrate and
-$\mathcal{O}(nk + m)$ with one. The substrate is better than no substrate in expectation if
-and only if
-\begin{equation}\label{eq:threshold}
-n \cdot m \;>\; c\,(n k + m) \;+\; F
+$\mathcal{O}(nk + m)$ with one. Writing $a = \sum_{e} |\mathcal{R}(e)| \le nm$ for the number of
+entity--resource associations, $c$ for the unit cost of one direct interaction, $c_s$ for the unit
+cost of one substrate interface, $C_{\mathrm{cons}}$ for the cost of keeping the $n$ independent
+implementations of a resource's invariants mutually consistent, and $F$ for the fixed cost of the
+substrate, the two arrangements cost
+\begin{equation}\label{eq:costs}
+C_{\text{direct}} \;=\; c\,a + C_{\mathrm{cons}},
+\qquad
+C_{\text{substrate}} \;=\; F + c_s\,(n k + m).
 \end{equation}
-where $c$ is the unit cost coefficient of one interaction.
+The substrate is the better arrangement in expectation if and only if
+$C_{\text{substrate}} < C_{\text{direct}}$, that is if and only if
+\begin{equation}\label{eq:threshold}
+c\,a + C_{\mathrm{cons}} \;>\; F + c_s\,(n k + m).
+\end{equation}
 \end{theorem}
 
 \begin{proof}
-Without a substrate: correct interaction of entity $e$ with resource $r$ requires an
-independent implementation, so the number of interacting pairs is
-$\sum_{e} |\mathcal{R}(e)| \le nm$, with equality under assumption (b), that is
-$\Theta(nm)$. In addition, for each resource $r$ the $n$ independent implementations must
-agree on the invariants of $r$; this is a consistency obligation whose number of failure
-modes is $\Omega(n)$ (any single implementation that deviates breaks the global invariant).
-
-With a substrate: the semantics of the $m$ resources are defined once each, at cost
-$\Theta(m)$; every entity interacts with the substrate through at most $k$ interfaces, at
-cost $\mathcal{O}(nk)$; add the fixed cost $F$. The total is therefore
-$\mathcal{O}(nk + m) + F$.
-
-Comparing the two expressions and normalising by the unit cost coefficient $c$ gives
+Without a substrate the number of interacting pairs is $\sum_{e} |\mathcal{R}(e)| = a \le nm$,
+with equality under assumption (b); each pair costs $c$ to implement correctly, and in addition, for
+each resource $r$, the $n$ independent implementations must agree on the invariants of $r$, which
+costs $C_{\mathrm{cons}}$ and whose number of failure modes is $\Omega(n)$ (any single
+implementation that deviates breaks the global invariant). With a substrate the semantics of the
+$m$ resources are defined once each, every entity interacts with the substrate through at most $k$
+interfaces, and the fixed cost $F$ is paid once, giving \eqref{eq:costs}. Comparing the two gives
 \eqref{eq:threshold}.
 \end{proof}
 
-\begin{corollary}[Phase-transition threshold]\label{cor:threshold}
+Two remarks on the form of \eqref{eq:threshold} are needed, because the obvious simplifications are
+each wrong in a different way.
+
+First, the two sides must be costs, not counts. An earlier formulation of this result compared the
+pair count $nm$ directly with $c(nk+m) + F$; that is dimensionally inconsistent, since the left side
+counts interactions and the right side prices them. The correct comparison is between
+$C_{\text{direct}}$ and $C_{\text{substrate}}$, as in \eqref{eq:threshold}. If one takes the two
+unit costs to be equal, $c = c_s = c$, the inequality reduces to
+\begin{equation}\label{eq:threshold-equal}
+a + \frac{C_{\mathrm{cons}}}{c} \;>\; n k + m + \frac{F}{c},
+\end{equation}
+and under assumption (b), where $a = nm$,
+\begin{equation}\label{eq:threshold-canonical}
+n m \;>\; n k + m + \frac{F}{c} - \frac{C_{\mathrm{cons}}}{c}.
+\end{equation}
+The three terms on the right are the substrate's per-entity interface overhead, its per-resource
+overhead, and its fixed cost in units of one interaction; the last term is the consistency cost the
+substrate removes. Dropping that last term makes \eqref{eq:threshold-canonical} conservative.
+
+Second, $a$ need not be $nm$. Assumption (b) is the worst case, not the typical one. If entity $e$
+participates in only $|\mathcal{R}(e)|$ resources and $\mathbb{E}_e[|\mathcal{R}(e)|]$ does not grow
+with $m$, then $a$ grows linearly rather than as a product, and the substrate need not pay for
+itself at all. Whether resource use is diffuse or concentrated is therefore an empirical question
+about a system, not a consequence of the algebra; Appendix \ref{app:proofs} records the growth
+condition under which the product form survives.
+
+\begin{corollary}[Break-even threshold]\label{cor:threshold}
 Because $k$ is the \emph{bounded} interface usage of each entity, $\mathcal{O}(nk + m)$ is
-linear in $n$, whereas $\Theta(nm)$ is a product linear in both $n$ and $m$. Hence when
-either $n$ or $m$ grows substantially, inequality \eqref{eq:threshold} must hold. The phase
-transition occurs at $n m \sim F/c$, that is, when the \emph{product of the number of
-entities and the number of resources} exceeds the order of the fixed cost of the substrate.
+linear in $n$, whereas $\Theta(nm)$ is a product linear in both $n$ and $m$. Under assumption (b)
+and equal unit costs, \eqref{eq:threshold-canonical} is therefore satisfied once $n$ or $m$ grows
+substantially. The break-even point is at
+\[
+c\,\bigl(a - n k - m\bigr) \;\sim\; F,
+\]
+that is, when the interaction work saved, priced at the unit interaction cost, exceeds the fixed
+cost of the substrate. Under assumption (b) and with the lower-order terms dominated this reads
+$n m \sim F/c$, so the governing quantity is the \emph{product of the number of entities and the
+number of resources}.
 \end{corollary}
+
+The corollary is deliberately named for a break-even rather than for a phase transition. Two cost
+functions crossing determines the point at which one arrangement becomes cheaper; a \emph{phase
+transition} would additionally require a structural change in the system's organisation in a
+neighbourhood of that point. Whether such a change occurs---whether systems crossing the break-even
+actually grow a substrate---is an empirical question and is Hypothesis $H_3$; the algebra here
+supplies the threshold at which the question becomes sharp, not the answer to it.
 
 Corollary \ref{cor:threshold} makes precise the intuition that ``the code volume reaches
 some order of magnitude'', and supplies its correct form:
@@ -238,6 +280,52 @@ be falsified by exhibiting a well-defined system that satisfies the premises and
 of the six. That judgement is itself open to challenge.
 \end{remark}
 
+\begin{remark}[The escape hatch, and how to test through it]\label{rmk:six-escape}
+The phrase ``either in the system's own code or in its host'' is what makes the theorem usable and
+also what makes it easy to defend dishonestly. Read carelessly it becomes unfalsifiable: any system
+lacking one of the six is said to have obtained it from its host, and since the host is always
+somewhere, the claim cannot fail. The phrase is not a loophole---the theorem's content is that the
+function is \emph{defined somewhere in the semantics}, which is a claim about the semantics and not
+about file ownership---but it does shift the burden of refutation, and it is worth saying where that
+burden now lies.
+
+A refutation must exhibit a system and a function such that (i) the operational semantics is well
+defined in the sense of Theorem \ref{th:six}, (ii) the premises hold, and (iii) the function is
+absent \emph{from the system and from every host it runs on}. Clause (iii) is the one that is hard to
+satisfy, and it is hard for a reason that is informative rather than evasive: named hosts are dense
+in the relevant functions. An operating system defines scheduling, allocation and isolation; a
+language runtime defines identity and lifecycle, and often communication; a browser defines all six.
+A refutation therefore has to name a system whose \emph{entire} execution environment lacks the
+function, which in practice means either a system with no host at all---bare metal with static
+allocation, which Theorem \ref{th:six} already excludes by its premises---or one whose host has been
+demonstrated to lack it, which is a claim about that host and is checkable.
+
+Two consequences follow for how the claim should be used. First, the theorem is best read as a
+\emph{checklist obligation} rather than as a discovery about the world: for each of the six, say
+where it is defined, and if the answer is ``the host'', say which host and on what evidence. A level
+manifest that cannot fill a row is not thereby refuted; it is thereby incomplete, and that is a
+usable state. Second, the three properties the theorem does \emph{not} establish should be separated
+out and treated as hypotheses rather than folded into the claim, because they are independently
+testable and independently doubtful:
+\begin{enumerate}[label=(\alph*)]
+\item \term{sufficiency}: that the six are enough, that is, that nothing outside the six is needed
+      for the semantics to be well defined. This is the claim Conjecture \ref{conj:relevant} addresses
+      from the coarse-graining side and Hypothesis $H_{10}$ tests.
+\item \term{independence}: that no two of the six are definable in terms of the others. The
+      list is motivated by distinct semantic obligations---distinguishability, finiteness and
+      contention, cardinality of the ready set, the object of interaction, the mode of composition,
+      and the propagation range of faults---but distinctness of obligation is not independence of
+      implementation, and systems routinely realise several at once (a capability table is
+      simultaneously naming, allocation and isolation).
+\item \term{minimality}: that the six cannot be reduced further. The argument shows that removing
+      any one breaks well-definedness under the premises; it does not show that the six are minimal
+      among all decompositions, only that this one is irredundant with respect to its own premises.
+\end{enumerate}
+Ablation is the natural instrument for all three: for each function, remove it from a system that
+satisfies the premises and observe whether the semantics in fact becomes ill defined, and whether
+the functions that remain can absorb its obligations. That experiment has not been run.
+\end{remark}
+
 The wording of Theorem \ref{th:six}, ``either in the system's own code or in its host'', is
 essential. It separates two questions: whether the functions necessarily appear, and whether
 they must be built in-house.
@@ -272,6 +360,34 @@ state after a crash''. Conversely, a web application should adopt garbage collec
 scheduling and memory allocation, because the invariants of these functions are general and
 building them in-house yields only a worse version.
 \end{example}
+
+\begin{remark}[The parallel with the theory of the firm, and where it stops]\label{rmk:coase}
+Corollary \ref{cor:buildadopt} answers a question that has a well-developed counterpart outside
+software: what should an organisation make, and what should it buy? Coase's answer is that the
+boundary of the firm is drawn where the cost of transacting in a market exceeds the cost of
+organising the same activity internally \cite{coase1937}, and the subsequent literature on
+make-or-buy decisions turns that into an operational comparison of governance costs
+\cite{williamson1985}. The structural parallel is close enough to be worth stating: in both cases
+the boundary is not a technical fact about the work but a consequence of which costs fall on which
+side of it.
+
+The criterion here is sharper in one respect and narrower in another, and the difference is the
+reason for citing the parallel rather than resting on it. Sharper: Coase's comparison is between
+two costs, which are notoriously hard to measure, whereas Corollary \ref{cor:buildadopt} asks a
+qualitative question with a definite answer---is the invariant one that only this system can own?
+---and only then considers cost. A firm with a domain-critical invariant has no make-or-buy
+decision to make, however cheap the market alternative is. Narrower: the corollary says nothing
+about the case where several systems could each own part of an invariant, or where ownership could
+be split contractually, which is where the economics literature has most of its content.
+
+What the parallel buys is a warning rather than a result. If the software boundary is drawn by
+governance costs in the same way as the firm's, then it will exhibit the same pathologies:
+boundaries that persist after the reason for them has gone, integration that is chosen for
+reasons of control rather than cost, and suppliers whose position is protected by the switching
+cost of the boundary itself rather than by the quality of what they supply. Those are observable
+in software, and a framework that claims to explain the boundary should predict them. That this
+paper does not do so is a gap, not a claim.
+\end{remark}
 
 \begin{remark}[A sharper criterion: monotonicity]\label{rmk:calm}
 Corollary \ref{cor:buildadopt} decides build versus adopt by whether the invariant is
