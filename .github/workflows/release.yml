@@ -1,0 +1,84 @@
+name: Assay Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    name: Build (${{ matrix.os }})
+    needs: validate
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Verify tag matches package version
+        shell: pwsh
+        run: |
+          $Cargo = Get-Content engine/Cargo.toml -Raw
+          $Version = [regex]::Match($Cargo, '(?m)^version\s*=\s*"([^"]+)"').Groups[1].Value
+          if (-not $Version -or $env:GITHUB_REF_NAME -ne "v$Version") {
+            throw "Tag $env:GITHUB_REF_NAME must match v$Version from engine/Cargo.toml"
+          }
+      - name: Test CLI
+        run: cargo test --locked --manifest-path engine/Cargo.toml
+      - name: Build CLI
+        run: cargo build --locked --release --manifest-path engine/Cargo.toml
+      - name: Package Windows CLI
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $Version = $env:GITHUB_REF_NAME.Substring(1)
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Compress-Archive -LiteralPath engine/target/release/assay.exe -DestinationPath "dist/assay-$Version-windows-x86_64.zip"
+      - name: Package Unix CLI
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          architecture="$(uname -m)"
+          mkdir -p dist
+          tar -C engine/target/release -czf "dist/assay-${version}-${platform}-${architecture}.tar.gz" assay
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Generate checksums
+        run: sha256sum dist/* > dist/SHA256SUMS
+      - name: Publish release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --title "$GITHUB_REF_NAME" --generate-notes
