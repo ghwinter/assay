@@ -5,10 +5,14 @@
 . "$PSScriptRoot\_lib.ps1"
 
 $manifest = @'
+[assay]
+protocol = "v0.7"
+
 [[claim]]
 id = "C-9"
 text = "fixture claim (contested)"
 rejected_by = "fixture"
+origin = "fixture"
 capability = "simulate"
 strength_required = 5
 scope = "sampled"

@@ -14,7 +14,7 @@
 #   `[[change]]`      ← 真实项目上，变化只能事后从 diff 里猜（尚未在真实仓用过）
 
 [assay]
-protocol = "v0.6"
+protocol = "v0.7"
 
 # ── 规则一：零领域字符 ────────────────────────────────────────────────────────
 # "协议里出现一个领域词，视为协议设计错误"（PROTOCOL.md 开头）。
@@ -253,3 +253,143 @@ touches = ["C-001"]
 evidence_required = ["S-09", "S-01"]
 reason = "新特性没有能红的检查，正是这套东西一直在批评的事；所以立项时就连同它的出生证明一起加"
 signed = "人类（本仓所有者）"
+
+# ── 规则四：入口（D-033） ─────────────────────────────────────────────────────
+# 买它的摩擦（措辞尽量贴近实测）：
+#   仓里有协议、引擎、账本工具与工作流文档，**没有任何一处能让 agent 问出
+#   "现在状态如何、下一步做什么"**；而且"声明的命令能不能跑"这件事无人检查。
+#   本机实测：PATH 上的 `python` 是 Microsoft Store 的 App Execution Alias 占位符，
+#   且没有解释器装 PyYAML（七个账本工具都 import yaml）——
+#   于是 pre-commit 的四道门**一次都没真正执行过**，而 `assay check` 仍然全绿。
+#   绿的是清单，不是工作。
+#
+# `doctor` 与 `check` 判两件不同的事，刻意分开：
+#   check  —— 清单自身是否自洽（门禁，红即阻断）
+#   doctor —— 工作还能不能继续（就绪度；不跑任何检查）
+#   合并会让"清单有错"与"本机跑不起来"混成一个红灯，而处置完全不同。
+
+[[claim]]
+id = "C-010"
+text = "清单里声明的命令首词解析不到时，doctor 报出并点名是哪个检查的哪个字段"
+rejected_by = "命令写得出、锚点不存在，而 doctor 说一切正常：此时文档就是无锚断言，四道门会在无人察觉时全部空转"
+capability = "structural"
+strength_required = 5
+scope = "unbounded"
+obligations = ["O-048"]
+trust_assumption = "doctor 只查首词能否在 PATH 或仓库内解析到，**不执行**任何被声明的命令。因此它证不了'命令能跑通'，只证得了'命令找得到'。承担者：清单作者（首次 run 时确认）"
+
+[[check]]
+id = "S-10"
+claims = ["C-010"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-10-unresolvable-command-is-red.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-10.ps1"
+stage = "pre-commit"
+budget_s = 60
+inputs = ["engine/src/readiness.rs", "engine/src/cli.rs", "assay/selfcheck/"]
+seen_red = "让 resolve_command_in 永远返回 Some ⇒ S-10 转红（解析不到的词没有被点名）；撤回后转绿"
+ref = "engine/src/readiness.rs — doctor_findings 的 commands-resolvable 段"
+
+[[claim]]
+id = "C-011"
+text = "证据与它当前的检查定义不符时，next 报出并给出具体原因；定义未变时不得误报"
+rejected_by = "拿整份清单指纹当失效判据：改一个注释就让全部证据报陈旧，人开始无视它——一个天天红的检查与没有检查统计等价"
+capability = "structural"
+strength_required = 5
+scope = "unbounded"
+obligations = ["O-049"]
+trust_assumption = "next 判的是'证据对不对得上这条检查的当前定义'（命令/档/范围/绑定的声明），不判'结论还成不成立'。语义是否仍适用只有人能判。承担者：清单作者"
+
+[[check]]
+id = "S-11"
+claims = ["C-011"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-11-next-detects-definition-drift.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-11.ps1"
+stage = "pr"
+budget_s = 120
+inputs = ["engine/src/readiness.rs", "assay/selfcheck/"]
+seen_red = "让 freshness 恒返回 Current ⇒ S-11 转红（命令改了却不报 K-nx 陈旧）；撤回后转绿"
+ref = "engine/src/readiness.rs — freshness / compute_actions"
+
+[[claim]]
+id = "C-012"
+text = "L1 的产物全集由 git 定义：未忽略的新文件在作用域内，被忽略的文件移出作用域"
+rejected_by = "作用域由本机文件系统决定：本地虚拟环境里的 site-packages 被认成无主产物，同一份提交在两台机器上一红一绿"
+capability = "structural"
+strength_required = 5
+scope = "unbounded"
+obligations = ["O-050"]
+trust_assumption = "本检查只覆盖 `tools/**/*.py` 这一条 glob 路径，作为 CODE_PATTERNS 全集的代表。其余模式的同类回归要靠同一条实现共享，不由本检查逐条证明。承担者：ledger_lint 维护者"
+
+[[check]]
+id = "S-12"
+claims = ["C-012"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-12-l1-scope-follows-git.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-12.ps1"
+stage = "pre-commit"
+budget_s = 120
+inputs = ["tools/ledger_lint.py", "tools/assay-cli.ps1", "assay/selfcheck/"]
+seen_red = "让 git_visible_files 退化回全量 glob ⇒ S-12 转红（被忽略的文件仍被当产物）；撤回后转绿"
+ref = "tools/ledger_lint.py — git_visible_files / L1 段"
+
+[[change]]
+id = "CH-003"
+intent = "给这条工作流装一个唯一入口：doctor（就绪度）+ next（有序动作表）+ 启动器；并修 L1 的作用域判定"
+claims_added = ["C-010", "C-011", "C-012"]
+touches = ["C-001", "C-002"]
+obligations_added = ["O-048", "O-049", "O-050"]
+evidence_required = ["S-10", "S-11", "S-12", "S-01"]
+reason = "本项目一直在批评'没有能红的检查的新特性'；所以立项时连同三条出生证明一起加。L1 的作用域缺陷是本工作安装 venv 时当场撞出来的，属于同一次修复的正当范围"
+signed = "人类（本仓所有者）— 待裁决：D-033 目前是 draft"
+
+# ── 规则五：常驻文件的预算（D-034） ───────────────────────────────────────────
+# 买它的摩擦：AGENTS.md 是**常驻注入**的，每一行都在花别人的上下文，
+# 而它曾驻着一行解释器命令——那个解释器在本机执行即失败。声明还在、锚点没了，
+# 四道门空转了两个引擎版本，状态板一路全绿。
+#
+# 两半判据各自对应一次实测：
+#   ① 预算：没有上限的规则文件只会单向变长（"加一条规则"的收益当场可见，
+#      "上下文变贵"的成本要等会话开始漂移才显形）；且靠自觉的预算等于没有预算。
+#   ② 命令头：机器相关的具体命令是**会腐化的声明**，它属于按需加载的 RUNBOOK.md。
+
+[[claim]]
+id = "C-013"
+text = "常驻注入的 AGENTS.md 有机器判定的字符预算，且不驻留机器相关的命令"
+rejected_by = "常驻文件里写着会腐化的命令，且长度无人管：换台机器整条链路断掉而状态板全绿，规则文件单向变长而没人看见成本"
+capability = "structural"
+strength_required = 5
+scope = "unbounded"
+obligations = ["O-052"]
+trust_assumption = "本检查只判两件事：字符数与命令头。它判不了'这行内容值不值它的上下文成本'——那是编辑判断。承担者：AGENTS.md 的维护者；提额必须在同一次改动的 [[change]].reason 里写理由"
+
+[[check]]
+id = "S-13"
+claims = ["C-013"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+command = "pwsh -NoProfile -File assay\\selfcheck\\S-13-injected-doc-has-budget.ps1"
+red_command = "pwsh -NoProfile -File assay\\selfcheck\\inject\\R-13.ps1"
+stage = "pre-commit"
+budget_s = 30
+inputs = ["AGENTS.md", "RUNBOOK.md", "assay/selfcheck/"]
+seen_red = "往 AGENTS.md 追加 12000 字符填充 ⇒ S-13 转红（超预算 15623 > 6000）；撤回后转绿，且文件 sha256 与注入前一致"
+ref = "AGENTS.md §0；assay/selfcheck/S-13-injected-doc-has-budget.ps1 的 $Ceiling"
+
+[[change]]
+id = "CH-004"
+intent = "把会腐化的内容从常驻注入的 AGENTS.md 搬进按需加载的 RUNBOOK.md，并给它装一条机器判定的预算"
+claims_added = ["C-013"]
+touches = ["C-001"]
+obligations_added = ["O-052"]
+evidence_required = ["S-13", "S-01"]
+reason = "提额/搬运的正当性来自一次实测：AGENTS.md 里的命令在本机跑不了而无人发现（见 D-034）。本次是**搬运 + 压缩**，不是提额：字符数从 3722 降到 3582，同时吸收了一批新规则"
+signed = "人类（本仓所有者）— 待裁决：D-034 目前是 draft"

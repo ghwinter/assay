@@ -1,0 +1,43 @@
+{
+  "schema_version": "assay-evidence/v1",
+  "event_id": "RUN-1791689411149791400-21128:S-11",
+  "run_id": "RUN-1791689411149791400-21128",
+  "lineage": {
+    "change_id": "CH-003",
+    "claim_ids": [
+      "C-011"
+    ],
+    "obligation_ids": [
+      "O-049"
+    ],
+    "origins": [],
+    "assumption_ids": [],
+    "trust_assumptions": [
+      "next 判的是'证据对不对得上这条检查的当前定义'（命令/档/范围/绑定的声明），不判'结论还成不成立'。语义是否仍适用只有人能判。承担者：清单作者"
+    ]
+  },
+  "subject": {
+    "manifest_fingerprint": "fnv1a:09950008473cd2cc"
+  },
+  "checker": {
+    "id": "S-11",
+    "capability": "structural",
+    "strength": 5,
+    "scope": "unbounded",
+    "bound": null,
+    "stage": "pr",
+    "command_fingerprint": "fnv1a:73924c9582c16a0d",
+    "engine_version": "0.6.0"
+  },
+  "result": {
+    "verdict": "pass",
+    "exit_code": 0,
+    "started_at": "2026-10-11T03:30:14Z",
+    "duration_s": 1.19,
+    "detail": "PASS: 定义没变不误报（②）；命令改了就点名并说明原因（①）"
+  },
+  "birth_certificate": {
+    "status": "reproduced",
+    "note": "已复现过（棘轮记录）；`run --certify` 可当场重跑"
+  }
+}

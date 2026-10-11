@@ -4,10 +4,14 @@
 . "$PSScriptRoot\_lib.ps1"
 
 $v1 = @'
+[assay]
+protocol = "v0.7"
+
 [[claim]]
 id = "C-6"
 text = "fixture claim"
 rejected_by = "fixture"
+origin = "fixture"
 capability = "proof"
 strength_required = 6
 scope = "unbounded"

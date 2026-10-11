@@ -3,14 +3,17 @@
 [[entry]]
 id = "S-01"
 claims = ["C-001"]
+obligations = []
 capability = "structural"
 strength = 5
 scope = "unbounded"
 cmd_fp = "fnv1a:ee1e5b7d06fe6e99"
 certified = true
+
 [[entry]]
 id = "S-02"
 claims = ["C-002"]
+obligations = []
 capability = "structural"
 strength = 5
 scope = "unbounded"
@@ -20,6 +23,7 @@ certified = true
 [[entry]]
 id = "S-03"
 claims = ["C-003"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -29,6 +33,7 @@ certified = true
 [[entry]]
 id = "S-04"
 claims = ["C-004"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -38,6 +43,7 @@ certified = true
 [[entry]]
 id = "S-05"
 claims = ["C-005"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -47,6 +53,7 @@ certified = true
 [[entry]]
 id = "S-06"
 claims = ["C-006"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -56,6 +63,7 @@ certified = true
 [[entry]]
 id = "S-07"
 claims = ["C-007"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -65,6 +73,7 @@ certified = true
 [[entry]]
 id = "S-08"
 claims = ["C-008"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
@@ -74,8 +83,50 @@ certified = true
 [[entry]]
 id = "S-09"
 claims = ["C-009"]
+obligations = []
 capability = "self-test"
 strength = 5
 scope = "unbounded"
 cmd_fp = "fnv1a:050c8a8ad108a5bc"
 certified = true
+
+[[entry]]
+id = "S-10"
+claims = ["C-010"]
+obligations = ["O-048"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:c4c68d7ad799274d"
+certified = true
+
+[[entry]]
+id = "S-11"
+claims = ["C-011"]
+obligations = ["O-049"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:73924c9582c16a0d"
+certified = true
+
+[[entry]]
+id = "S-12"
+claims = ["C-012"]
+obligations = ["O-050"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:23c6cfcf9dd29224"
+certified = true
+
+[[entry]]
+id = "S-13"
+claims = ["C-013"]
+obligations = ["O-052"]
+capability = "structural"
+strength = 5
+scope = "unbounded"
+cmd_fp = "fnv1a:bc499550ab8831b3"
+certified = true
+

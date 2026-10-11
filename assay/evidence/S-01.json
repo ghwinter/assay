@@ -1,8 +1,9 @@
 {
   "schema_version": "assay-evidence/v1",
-  "event_id": "RUN-1791539952013611100-22672:S-01",
-  "run_id": "RUN-1791539952013611100-22672",
+  "event_id": "RUN-1791689795442850100-28744:S-01",
+  "run_id": "RUN-1791689795442850100-28744",
   "lineage": {
+    "change_id": "CH-004",
     "claim_ids": [
       "C-001"
     ],
@@ -16,7 +17,7 @@
     ]
   },
   "subject": {
-    "manifest_fingerprint": "fnv1a:badf7bfa0c0329f5"
+    "manifest_fingerprint": "fnv1a:5b568c1347562589"
   },
   "checker": {
     "id": "S-01",
@@ -26,17 +27,17 @@
     "bound": null,
     "stage": "pre-commit",
     "command_fingerprint": "fnv1a:ee1e5b7d06fe6e99",
-    "engine_version": "0.5.0"
+    "engine_version": "0.6.0"
   },
   "result": {
     "verdict": "pass",
     "exit_code": 0,
-    "started_at": "2026-10-09T09:59:12Z",
-    "duration_s": 1.43,
+    "started_at": "2026-10-11T03:36:35Z",
+    "duration_s": 0.76,
     "detail": "PASS: PROTOCOL.md 零后端工具名（0 命中；只描述能力，不描述工具）"
   },
   "birth_certificate": {
     "status": "reproduced",
-    "note": "已复现过（棘轮记录）；`run --certify` 可当场重跑"
+    "note": "注入命令 exit=1（1.56s）：🎓 证书成立：S-01：注入后检查转红（exit=1）。最小反例：FAIL: 协议点名了后端工具（1 处）。最小反例：355:<!-- 注入：举例时说「例如 Verus 可以证明 Rust 函数」（这一行就是违约） -->"
   }
 }

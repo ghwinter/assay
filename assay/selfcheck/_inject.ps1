@@ -58,7 +58,8 @@ function Invoke-EngineInjection {
         [string]$Name,
         [string]$Find,          # 必须恰好出现一次的字面量
         [string]$Replace,
-        [string]$CheckScript
+        [string]$CheckScript,
+        [string]$PatchFile = 'main.rs'   # 引擎源码里的目标文件（模块化后补丁不一定落在 main.rs）
     )
     $root = Get-Root
     $tmp = Join-Path $env:TEMP "assay-inject-$Name"
@@ -72,7 +73,8 @@ function Invoke-EngineInjection {
     Copy-Item -Path (Join-Path $root 'engine\src\*') -Destination (Join-Path $tmp 'src') -Recurse
 
     # 2) 打补丁：注入点必须恰好命中一次，否则注入器自己要被修
-    $target = Join-Path $tmp 'src\main.rs'
+    $target = Join-Path $tmp "src\$PatchFile"
+    if (-not (Test-Path $target)) { Cert-Unproven "$Name：补丁目标不存在：$target" }
     $src = Get-Content $target -Raw
     $n = ([regex]::Matches($src, [regex]::Escape($Find))).Count
     if ($n -ne 1) {
@@ -98,6 +100,42 @@ function Invoke-EngineInjection {
         $code = $LASTEXITCODE
     } finally {
         Remove-Item Env:\ASSAY_ENGINE -ErrorAction SilentlyContinue
+    }
+    if ($code -eq 0) {
+        Cert-Unproven "$Name：注入缺陷后检查仍然绿 ⇒ 这条检查红不了。输出：$out"
+    }
+    $ce = ($out -split "`r?`n" | Where-Object { $_ -match 'FAIL' } | Select-Object -First 1)
+    Cert-Proven "$Name：注入缺陷后检查转红（exit=$code）。最小反例：$ce"
+}
+
+# C 类：把**账本工具**（Python）做坏（不需要编译，只复制 + 打补丁）
+# 与 B 类同构：退出码语义完全一致（非零 = 证书成立）。
+function Invoke-ToolInjection {
+    param(
+        [string]$Name,
+        [string]$Source,        # 相对 root 的待注入脚本
+        [string]$Find,
+        [string]$Replace,
+        [string]$CheckScript
+    )
+    $root = Get-Root
+    $tmp = Join-Path $env:TEMP "assay-inject-$Name"
+    New-Item -ItemType Directory -Force -Path $tmp | Out-Null
+    $target = Join-Path $tmp (Split-Path $Source -Leaf)
+    $src = Get-Content (Join-Path $root $Source) -Raw
+    $n = ([regex]::Matches($src, [regex]::Escape($Find))).Count
+    if ($n -ne 1) {
+        Cert-Unproven "$Name：注入点出现 $n 次（必须恰好 1 次）。脚本改了，注入器要跟着改：$Find"
+    }
+    Set-Content -Path $target -Value $src.Replace($Find, $Replace) -Encoding utf8 -NoNewline
+
+    # 检查脚本读 ASSAY_TOOL_OVERRIDE 指向被做坏的副本；没设就用仓库里的正本
+    $env:ASSAY_TOOL_OVERRIDE = $target
+    try {
+        $out = & pwsh -NoProfile -File (Join-Path $root "assay\selfcheck\$CheckScript") 2>&1 | Out-String
+        $code = $LASTEXITCODE
+    } finally {
+        Remove-Item Env:\ASSAY_TOOL_OVERRIDE -ErrorAction SilentlyContinue
     }
     if ($code -eq 0) {
         Cert-Unproven "$Name：注入缺陷后检查仍然绿 ⇒ 这条检查红不了。输出：$out"

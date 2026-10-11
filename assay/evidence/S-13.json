@@ -1,0 +1,43 @@
+{
+  "schema_version": "assay-evidence/v1",
+  "event_id": "RUN-1791689795442850100-28744:S-13",
+  "run_id": "RUN-1791689795442850100-28744",
+  "lineage": {
+    "change_id": "CH-004",
+    "claim_ids": [
+      "C-013"
+    ],
+    "obligation_ids": [
+      "O-052"
+    ],
+    "origins": [],
+    "assumption_ids": [],
+    "trust_assumptions": [
+      "本检查只判两件事：字符数与命令头。它判不了'这行内容值不值它的上下文成本'——那是编辑判断。承担者：AGENTS.md 的维护者；提额必须在同一次改动的 [[change]].reason 里写理由"
+    ]
+  },
+  "subject": {
+    "manifest_fingerprint": "fnv1a:5b568c1347562589"
+  },
+  "checker": {
+    "id": "S-13",
+    "capability": "structural",
+    "strength": 5,
+    "scope": "unbounded",
+    "bound": null,
+    "stage": "pre-commit",
+    "command_fingerprint": "fnv1a:bc499550ab8831b3",
+    "engine_version": "0.6.0"
+  },
+  "result": {
+    "verdict": "pass",
+    "exit_code": 0,
+    "started_at": "2026-10-11T03:36:37Z",
+    "duration_s": 0.84,
+    "detail": "PASS: AGENTS.md 3582/6000 字符（余量 2418），零机器相关命令头"
+  },
+  "birth_certificate": {
+    "status": "reproduced",
+    "note": "注入命令 exit=1（1.65s）：🎓 证书成立：S-13：注入后检查转红（exit=1）。最小反例：FAIL: AGENTS.md 超预算：15623 字符 > 上限 6000。按序处理：先搬走（挪进 RUNBOOK.md 或对应账）→ 再压缩 → 最后才提高 $Ceiling，且必须在同一次改动的 [[change]].reason 里写出提额理由。"
+  }
+}
