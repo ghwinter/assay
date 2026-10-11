@@ -171,9 +171,28 @@ resolved below; the rest are recorded so that one English term keeps exactly one
 | institutional fact | 制度事实 | adjudicator | 裁决者 |
 | multi-objective | 多目标 | resource algebra | 资源代数 |
 | irredundant | 冗余自由的 | rework | 返工 |
+| attestation record | 审定记录 | authorising body | 授权机构 |
+| the party with standing | 具备资格的一方 | observable proxy | 可观察代理 |
+| requirement discovery | 需求发现问题 | decision rule | 判定规则 |
+| attestor roster | 名单 | evidence provenance | 证据来源 |
+| dissent record | 异议记录 | selection capture | 选择俘获 |
+| provenance collapse | 来源坍缩 | threshold theatre | 阈值表演 |
+| unfalsifiable acceptance | 不可证伪的验收 | silent clause loss | 条款静默丢失 |
+| unrequested clause | 未被请求的条款 | unrepresented intent | 未被表达的意图 |
+
+The seven steps of the protocol in Appendix \ref{app:protocol} are written, in order, as
+框定意图 · 推导规格 · 使推导可追溯 · 对抗性地审定 · 判定并授权 · 设定视界与触发条件 ·
+按触发条件重新审定.
+
+### 7.4 One usage note that is not a new term
+
+English uses *confirm* in two unrelated senses, and only one of them is the technical one. Where it
+means **validation** it is 确认, per §2. Where it means *rubber-stamp a candidate*---as in the
+instruction to attestors to ``find failures rather than to confirm''---it is **认可**, because 确认
+would import the validation sense and 审定 would read as *attest*. The distinction is worth keeping
+in view: the sentence is precisely about the difference between judging and endorsing.
 
 ### 7.3 How this section is maintained
-
 A term enters this section when it is first used in either build. If a later revision changes the
 English term, the Chinese changes with it in the same commit; the two builds are not allowed to
 drift, and the label-and-reference parity check between `en/` and `zh/` is the mechanical guard
