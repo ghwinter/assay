@@ -318,7 +318,7 @@ $\operatorname{rank}_{\mathcal{T}}\mathcal{J} = \dim \mathcal{T}$。把一般判
 第 \ref{sec:comprehension-formal} 节已经给出停止准则的形式（命题 \ref{prop:stopping}）。
 此处给出它的工程化版本与预算分配。
 
-\begin{principle}[下潜预算分配]\label{pr:budget}
+\begin{principle}[下潜预算分配]\label{pr:descent-budget}
 把理解预算按"信息增益/成本"排序分配，而不是按代码量或目录顺序分配。典型的高收益
 入口依次是：对外接口定义与数据模型 $>$ 端到端执行路径的一次跟踪 $>$ 不变量强制点
 $>$ 共同变更热点 $>$ 具体实现细节。低收益入口是：顺序阅读实现体、通读工具函数库、

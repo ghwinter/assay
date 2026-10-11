@@ -64,6 +64,30 @@ Then $\Lambda_i$ is \term{sound} with respect to $\Lambda_{i+1}$ under $A$ if
 \end{equation}
 \end{definition}
 
+\begin{remark}[The inclusion is a laxity, and what that does and does not buy]\label{rmk:lax}
+Condition \eqref{eq:soundness} is an inclusion where a commuting square would be an equality: the
+abstract behaviour set must \emph{contain} the image of the concrete one rather than coincide with
+it. That is exactly the shape of a \term{lax} coalgebra morphism, and reading it that way is not a
+new proposal---lax coalgebra morphisms are the established formalisation of functional simulation
+\cite{rot2023}, so the reading imports the coalgebraic toolkit for simulations and their up-to
+techniques instead of inventing one.
+
+Two things the reading does not buy, recorded because both are easy to overclaim. First, it requires
+fixing an order on the behaviour objects before ``lax'' means anything: a lax morphism is defined
+against a functor landing in ordered sets, so $\Beh_i$ must carry an order compatible with its
+transition structure, and the inclusion order on a powerset is the natural choice. Where that order
+is left implicit, ``soundness is laxness'' is not yet a statement.
+
+Second, and more likely to be got wrong, the failure of laxity to be \emph{strict} is not the same
+condition as the existence of a leak pair (Proposition \ref{prop:leakpair}). Non-strictness says the
+soundness inclusion is proper: the abstract level admits behaviours that no admissible concrete
+behaviour maps to. A leak pair says two concrete behaviours share an abstract image while differing
+externally. The first is a defect of the \emph{image}; the second is a defect of the \emph{kernel}.
+They are the two sides of Principle \ref{pr:two-criteria}, not two names for one thing, and neither
+implies the other in general. This paper uses the leak pair because it is the side that differential
+testing can reach, and it does not identify the two.
+\end{remark}
+
 \begin{proposition}[Composition of soundness]\label{prop:soundness}
 Let there be a chain $\Lambda_0, \Lambda_1, \dots, \Lambda_n$, with increasing index
 denoting increasing concreteness, and suppose that for each $i$ there exists
@@ -85,6 +109,61 @@ behaviour set, so that \eqref{eq:soundness} can be applied level by level. Condi
 ensures that the composite observation agrees with the level-by-level observations, so
 that the conclusion holds at the top level.
 \end{proof}
+
+\begin{remark}[What conditions (a) and (b) do not give: the kernel accounting]\label{rmk:kernel-accounting}
+Proposition \ref{prop:soundness} concludes an inclusion of \emph{images},
+$\Obs_0^{(n)}(\Beh_n\!\upharpoonright\!\bigcap_i A_i) \subseteq \Beh_0$. That conclusion is correct
+and it composes. What does not compose is the accounting of what each level \emph{ignores}, and the
+difference matters here because the rest of the paper treats $\Obl(\Lambda_i)$ as an object that is
+declared and then checked (Principle \ref{pr:two-criteria}) rather than as a by-product of a
+soundness proof.
+
+The relevant fact is elementary and exact. For composable maps,
+\begin{equation}\label{eq:kernel-mono}
+\ker(\Obs_i \circ \Obs_{i+1}) \;\supseteq\; \ker \Obs_{i+1},
+\end{equation}
+with equality \emph{if and only if} $\Obs_i$ is injective on $\Obs_{i+1}(\Beh_{i+2})$. A composite
+therefore never ignores less than its last step, and it ignores strictly more whenever the upper
+observation identifies two behaviours that the lower one keeps apart.
+
+Condition (a) is silent about this. It is an equation between two maps,
+$\Obs_i \circ \Obs_{i+1} = \Obs_i^{(i+2)}$, and it constrains neither side's kernel. The
+counterexample is as small as it can be: take $\Obs_i$ constant and let the independently given
+direct observation $\Obs_i^{(i+2)}$ be that same constant map. Condition (a) holds, and
+$\ker(\Obs_i \circ \Obs_{i+1})$ is the universal relation, strictly larger than $\ker\Obs_{i+1}$
+whenever $\Obs_{i+1}$ is not itself constant.
+
+So \emph{soundness composes while oblivious-set accounting does not}, and the two must not be run
+together. If a chain's declared oblivious sets are to mean anything, the condition to add is a
+statement about the composite kernel. Writing $\mathrm{ext}$ for the behaviour that is externally
+relevant at the bottom of the chain, that condition is
+\begin{equation}\label{eq:kernel-coherence}
+\ker \Obs_i \;\cap\; \bigl(\Obs_{i+1}(\Beh_{i+2})\bigr)^{2} \;\subseteq\; \ker \mathrm{ext},
+\end{equation}
+that is: whatever the two levels jointly fail to distinguish must already be externally irrelevant.
+Injectivity of $\Obs_i$ on $\Obs_{i+1}(\Beh_{i+2})$, which gives
+$\ker(\Obs_i \circ \Obs_{i+1}) = \ker\Obs_{i+1}$ by \eqref{eq:kernel-mono}, is \emph{sufficient} for
+\eqref{eq:kernel-coherence} and strictly stronger, since it forbids $\mathrm{ext}$ from identifying
+anything that $\Obs_{i+1}$ separates. Choosing between the two is a decision about how much a chain
+is allowed to hide without saying so; conflating them is not a decision at all.
+
+Two neighbouring results should be distinguished rather than absorbed. In abstract interpretation the
+established treatment of composition failure is that of Giacobazzi and Ranzato, who show that being
+the \emph{best correct abstraction} is not compositional: composing two best correct abstractions need
+not give the best correct abstraction of the composite \cite{giacobazzi2025}. The condition needed here
+is a different one, because the object at stake is different: \eqref{eq:kernel-coherence} constrains a
+\emph{declared} set against an external behaviour, whereas completeness constrains an abstraction
+against the concrete semantics. The two are related but neither implies the other, and the version of
+the problem that involves a declared set does not appear in that literature. The domain-level sandwich
+$\pi \subseteq \alpha \subseteq C$, in which an abstraction is complete for an observation rather than
+for the full concrete semantics, is Amato and Scozzari's \emph{observational completeness}
+\cite{amato2011}; the kernel sandwich \eqref{eq:kernel-mono}--\eqref{eq:kernel-coherence} is its
+counterpart for images of maps rather than for domains, and is not the same statement.
+
+All three facts above---\eqref{eq:kernel-mono} with its equality criterion, the counterexample to
+condition (a) sufficing, and the sufficiency-but-not-necessity of injectivity---are proved in the
+machine-checked companion development \cite{assaylean}.
+\end{remark}
 
 \begin{remark}[Condition (a) in the relational case]\label{rmk:relational-compose}
 Proposition \ref{prop:soundness} is stated for functional observation maps, because condition (a)
@@ -113,6 +192,32 @@ Three things must be said about \eqref{eq:relcompose}.
       Its relational version is conditional: it holds under \eqref{eq:relcompose}, which is an
       additional premise rather than a consequence.
 \end{enumerate}
+
+A fourth point is more consequential than the three above, and it concerns
+Proposition \ref{prop:oblivious} rather than \eqref{eq:relcompose}. In the functional case
+$\Obl(\Lambda_i) = \ker\Obs_i$ is an equivalence relation---reflexive, symmetric and transitive by
+virtue of $=$ being so---and the quotient $\Beh_{i+1}/\Obl(\Lambda_i)$ is what makes
+``abstraction is quotienting by the kernel'' true. For a general relation $R_i$ the induced relation
+``some $b_i$ is $R_i$-related to both'' is reflexive and symmetric but \emph{not transitive}: with
+$\Beh_{i+2} = \{a_1,a_2,a_3\}$, $\Beh_{i+1} = \{b_1,b_2\}$ and
+$R = \{(a_1,b_1),(a_2,b_1),(a_2,b_2),(a_3,b_2)\}$, one has $a_1 \sim a_2$ through $b_1$ and
+$a_2 \sim a_3$ through $b_2$, while $a_1 \not\sim a_3$ because their related sets are disjoint. The
+relation is not an equivalence, so $\Beh/\Obl$ is not definable, and
+Proposition \ref{prop:oblivious} does not merely lack a premise---it has no referent.
+
+The repair is not to add a condition but to change the ambient category, and the change also repairs
+the point raised above. Taking the transitive closure restores an equivalence and hence a quotient,
+but quotients by equivalences discard order; the order is exactly what the lax reading of soundness
+needs (\S\ref{sec:composition}). Working instead in preorders, where the inter-level relation is a
+preorder and the quotient is the poset of principal lower sets, keeps both: the similarity quotient
+exists and the order survives it. That is the setting Levy develops for one-directional semantics,
+where similarity is characterised as a \emph{final coalgebra in a category of preorders} rather than
+in $\mathbf{Set}$, with the quotient by a preorder being left adjoint to the forgetful functor
+\cite{levy2011}. Read against the present chapter, it says that a level ladder whose edges are
+relations should be built over preorders from the start; a ladder built over sets will lose either
+the quotient or the order, and no additional premise on \eqref{eq:relcompose} recovers what was lost.
+Both the non-transitivity witness and the equivalence it refutes are machine-checked
+\cite{assaylean}.
 
 The reading that matters for Chapter \ref{ch:intent} is this: moving from a functional abstraction
 to a forward simulation, a backward simulation, a bisimulation or a contextual equivalence acquires

@@ -780,6 +780,112 @@ against subsequently observed defects and rework. This does not answer the open 
 the limit that is not.
 \end{remark}
 
+\subsection{Why the two layers cannot be merged, and what that forces}\label{sec:enrichment}
+
+Definition \ref{def:two-layer} asserts that the chain has a mechanical layer and a consensus layer
+and that the two are stitched rather than fused. That assertion has a mathematical reason, and
+stating it settles a design question that is otherwise answered by preference: why a single, more
+capable verifier cannot replace the pair.
+
+The reason is that the two layers do not merely differ in strength; they assign their guarantees to
+\emph{different kinds of object}. A mechanical guarantee is a proof: an arrow either carries one or
+it does not, and one proof may refine another. A consensus guarantee is a number: an unreliability
+$\varepsilon$, with no question of one $\varepsilon$ refining another. Formally the two layers are
+two \emph{enrichments} of the same underlying structure of stages and artefacts---hom-objects drawn
+from the two-element order in the first case, from the Lawvere quantale
+$V = ([0,\infty],\geq,+,0)$ in the second, where the composite of two stages has unreliability at
+most the sum of theirs. That composition law is the union bound, and it deserves emphasis that it
+needs no independence assumption: if stages $1$ and $2$ are each faithful with probability at least
+$1-\varepsilon_i$, then both are faithful with probability at least $1-\varepsilon_1-\varepsilon_2$
+whatever the dependence between them. This is worth contrasting with the bound of
+Theorem \ref{th:condorcet}, whose exponential improvement requires independence and which the whole
+of \S\ref{sec:consensus} exists to qualify.
+
+The asymmetry between the two enrichments is not symmetric. There is a change of base from proof to
+reliability---a discharged obligation has unreliability $0$, an undischarged one has
+unreliability $\infty$---so a proof may legitimately be weakened into a reliability claim. The
+reverse fails, and it fails for a reason that is two lines long. If
+$G : ([0,\infty],\geq,+,0) \to (\{0,1\},\leq,\wedge,1)$ respects the monoidal structure, then for
+every $\varepsilon$,
+\begin{equation}\label{eq:doubling}
+G(2\varepsilon) \;=\; G(\varepsilon+\varepsilon) \;=\; G(\varepsilon)\wedge G(\varepsilon)
+\;=\; G(\varepsilon),
+\end{equation}
+so $G$ cannot distinguish $\varepsilon$ from $2^n\varepsilon$ for any $n$. Nothing is lost in this
+computation by weakening it: functoriality alone gives $G(2\varepsilon) \leq G(\varepsilon)$ and the
+comparison map gives the reverse inequality, so \eqref{eq:doubling} holds for lax monoidal $G$ as
+well as strong ones. The form checked in the companion development is the strict one,
+$G(a+b) = G(a)\wedge G(b) \Rightarrow G(2\varepsilon) = G(\varepsilon)$; the lax strengthening is the
+two-line argument just given and is not itself checked.
+
+The monoidal maps from $V$ to the two-element order are exactly three: the constant map to the top
+element; the map $\varepsilon \mapsto [\varepsilon < \infty]$, which is the left adjoint of the
+inclusion of the two-element order and is Lawvere's $\pi_0$; and the map
+$\varepsilon \mapsto [\varepsilon = 0]$, which is the right adjoint \cite{lawvere1973}. \emph{Each of the three is constant on the finite positive values}---the first two take the top
+element there and the third takes the bottom---so none of them separates two such values. That is
+the consequence this chapter uses: \emph{no monoidal map separates two finite positive
+unreliabilities}. A single threshold on $\varepsilon$ is therefore not merely a lossy summary; it is
+not a change of base at all. With $\theta$ for the threshold and $G(\varepsilon) = [\varepsilon \leq
+\theta]$, two stages at $\varepsilon = 0.6\,\theta$ each pass while their composite at
+$1.2\,\theta$ does not, so $G$ fails \eqref{eq:doubling} and with it the composition law.
+
+\begin{principle}[Reliability is budgeted, not gated]\label{pr:budget}
+A chain of $k$ stages that must \emph{all} hold has composite unreliability at most
+$\sum_{i=1}^{k}\varepsilon_i$. Gating each stage against a fixed threshold $\theta$ therefore gives a
+composite bound of $k\theta$, which grows without limit in $k$; the bound must instead be
+\emph{divided}, with each stage held to $\varepsilon_i \leq \Theta/k$ for a total budget $\Theta$.
+\end{principle}
+
+The practice the principle rules out is common enough to be worth stating numerically. Take
+``$99\%$ reliable'' as the per-clause gate, $\varepsilon \leq 0.01$, and a specification with $k$
+clauses each attested on its own---attested separately, not with independent errors, since the union
+bound assumed no independence. The composite bound $1-k\varepsilon$ is $0.90$ at $k = 10$, $0.50$ at
+$k = 50$, and \emph{zero at $k = 100$}---no information at all. Real specifications have hundreds of
+clauses, so clause-wise gating at a fixed per-clause reliability does not merely weaken the
+guarantee; past a hundred clauses it says nothing, while continuing to look like a guarantee. The
+bound must be divided: to have any content at $k = 100$ the per-clause requirement is
+$\varepsilon < 0.01$, strictly below $1/k$. This is the same shape as the budget line of Remark
+\ref{rmk:design-effect}---which already says of diversity that it is a budget---applied to a
+different quantity, and it is the shape the design-effect correction takes across stages rather than
+within one: the design effect governs correlation \emph{among attestors of one stage}, the union
+bound governs composition \emph{across stages}.
+
+Two boundary conditions on the claim. First, it concerns the composition of \emph{reliability}; it
+does not say that thresholds are useless, only that a threshold applied per stage is not a
+compositional summary, and the correct composite statement is the $\varepsilon$-indexed family
+$[\varepsilon \leq \theta]$ taken for each $\theta$ rather than one chosen $\theta$. That family is
+how a quantitative statement is expressed in Boolean logic without losing its content, and the
+device is standard in quantitative equational logic \cite{bacci2023}. The failure mode of a single
+threshold has a standard name in the bisimulation-metric literature as well: approximate
+bisimulations are not transitive in general, which is the abstract form of the
+$0.6\theta + 0.6\theta > \theta$ computation \cite{gebler2013}.
+
+Second, the principle bounds what a chain can claim, not what a single stage can achieve. The
+$\varepsilon_i$ are properties of one attestation round given a design and a correlation structure;
+the design effect is how they are estimated. The contribution here is therefore narrow and should be
+stated narrowly: not a better bound, but the observation that the sum bound, which is often treated
+as a crude fallback, is the composition law \emph{forced} by the enrichment, and that the
+alternatives to it are not better bounds but a different kind of object. This is worth saying because
+the opposite is the received view at exactly the point where the framework needs it. Rushby, in the
+analysis of assurance cases closest to the present chapter, states the mismatch between probabilistic
+evidence and deductive argument, gives the sum rule and the product rule, judges both ``too crude and
+pessimistic'', and leaves the repair as an open problem \cite{rushby2015}. The refinement this
+section offers is that the sum rule is not a crude approximation to be improved on---it is what
+composition of unreliabilities \emph{is}---and that the apparent crudeness lies in the per-stage
+$\varepsilon$, where the design-effect correction and the incentive analysis of \S\ref{sec:mechanism}
+do their work, rather than in the rule that combines them.
+
+One point of contact with the software-engineering literature is worth recording, because it is the
+empirical counterpart of the same phenomenon. Attestors drawn from one interest class fail together,
+and the standard model for that is design diversity, where independently produced versions are found
+to exhibit coincident failures far more often than independence would allow; the review of
+Littlewood, Popov and Strigini is the standard reference for those models, and Knight and Leveson's
+experiment is the origin of the empirical objection \cite{littlewood2001,knight1986}. Read against
+\eqref{eq:doubling}, that literature is measuring $\bar\rho$ in the sense of Remark
+\ref{rmk:design-effect} rather than bounding it, which is what makes the framework's reliance on an
+estimable companion quantity rather than on $q$ itself a practical choice and not merely a
+concession.
+
 \section{The Incentive Structure of the Intent Layer}\label{sec:mechanism}
 
 Proposition \ref{th:correlated} attributes consensus reliability to the parameter $q$ but
