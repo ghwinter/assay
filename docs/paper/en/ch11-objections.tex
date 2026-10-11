@@ -237,7 +237,14 @@ The following questions are open:
       for estimating $q$. This is the crux of whether the direction can be put into
       practice. Section \ref{sec:consensus} supplies a companion quantity, the mean pairwise
       error correlation $\bar\rho$, which is estimable from data the framework already collects;
-      $q$ remains the limit that is not.
+      $q$ remains the limit that is not. Appendix \ref{app:protocol} makes the same quantities
+      addressable at the level of procedure---attestor roster, evidence provenance and dissent
+      record are the fields from which $\bar\rho$ can be estimated and against which selection
+      capture becomes visible---but it neither measures $q$ nor claims to.
+\item \term{That the consensus protocol of Appendix \ref{app:protocol} works}. The appendix
+      specifies a procedure and states its failure modes; it has not been built, run or
+      evaluated, and no parameter in it was measured. Its role is to make the intent layer's
+      obligations concrete enough to criticise, not to discharge them.
 \item \term{Whether a joint semantics of resources and function is decidable}. A costed
       trace semantics can express joint constraints, but the size of its decidable fragment
       and the tightness of its bounds are unsettled.

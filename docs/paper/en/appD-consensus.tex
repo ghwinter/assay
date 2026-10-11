@@ -1,0 +1,171 @@
+\chapter{A Consensus Protocol Skeleton}\label{app:protocol}
+
+This appendix sketches the mechanism that \S\ref{sec:mechanism} argues is required and
+\S\ref{sec:consensus} models: the procedure by which a group of independent parties converts an
+intent into a specification that others may then execute against. It is written because the
+chapter's central claim---that the intent layer's guarantee comes from adversarial consensus rather
+than from a verifier---is hollow without at least a sketch of what such a procedure looks like, and
+because the claim that the intersection is \emph{unoccupied} (Chapter \ref{ch:literature}) is
+easier to assess against a concrete proposal than against a description.
+
+Three things this appendix is not. It is not an implementation; no part of it has been built or
+run. It is not validated; no experiment is reported, and the parameters are stated as quantities to
+be fixed rather than as values that were measured. And it is not a claim about correctness: the
+protocol below can be followed exactly and still produce a specification that misrepresents the
+intent, for the reasons Proposition \ref{prop:three-grounds} sets out. What it does claim is a
+shape: that the obligations the rest of the paper places on the intent layer can be discharged by a
+procedure with these steps, and that each step has an analogue in deployed practice.
+
+\section{The Object Being Attested}
+
+The protocol produces an \term{attestation record}, which is the intent-layer artefact the rest of
+the chain consumes. Its fields are the intent-layer counterpart of the artefact evidence list
+(Table \ref{tab:evidence-package}), and the correspondence is deliberate: the two lists are read by
+the same downstream machinery.
+
+\begin{center}
+\small
+\begin{longtable}{L{0.9cm}L{5.2cm}L{8.5cm}}
+\caption{Attestation record}\label{tab:attestation}\\
+\toprule
+\textbf{\#} & \textbf{Field} & \textbf{Content and why it is required} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{\#} & \textbf{Field} & \textbf{Content and why it is required} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+1 & Specification text & The formal object $\Phi$ itself, with its scope $\Sigma$ and its declared
+  environmental assumptions $A$. \\
+2 & Intent statement & The requirement as stated by the party with standing, in whatever notation that
+  party used. Kept verbatim: paraphrase is where intent is lost, and the gap between fields 1 and 2
+  is precisely the object Proposition \ref{prop:three-grounds}(i) says cannot be closed
+  mechanically. \\
+3 & Attestor identities and stakeholder classes & Who attested, and which interest each
+  represents. Required because the reliability of the aggregate depends on the \emph{independence}
+  of the error sources, and stakeholder class is the observable proxy for that independence
+  (\S\ref{sec:mechanism}). \\
+4 & Evidence provenance & For each attestor, the sources on which the judgement rested. This is the
+  field that makes $q$ measurable in principle: two attestors relying on the same source are
+  correlated whether or not they know it, which is the common-cause mechanism of
+  \cite{dietrich2004}. \\
+5 & Dissent record & Objections raised and how they were resolved. A record with no dissent is
+  evidence about the procedure, not about the specification. \\
+6 & Threshold and rule & The decision rule used, the threshold, and its rationale. \\
+7 & Authorising body & Who adopted the specification and with what standing
+  (\S\ref{sec:authority}). Distinct from the attestors: attesting is judging, authorising is
+  deciding. \\
+8 & Validity horizon and re-confirmation triggers & When the attestation lapses, and which events
+  force re-attestation rather than mere re-verification (\eqref{eq:spec-decay}). \\
+9 & \textbf{Known unresolved intent} & Requirements the procedure could not settle. The analogue of
+  uncovered behaviour in Table \ref{tab:evidence-package}, item 9, and the field most likely to be
+  omitted because recording it weakens the appearance of the result. \\
+10 & \textbf{Re-attestation rules} & Which changes to the specification, the intent, the
+  environment or the authorising body invalidate the record. \\
+\end{longtable}
+\end{center}
+
+Fields 9 and 10 carry the same weight here as items 9 and 10 carry there. A record that omits field
+9 is not a stronger record; it is a record whose boundary is unknown, and the downstream evidence
+chain will treat the specification as complete when it is not.
+
+\section{The Procedure}
+
+The steps below are stated in the order in which they are performed. Steps 1--3 are constructive,
+step 4 is adversarial, step 5 is the decision, and steps 6--7 are maintenance.
+
+\begin{enumerate}[label=\textbf{P\arabic*.},leftmargin=*]
+\item \term{Frame the intent.} The party with standing states the goal, the constraints and the
+      acceptance criteria, and names the scope $\Sigma$. Output: field 2.
+\item \term{Derive the specification.} One or more proposers produce candidate specifications from
+      the intent. This step may be automated, and in the framework of Chapter \ref{ch:program} it
+      is where generation is expected to be cheapest. Output: candidate values of field 1.
+\item \term{Make the derivation traceable.} Each clause of the candidate specification is linked to
+      the part of the intent statement it discharges. Clauses with no link are unrequested; parts
+      of the intent with no clause are unrepresented. This step is the mechanism by which field 9
+      becomes writable rather than aspirational, and it is the discipline that recent
+      traceable-refinement work automates (\S\ref{sec:gaps}).
+\item \term{Attest adversarially.} Attestors drawn from deliberately different stakeholder classes
+      judge the candidate against the intent, with an explicit instruction to find failures rather
+      than to confirm. Output: fields 3, 4 and 5. Two design choices matter more than the rest.
+      Attestors must be selected for \emph{diversity of interest and of evidence}, because that is
+      what the reliability argument requires, not merely for competence; and dissent must be
+      recorded rather than resolved away, because the record of an unresolved disagreement is the
+      most informative output of the step.
+\item \term{Decide and authorise.} A threshold rule is applied to the attestations, and the
+      authorising body adopts the specification. The two acts are distinct and must be separately
+      recorded (fields 6 and 7), for the reason \S\ref{sec:authority} gives: a specification can be
+      correct and unauthorised, or authorised and wrong.
+\item \term{Set the horizon and the triggers.} The record is given a validity horizon and a list of
+      events that force re-attestation. The horizon is not cosmetic; eq.~\eqref{eq:spec-decay}
+      makes the assurance condition time-indexed precisely because an attested specification can
+      drift from a moving intent while every mechanical check continues to pass.
+\item \term{Re-attest on trigger.} On any trigger from field 10, the procedure restarts at step 1
+      for the affected clauses. Re-verification of the implementation is not a substitute: if the
+      intent moved, the artefact that was verified is no longer the right artefact to verify.
+\end{enumerate}
+
+\section{What Each Step Buys, and What It Does Not}
+
+The value of writing the protocol out is that it separates the parts of the problem that different
+instruments actually address, which the chapter's argument needs and a prose description obscures.
+
+\emph{Steps 2 and 3 are largely mechanisable}, and are where automation has the most to offer. They
+address the expressibility question. Nothing in this paper denies that they can be automated well;
+the framework expects it.
+
+\emph{Step 4 is not mechanisable and cannot be made so}, because its input includes judgements about
+what the intent should have been. This is the discovery question, and the protocol's contribution to
+it is procedural: it forces the disagreement to be recorded and the evidence provenance to be
+declared, which converts an unmeasurable quantity into an estimable one. That is the most that can
+be claimed, and it is less than the reliability argument of \S\ref{sec:consensus} would need to be
+a prediction.
+
+\emph{Step 5 is a different kind of act from steps 1--4}, and this is the point \S\ref{sec:authority}
+adds to the framework. No amount of correct judgement by appropriately diverse attestors makes the
+result binding; standing is not earned by accuracy. A protocol that recorded attestations but not
+authorisation would have no answer to the objection that a specification was never anyone's to
+adopt.
+
+\emph{Steps 6 and 7 are the parts most often absent from deployed practice}, and they are the parts
+that a lifecycle view makes unavoidable. Their absence is invisible at the moment of attestation and
+apparent only afterwards, when the intent has moved and the record still says what it said.
+
+\section{Failure Modes of the Protocol Itself}
+
+A protocol sketch that listed only its steps would be a sales document. The modes below are the ones
+this design is most exposed to, stated as properties of the procedure rather than of its
+participants.
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Selection capture.} If the set of attestors is chosen by the party whose specification
+      is under judgement, diversity can be satisfied nominally while the errors remain correlated.
+      Field 3 does not detect this, because a captured roster is still a roster. The mitigation is
+      procedural and outside the protocol: the selection rule must be fixed before the candidate is
+      known.
+\item \term{Provenance collapse.} Attestors from different stakeholder classes become dependent if
+      they draw on the same source, and field 4 is what makes this visible. Where provenance is
+      undeclared the protocol degenerates to the Condorcet case, whose premises are not jointly
+      satisfiable in general \cite{dietrich2008}.
+\item \term{Threshold theatre.} A high threshold over a small, correlated roster yields a
+      confidence that the bound of \eqref{eq:chernoff} does not support, because the bound's
+      effective sample size is set by $\bar\rho$ and not by the count. This is the design-effect
+      point of Remark \ref{rmk:design-effect} appearing as a governance failure.
+\item \term{Unfalsifiable acceptance.} If no observable consequence is specified at step 1, the
+      attestation cannot later be scored, and the protocol produces a record that is
+      indistinguishable from a correct one. This is the limitation Remark
+      \ref{rmk:consensus-status} records for the whole consensus layer, and it is the strongest
+      argument against relying on the protocol in domains that lack scoreable outcomes.
+\item \term{Silent clause loss.} Step 3 makes unrepresented intent visible only if the intent
+      statement is itself complete. Where the party with standing cannot say what it wants until it
+      sees what it does not want, field 9 is written from a moving target, and the record's
+      completeness claim is weaker than its format suggests.
+\end{enumerate}
+
+None of these is repaired by a better threshold. Three of them are properties of the roster and the
+provenance rather than of the decision rule, and the fourth is a property of the domain. That
+distribution is the honest summary of what a consensus protocol can and cannot contribute: it can
+make the relevant properties \emph{recorded and therefore auditable}, and it cannot make them
+\emph{true}.
