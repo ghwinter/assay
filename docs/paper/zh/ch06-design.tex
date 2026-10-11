@@ -26,33 +26,56 @@ Q(\Mod) \;=\; \mathbb{E}_{c \sim \mathcal{C}}\bigl[\,|\rho(c)|\,\bigr],
 \begin{definition}[不变量的强制点]\label{def:enforce}
 设 $\Inv$ 为系统的不变量集合。对 $\iota \in \Inv$，其\term{强制点集}
 $\mathrm{S}(\iota) \subseteq \Mod$ 定义为所有\emph{必须正确实现才能保证 $\iota$
-成立}的模块集合。称强制是\term{有效的}，若 $\iota$ 在任一执行中不被违反。
+成立}的模块集合。称强制是\term{有效的}，若 $\iota$ 在任一执行中不被违反。其
+\term{未审定部分} $\mathrm{S}_{\mathrm{un}}(\iota) \subseteq \mathrm{S}(\iota)$
+是那些 \emph{不阅读就无法确认其正确性}的强制点构成的子集：既无机器可检查的证明、又无
+被强制的类型级约束、又无可单独检查的契约、也无已被接受的证书的强制点。
+$\mathrm{S}_{\mathrm{un}}(\iota)$ 之外的强制点仍然是\emph{必要的}——若它们出错，
+$\iota$ 就会失效——但它们\emph{可被其证据替代}，意思是智能体可以依赖该保证而无须
+检视实现。
 \end{definition}
 
 \begin{theorem}[不变量集中化]\label{th:centralise}
 设不变量 $\iota$ 的强制有效，且变更 $c$ 可能破坏 $\iota$（即存在一次合法变更序列使
 $\iota$ 在缺少对 $\mathrm{S}(\iota)$ 的理解时被破坏）。则
 \begin{equation}\label{eq:central}
-|\rho(c)| \;\ge\; \bigl|\mathrm{S}(\iota)\bigr| .
+|\rho(c)| \;\ge\; \bigl|\mathrm{S}_{\mathrm{un}}(\iota)\bigr| .
 \end{equation}
 因此，在其余条件不变的前提下，最小化 $\mathbb{E}[|\rho|]$ 要求最小化
-$\sum_{\iota \in \Inv} |\mathrm{S}(\iota)|$，其下界由每条不变量在\emph{单一模块}中
-强制达到。
+$\sum_{\iota \in \Inv} |\mathrm{S}_{\mathrm{un}}(\iota)|$，其下界在每个强制点要么是
+唯一的一个、要么是可单独检查的时候达到。
 \end{theorem}
 
 \begin{proof}
-若 $c$ 可能破坏 $\iota$，则执行 $c$ 的智能体必须知道 $\iota$ 在何处以及如何被保证，
-否则无法判断 $c$ 是否安全。$\mathrm{S}(\iota)$ 的每个元素都是该判断的必要证据来源，
-故 $\rho(c) \supseteq \mathrm{S}(\iota)$，得式 \eqref{eq:central}。
-对 $\iota$ 求和：$\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}(\iota)|]$，
-且在 $\mathrm{S}(\iota)$ 不相交的乐观情形下等于 $\sum_\iota |\mathrm{S}(\iota)|$。
-每个非空的 $\mathrm{S}(\iota)$ 至少含一个模块，故下界由 $|\mathrm{S}(\iota)| = 1$
-取得。
+若 $c$ 可能破坏 $\iota$，则执行 $c$ 的智能体必须能够判断该变更是否安全。对
+$\mathrm{S}_{\mathrm{un}}(\iota)$ 中的每个强制点，该判断都要求阅读该强制点，因为按
+定义没有其他证据能了结它；故 $\rho(c) \supseteq \mathrm{S}_{\mathrm{un}}(\iota)$，
+得式 \eqref{eq:central}。$\mathrm{S}(\iota) \setminus \mathrm{S}_{\mathrm{un}}(\iota)$
+中的强制点可以经由其证据被依赖，无须被阅读。对 $\iota$ 求和：
+$\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}_{\mathrm{un}}(\iota)|]$，
+且在这些集合不相交的乐观情形下取等号。该下界由
+$|\mathrm{S}_{\mathrm{un}}(\iota)| = 0$ 达到，即每个强制点都带有无须阅读即可检查的
+证据——类型系统、私有构造函数、能力令牌、数据库约束或证明。
 \end{proof}
 
+从 $|\mathrm{S}(\iota)|$ 改为 $|\mathrm{S}_{\mathrm{un}}(\iota)|$ 并不是为了稳妥而
+引入的弱化。它是对一处真实混淆的纠正，而它所划出的区分此前在论证中是缺失的。有三个
+不同的集合被当成了一个：对 $\iota$ 而言其正确行为是必要的那些模块（即
+$\mathrm{S}(\iota)$）；证明某次变更安全所需的证据；以及智能体实际必须阅读的源文件。
+第一个集合并不约束第三个，除非经由第二个，而第二个恰恰是
+$\mathrm{S}_{\mathrm{un}}$ 所分离出来的东西。一个拥有机器可检查的证明、或拥有稳定的
+可单独检查的接口的模块，无论其正确性多么必要，都不进入读集。
+
+由此得出两条后果，而它们是实践上有用的那两条。第一，该界解释了为什么把不变量编码进
+类型具有超出表达力的工程价值，而且是定量地解释的：它降低
+$|\mathrm{S}_{\mathrm{un}}(\iota)|$，而不只是把不变量挪个位置。第二，它告诉维护者读集
+实际上来自何处：不是来自不变量起作用的处所的数量，而是来自那些其正确性无所可查的
+处所的数量。那是一个更小、也更可行动的数字，也是重构应当瞄准的数字。
+
 \begin{corollary}[强制点的最优位置]\label{cor:site}
-在满足有效性约束的所有候选中，最优的强制点是\emph{扇入最小}的模块，即那些被最少
-其他模块依赖、因而最不可能被绕过修改的模块。
+在满足有效性约束的所有候选中，使式 \eqref{eq:central} 的期望读集最小的强制点是
+\emph{扇入最小}的模块，即那些被最少其他模块依赖、因而最不可能被绕过修改的模块。
+这一最优性的范围仅限于读集这一目标；见下面的备注。
 \end{corollary}
 
 \begin{remark}[定理 \ref{th:centralise} 的限度]\label{rmk:central-limit}
@@ -62,7 +85,23 @@ $\sum_{\iota \in \Inv} |\mathrm{S}(\iota)|$，其下界由每条不变量在\emp
 \emph{不变量散落是一种有代价的防御；若不变量可以真正被集中（例如通过类型系统、
 私有构造函数、能力令牌或数据库约束使绕过不可能），则集中严格优于散落。}
 这解释了为什么"把不变量编码进类型"在工程上有超出表达力的额外价值：它把
-$|\mathrm{S}(\iota)|$ 降到 $1$ 而不增加绕过风险。
+$|\mathrm{S}_{\mathrm{un}}(\iota)|$ 降到趋近 $0$ 而不增加绕过风险。这两种机制彼此独立
+且都重要——类型免除了阅读的必要，有效强制免除了信任的必要。
+\end{remark}
+
+\begin{remark}[集中化只优化了若干目标中的一个]\label{rmk:central-multi}
+推论 \ref{cor:site} 识别出的是读集最优的强制点。不应当把它读作识别出了最好的强制点，
+因为读集只是若干目标中的一个，而其余目标在模型中完全没有被表示。把一条不变量移入单一
+模块，同时也把\emph{负载}移到了该模块上，给每一个本可以是本地的操作增加了一跳，集中了
+\emph{失效影响}——若该强制点失效，所有依赖者一起失效——并制造了\emph{变更瓶颈}，
+因为此后每一次触及该不变量的变更都要串行地经过同一个所有者。
+
+这些正是全文坚持不得被合并的那些维度（原则 \ref{pr:crosscutting}），因此对该推论诚实
+的陈述是有条件的：\emph{给定}在所涉强制点上有效性是可达到的，且\emph{给定}其他四个
+维度在该处是可接受的，则扇入最小对读集而言是最优的。当它们不可接受时，正确的问题是
+一个多目标问题——正确性、变更影响、延迟与失效域——而读集之界是其中的一项约束，而不是
+目标本身。一次把"把不变量集中起来"当作无条件建议的设计评审，是把该推论用在了它的
+范围之外。
 \end{remark}
 
 \section{近可分解性}\label{sec:neardecomp}
@@ -119,6 +158,27 @@ $(\Rightarrow)$ 若式 \eqref{eq:neardecomp} 不成立，则不存在满足条�
 由推论 \ref{cor:diagnose}，设计的可检验目标可以写成：
 \emph{对每一个声称的模块边界，其接口观察应当是外部行为的充分统计量；泄漏对的存在
 即边界的失效。}
+\end{principle}
+
+\begin{principle}[对一个声称的边界有两条判据，而不是一条]\label{pr:two-criteria}
+一个模块与其环境之间被声称的边界作出两项彼此分离的主张，而它们会各自失败。
+\begin{enumerate}[label=(\alph*)]
+\item \term{充分性}：接口观察决定外部行为。这就是定义 \ref{def:neardecomp}；它的失败
+      是一个泄漏对（命题 \ref{prop:leakpair}），由差分测试（推论 \ref{cor:diagnose}）
+      发现。
+\item \term{完备性}：边界所声明的观察映射就是跨过该边界可观察到的一切。它的失败是
+      一个被边界声明为无关的差异无论如何变得可见——经由时间、资源占用或失效行为
+      ——而它由信息流分析的技术而非差分测试发现（备注 \ref{rmk:noninterference}）。
+\end{enumerate}
+二者彼此独立，且两个方向都独立。一个边界可以是充分而不完备的：每一对接口相同的执行
+都具有相同的外部行为，然而一个被声明为无关的差异却可以经由时间通道从上方读出。它同样
+可以是完备而不充分的：没有任何东西经由未声明的通道泄漏，而所声明的接口却过于粗糙，
+不足以确定行为。
+
+推论 \ref{cor:diagnose} 与原则 \ref{pr:design-eq} 只处理第一条判据。第二条判据才是
+静默失败的那一条，因为一个经由未声明通道泄漏的边界会通过每一项针对所声明接口写成的
+差分测试——该测试永远不会构造出那对冒犯性的执行，因为这一对在边界声称无关的某处上
+不同。
 \end{principle}
 
 \section{技术债}\label{sec:debt}
@@ -182,16 +242,18 @@ K \;=\; h \cdot b,
 称系统处于\term{可治理状态}，若 $C(t) \le K$ 对所有相关 $t$ 成立。
 \end{definition}
 
-\begin{proposition}[架构决定标度指数]\label{prop:exponent}
+\begin{proposition}[容量模型下所需人力的标度指数]\label{prop:exponent}
 设系统有 $n$ 个特性，每个特性以速率 $\lambda_0$ 独立变更，故 $\lambda \propto n$。
-设读集 $\mathbb{E}[\rho]$ 关于 $n$ 的标度为 $n^{\alpha}$（$\alpha \ge 0$ 由架构决定，
-$\alpha = 0$ 对应完全局部化，$\alpha = 1$ 对应未受约束的耦合）。则可治理复杂度标度为
+设读集 $\mathbb{E}[\rho]$ 关于 $n$ 的标度为 $n^{\alpha}$，其中 $\alpha \ge 0$ 是该
+模型的参数，$\alpha = 0$ 对应完全局部化，$\alpha = 1$ 对应未受约束的耦合。则可治理
+复杂度标度为
 \begin{equation}\label{eq:exponent}
 C \;\propto\; n^{1+\alpha}.
 \end{equation}
-由 $C \le K$ 得所需人力标度为 $h \propto n^{1+\alpha}$。因此：
+由 $C \le K$ 且 $K = hb$、$b$ 为常数，使系统保持可治理所需的人力标度为
+$h \propto n^{1+\alpha}$。因此，\emph{在该模型之内}：
 \begin{enumerate}[label=(\alph*)]
-\item 若架构把 $\alpha$ 压到 $0$，人力随系统规模线性增长，系统可长期存续；
+\item 若 $\alpha$ 被压到 $0$，人力随系统规模线性增长，系统可长期存续；
 \item 若 $\alpha = 1$，人力须随规模\emph{平方}增长，系统在某个规模上必然失稳。
 \end{enumerate}
 \end{proposition}
@@ -202,6 +264,16 @@ $\lambda = n\lambda_0$ 与 $\mathbb{E}[\rho] = \Theta(n^{\alpha})$ 得
 $C = \Theta(n^{1+\alpha})$。由 $C \le K = hb$ 得
 $h \ge C/b = \Theta(n^{1+\alpha})$。
 \end{proof}
+
+有两件事是该命题并未确立的，而早先的标题——\emph{架构决定标度指数}——以暗示的方式
+断言了它们。第一，它没有表明该指数由架构决定；它\emph{假定} $\mathbb{E}[\rho]$ 按
+$n$ 的幂标度，并把 $\alpha$ 当作该标度的参数。$\alpha$ 是否由架构决定，以及用于估计
+它的读集代理是否有效，都是经验问题——后者是假设 $H_4$，前者正是假设 $H_{14}$ 直接
+追问的问题。第二，它没有表明真实组织的人力会遵循该指数。它表明的是：\emph{若}组织要
+在所声明的容量模型下保持可治理，人力就\emph{必须}遵循该指数；这是关于一个理解容量
+模型的条件陈述，而不是关于招聘的预测。其经验内容是：估计出的 $\alpha$ 更高的系统，
+应当要求每单位增长对应不成比例地更多的协调投入；这是可检验的，第 \ref{ch:program} 章
+提出了检验的方式。
 
 \begin{corollary}[架构的实际作用]\label{cor:arch-role}
 命题 \ref{prop:exponent} 给出架构的一个精确职责：它不降低单个变更的成本，而是

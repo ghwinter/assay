@@ -115,7 +115,7 @@ $\to$ 实现 $\to$ 二进制 $\to$ 执行）的保证来自极小可信内核的
       包括被本文拒绝的若干"权威定理"。
 \item \term{假设显式化}。凡结论依赖环境假设，必须在陈述中写明；凡保证有边界，必须在
       边界处标注。
-\item \term{可证伪性}。第 \ref{ch:program} 章把核心命题降格为十二条可证伪假设，并给出
+\item \term{可证伪性}。第 \ref{ch:program} 章把核心命题降格为十四条可证伪假设，并给出
       操作化、对照组、证伪条件与风险。
 \item \term{不与结论同构的验证}。凡提出"生成不可信、验证需独立"的地方，该原则同样
       适用于本文自身：本文的核心承重命题必须可被独立检验，且不得依赖任何未证明猜想。
@@ -136,25 +136,35 @@ $\to$ 实现 $\to$ 二进制 $\to$ 执行）的保证来自极小可信内核的
 \item 以抽象映射的\emph{核}刻画层级的无视集，使"这一层可以不关心什么"从修辞变为
       可计算对象（定义 \ref{def:oblivious}）。
 \item 以 Galois 连接刻画层间语义保持，并给出层级可靠性的条件式（定义
-      \ref{def:galois}、命题 \ref{prop:soundness}）。
-\item 以"接口是模块行为的\emph{充分统计量}"给出 Simon 近可分解性的可检验判据，并由
-      此构造\emph{泄漏对}诊断程序（定义 \ref{def:neardecomp}、命题
-      \ref{prop:leakpair}）。
-\item 以集成成本不等式 $\Theta(nm)\to\mathcal{O}(n+m)$ 给出内部基础设施化的相变阈值，
-      并说明阈值由"独立特性数 $\times$ 共享状态数"而非代码行数决定（定理
-      \ref{th:integration}）。
+      \ref{def:galois}、定义 \ref{def:soundness}、命题 \ref{prop:soundness}）。
+\item 以\emph{契约操作元}的良定义性把局部保证的可组合性归约为接口图的良类型着色与
+      无环性（定义 \ref{def:operad}、命题 \ref{prop:operad-compose}）。
+\item 以\emph{层族} $\pi:\mathcal{L}\to\mathcal{P}$ 把内核六职能的跨域同构与沿问题
+      形状的迁移区分开来（定义 \ref{def:fibration}、命题 \ref{prop:transport}）。
+\item 以\emph{粗粒化判据}使收敛论题可以在单个项目内部被证伪（定义
+      \ref{def:coarsegrain}、猜想 \ref{conj:relevant}）。
+\item 以一条摊销不等式比较 $\Theta(nm)$ 的直接交互与 $\mathcal{O}(nk+m)$ 的基座交互，
+      给出内部基础设施化的盈亏平衡阈值（定理 \ref{th:integration}）。
 \item 以操作语义完备性论证内核六职能的\emph{条件必然性}，并由此导出"自建 vs 外借"
       的判定准则（定理 \ref{th:six}、推论 \ref{cor:buildadopt}）。
 \item 以抽象映射的像空间维度给出过约束/欠约束判据，从而把"底层唯一、高层多解"
       形式化为解集几何（命题 \ref{prop:overconstrain}）。
-\item 以读集期望 $\mathbb{E}[\rho]$ 给出架构质量的可测量目标函数，并证明不变量集中
-      化最小化读集（定义 \ref{def:readset}、定理 \ref{th:centralise}）。
-\item 以描述长度差给出技术债的精确定义（定义 \ref{def:debt}）。
+\item 以读集期望 $\mathbb{E}[\rho]$ 给出架构质量的可测量目标函数，并给出一个界，表明
+      不变量集中化会降低读集，且该界是相对于那些没有任何独立证据能够确定的强制点
+      陈述的（定义 \ref{def:readset}、定义 \ref{def:enforce}、定理
+      \ref{th:centralise}）。
+\item 以描述长度差给出技术债的精确定义（定义 \ref{def:debt}），并给出重构的率失真
+      解读。
+\item 一个可辨识性判据，用于判断理解能否收敛，它把观测不足与采样不足区分开来，而
+      线性观测秩是它在有限维下的特例（定义 \ref{def:observability}、命题
+      \ref{prop:observability}）。
+\item 以\emph{可治理复杂度}的稳定性条件，以及所需人力的标度律（定义
+      \ref{def:governable}、命题 \ref{prop:exponent}）。
 \item 以 Hoeffding 界给出共识层可靠性的指数上界，并证明当存在相关错误模式 $q$ 时该界
       被 $q$ 支配、增加节点数无益，从而确立"多样性而非数量"为共识设计的核心变量
-      （定理 \ref{th:condorcet}、命题 \ref{th:correlated}）。
+      （定理 \ref{th:condorcet}、命题 \ref{th:correlated}、第 \ref{sec:mechanism} 节）。
 \item 给出完整的保证条件式，把功能、资源、副作用、系统组合与目标表达五类正确性统一
-      为一条可追溯的条件蕴含（定义 \ref{def:assurance}）。
+      为一条可追溯的条件蕴含（定义 \ref{def:assurance}、命题 \ref{prop:assurance}）。
 \end{enumerate}
 
 \paragraph{方法论贡献。}
@@ -162,7 +172,7 @@ $\to$ 实现 $\to$ 二进制 $\to$ 执行）的保证来自极小可信内核的
 \item 一份七步"下行协议"，把理解大型系统从顺序阅读改造为分层建模与主动辨识。
 \item 一组可执行的"缝探测器"清单，用于在陌生代码库中定位真实模块边界。
 \item 一份七步"正向压缩"设计流程，把设计目标从形容词改造为可优化目标函数。
-\item 十二条可证伪假设及实际上验设计。
+\item 十四条可证伪假设及实验设计。
 \item 一份把社会认识论与证明携带代码耦合起来的交叉研究方向，即文献地图上最空白的
       可占据位置。
 \end{enumerate}
@@ -172,8 +182,9 @@ $\to$ 实现 $\to$ 二进制 $\to$ 执行）的保证来自极小可信内核的
 第 \ref{ch:framework} 章建立统一的形式框架：层级、抽象映射、无视集、契约、轨迹、
 保证与信任。第 \ref{ch:convergence} 章处理问题 \ref{prob:low}，把收敛拆成三个强度
 不同的命题并给出强度定律。第 \ref{ch:infrastructure} 章处理问题 \ref{prob:scale}，
-证明六职能的条件必然性并给出相变阈值。第 \ref{ch:comprehension} 章处理问题
-\ref{prob:mind} 的前半，给出逆向压缩的理解理论。第 \ref{ch:design} 章处理问题
+证明六职能的条件必然性，并推导出基座收回自身成本的盈亏平衡阈值。第
+\ref{ch:comprehension} 章处理问题 \ref{prob:mind} 的前半，给出逆向压缩的理解理论。
+第 \ref{ch:design} 章处理问题
 \ref{prob:mind} 的后半，给出正向压缩的设计理论。第 \ref{ch:intent} 章处理问题
 \ref{prob:trust}，给出从意图到可验证执行的七段链与双层信任结构。第
 \ref{ch:levels} 章把层级从认知辅助升级为验证义务的分解单元。第 \ref{ch:program}

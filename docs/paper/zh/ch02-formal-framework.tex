@@ -44,8 +44,12 @@ b \sqsubseteq_{i+1} \Conc_i(b') \quad\Longleftrightarrow\quad \Obs_i(b) \sqsubse
 \end{definition}
 
 Galois 连接的意义在于：它精确刻画"抽象化丢掉了什么、保住了什么"，并且是
-Cousot 抽象解释框架的核心工具\cite{cousot1977}。当层间关系可由 Galois 连接表达时，
-语义保持条件成为可机械判定的对象；当不能时，必须退回到模拟关系或人工论证。
+Cousot 抽象解释框架的核心工具\cite{cousot1977}。它在本文中的角色是确切的，但比通常
+以为的更窄：Galois 连接使语义保持条件成为一个\emph{良定义、具有典范证明形态的义务}，
+而不是一个可自动判定的条件。要判定它，仍然要求两个论域都有有效表示、二者之间的关系
+可计算、所涉性质落在某个可判定的片段内，并且分析能够终止。当 Galois 连接无法建立时，
+必须退回到模拟关系、双模拟、上下文等价或人工论证，而它们各自带有自己的组合义务，
+如注 \ref{rmk:relational-compose} 所述。
 
 \begin{definition}[层间可靠性]\label{def:soundness}
 设 $A \in \Env_i$ 为上层声明的一条环境假设，$\Beh_{i+1}\!\upharpoonright\! A$ 表示下层
@@ -74,6 +78,36 @@ Cousot 抽象解释框架的核心工具\cite{cousot1977}。当层间关系可�
 一致，故结论中的包含关系对最上层成立。
 \end{proof}
 
+\begin{remark}[关系情形下的条件 (a)]\label{rmk:relational-compose}
+命题 \ref{prop:soundness} 是对函数式观察映射陈述的，因为条件 (a) 是复合的等式，
+$\Obs_i \circ \Obs_{i+1} = \Obs_i^{(i+2)}$。注 \ref{rmk:source} 已记录：在若干转换边上，
+层间关系是一般关系 $R_i \subseteq \Beh_{i+1} \times \Beh_i$ 而非函数。二者在这里不可
+互换，这一差别值得确切写出，而不是留给读者。
+
+在关系情形下，条件 (a) 的自然替代物是\emph{复合相容性包含}
+\begin{equation}\label{eq:relcompose}
+R_{i+1} \circ R_i \;\subseteq\; R_i^{(i+2)},
+\end{equation}
+其中 $R_i^{(i+2)}$ 是 $\Beh_{i+2}$ 到 $\Beh_i$ 的直接关系，而
+$b_{i+2}\,(R_{i+1} \circ R_i)\,b_i$ 成立，当且仅当存在某个 $b_{i+1}$ 满足
+$b_{i+2} R_{i+1} b_{i+1}$ 且 $b_{i+1} R_i b_i$。
+
+关于式 \eqref{eq:relcompose} 有三点必须说明。
+\begin{enumerate}[label=(\alph*)]
+\item 它是一条\emph{包含}，不是等式。归纳步用到的正是包含；等式是严格更强、且不必要
+      的前提。
+\item 它\emph{不被}函数式条件所蕴含，也不能由每个 $R_i$ 分别是（比如说）一个模拟
+      推出。复合相容性是关于族 $\{R_i\}$ 的独立闭合性质，或需假设，或需证明。
+\item 因此，命题 \ref{prop:soundness} 在本文中只对函数式情形给出证明。它的关系版本是
+      有条件的：它在式 \eqref{eq:relcompose} 之下成立，而后者是附加前提，不是推论。
+\end{enumerate}
+
+对第 \ref{ch:intent} 章真正重要的读法是：从函数式抽象改用前向模拟、后向模拟、双模拟
+或上下文等价，就承担了为所使用的关系族建立式 \eqref{eq:relcompose} 的义务。在实践中
+这一义务由相应理论的复合引理兑现，而这恰恰是该要求在被非正式地写下时容易被忽略的
+原因。
+\end{remark}
+
 \begin{remark}[与源研究报告记号的关系]\label{rmk:source}
 本文的六元组定义 \ref{def:level} 是源研究报告四元组
 $M_i = (X_i, \mathrm{Beh}_i, \mathrm{Obs}_i, A_i)$ 的扩展：本文显式加入
@@ -88,7 +122,7 @@ $R_i(b_{i+1}, b_i)$ 成立。这是一个\emph{模拟条件}，比式 \eqref{eq:
 \emph{不能假定所有转换都使用同一种关系}。这一限定本文完全接受。
 \end{remark}
 
-\begin{remark}
+\begin{remark}\label{rmk:why-compose-fails}
 命题 \ref{prop:soundness} 是"局部保证如何组合成端到端保证"的精确形式，也是它
 \emph{为什么常常失败}的精确形式：组合需要两个条件同时成立，而工程实践中 (a) 常因
 观察映射不一致而破坏（例如"事务提交成功"在应用层与存储层指代不同的观察），(b) 常因
@@ -136,11 +170,102 @@ $\Obl(\Lambda_i)$ 是 $\Beh_{i+1}$ 上的等价关系，且商集满足
 第三条的后果最深：它使"无知"成为一种可以被主动声明、被检查、被追责的性质。一个从未
 声明自己无视集的模块，其契约是不完整的。
 
+\begin{remark}[无视集相对于任务与性质]\label{rmk:oblivious-relative}
+定义 \ref{def:oblivious} 从单个对象（观察映射 $\Obs_i$）定义了 $\Obl(\Lambda_i)$。
+这是正确的定义（正是它使命题 \ref{prop:oblivious} 为真），但它压缩掉了一个在使用中
+重要的依赖关系：$\Obs_i$ 不是由系统给定的。它是被\emph{选择}的，并且是相对于任务被
+选择的：一个实现细节可能与业务结果完全无关，却对尾延迟、对安全边界或对能耗具有
+决定性作用；同一次改动每次使一方变好、使另一方变差，就演示了这一点。
+
+在依赖关系重要之处，记号应当把它显示出来。本文记 $\Obl(\Lambda; T)$ 为层级 $\Lambda$
+在任务 $T$ 下的无视集，记 $\Obl(\Lambda; \varphi)$ 为相对于所要保证的性质 $\varphi$
+可以被无视的差异。不带参数的 $\Obl(\Lambda)$ 于是表示在所考虑的全部任务上的交，这
+正是一个模块所声明的无视集若要对其尚未遇见的调用者成立所应取的值。
+
+这里有一个值得提炼的口号，因为人们实际使用的口号是错的。有效的抽象不是尽可能多地
+删除信息，而是删除那些不可能影响所要得出的结论的差异。一个隐藏了很多、却保住了对它
+提出的各种性质的层级，优于一个隐藏得更多、却保住得更少的层级；单看 $\kappa$ 无法区分
+二者，这正是为什么压缩率是一种测量，而目标是定义 \ref{def:mdl} 的约束优化，不是这个
+比率本身。
+\end{remark}
+
+\begin{remark}[核的定义给出了什么、没有给出什么]\label{rmk:kernel-limits}
+命题 \ref{prop:oblivious} 是关于一个核的陈述；对于从它能推出什么，值得说得确切，
+因为有两件事常被假定为可推出，而它们并不能。
+
+它\emph{不}给出可计算性。$\Obl(\Lambda_i)$ 是等价关系，这由 $\Obs_i$ 是函数得到；
+但该关系是否\emph{可判定}、其等价类能否被枚举，还额外要求 $\Obs_i$ 有效可计算，且其
+输出是否相等可判定。对于一个观察映射由无穷行为集合上的操作语义定义的层级，这两点都
+不是自动成立的。因此这个定义是关于无视集\emph{是什么}的规格，而不是产生无视集的
+算法。
+
+它也不提供构造。本节没有任何内容说明如何从一个真实系统的执行语义、接口与已观察行为
+得到它的 $\Obs_i$，也没有说明如何计算或近似该层级隐藏了哪些差异。这项工作并非因篇幅
+原因被推迟：它是一个独立的问题；本文立场的诚实表述是，无视集\emph{是一个应被声明、
+随后被检查的设计制品}，而不是一个可被提取的分析制品。声明本身就是那个制品；可用于
+检验它的，是原则 \ref{pr:two-criteria} 的两条边界判据：以泄漏对检验的充分性，与以
+非干扰检验的完备性，而两者都是部分的。同时通过两者的声明并未被证明为正确，只是尚未
+被反驳。
+\end{remark}
+
+\begin{remark}[声明可能是不完备的：第二条边界判据]\label{rmk:noninterference}
+定义 \ref{def:oblivious} 把 $\Obl(\Lambda_i)$ 定义为\emph{已声明}的观察映射 $\Obs_i$
+的核。该层级看不见的一切按构造对 $\Obs_i$ 不可见，因此没有任何失效可以定位在
+$\Obl(\Lambda_i)$ 自身之内。可能发生的失效位于上一层，在声明之中：$\Obs_i$ 可能不是
+上层实际能观察到的全部。若一个被 $\Lambda_i$ 声明为可无视的差异仍然改变了时间、
+资源占用或失败行为（这三者从上层可见，却不在 $\Obs_i$ 之中），那么这个声明是假的，
+尽管用 $\Obs_i$ 作出的每一句陈述仍然为真。两个行为在 $\Obs_i$ 下相等，在实践中却
+可区分。
+
+这个问题很古老，为它命名可以换来一整套技术。设
+$D \subseteq \Obl(\Lambda_i)$ 是该层级声明为可无视的差异集合，并设上层实际可用的观测
+装置为 $\mathcal{J}$，它可能严格大于 $\Obs_i$。要求 $D$ 中没有任何差异经由
+$\mathcal{J}$ 可见，正是 Goguen 与 Meseguer 的\emph{非干扰}条件\cite{goguen1982}：
+一个论域中的变化不得使另一个论域的观察发生变化。用本文的语汇：
+
+\begin{center}
+\small
+\begin{tabular}{L{4.2cm}L{10.0cm}}
+\toprule
+\textbf{信息流概念} & \textbf{本文中的对应物} \\
+\midrule
+高层输入 & 被声明为可无视的差异，$D \subseteq \Obl(\Lambda_i)$ \\
+低层观察 & 上层实际可用的观测装置，$\mathcal{J}$ \\
+非干扰 & $D$ 不改变 $\mathcal{J}$-观察：该声明是\emph{完备的} \\
+隐蔽信道 & 一条位于 $\Obs_i$ 之外、却仍使 $D$ 可见的 $\mathcal{J}$-路径 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+第 \ref{ch:comprehension} 章提供了边界忠实性的另一半：接口对外部行为是否\emph{充分}，
+其检验方式是寻找一个泄漏对。本注提供的是充分性无法提供的东西，因为泄漏对是关于
+$\Obs_i$ 的陈述，对 $\Obs_i$ 遗漏了什么一字未说。第 \ref{sec:neardecomp} 节把两条判据
+并列陈述。
+
+实践上的后果是一套借来的工具箱，而不是一个新理论：差分测试是充分性方向上的工具，
+污点追踪、信道审计与时间通道分析是完备性方向上的工具。已经编目的反模式"用类型系统
+强制多租户隔离"（例 \ref{ex:wrong-language}(d)）正是完备性失效在其天然栖息地中的
+形态：类型系统约束了已声明的信道，而未被声明的信道仍然敞开。
+\end{remark}
+
 \begin{remark}[模式实在性的判据]\label{rmk:dennett}
 命题 \ref{prop:oblivious} 与一个独立的哲学判据同构。Dennett 的\emph{真实模式}判据
 断言：一个模式是真实的，当且仅当用该模式描述系统比描述原始数据更经济
 \cite{dennett1991}。在该判据下，"这一层是否存在"不是一个本体论问题，而是一个
 \emph{压缩率问题}，恰是定义 \ref{def:compression} 所度量的量。
+
+这一判据后来获得了一个更锐利、且明确是信息论的表述；它值得引用，因为它比 Dennett 的
+原始陈述更接近定义 \ref{def:compression}。Ladyman 与 Ross 主张"存在即是一个真实模式"：
+一个模式是真实的，仅当它有一个模型，该模型在一个\emph{逻辑深度}低于该结构的位图编码
+的编码中承载关于某个结构的信息；并且他们认为，奥卡姆剃刀所建议的是：只把那些使归属于
+世界的逻辑深度最小的模式计为真实的\cite{ladyman2007}。这是一个用编码语汇、而不是用
+非正式的经济性语汇表述的存在性压缩判据，而定义 \ref{def:compression} 的压缩率正是它
+所要问的量。
+这一等同是双向的，并非没有代价：若一个层级是真实的，当且仅当承认它带来压缩，那么
+一个不带来压缩的层级就不仅是不方便的，而是不真实的；这比本文所需的主张更强，本文
+不作此主张。本文采用的是较弱的、条件式的读法：\emph{若}一个层级所声明的观察映射带来
+压缩，则它的核是一个真实的等价关系；压缩多少才算够是一个设计决定，而不是一个本体论
+阈值。
 
 这一等价有三项后果，本文在后续各章中分别使用：
 \begin{enumerate}[label=(\alph*)]
@@ -153,16 +278,39 @@ $\Obl(\Lambda_i)$ 是 $\Beh_{i+1}$ 上的等价关系，且商集满足
 \end{remark}
 
 \begin{definition}[压缩率]\label{def:compression}
-设 $\Beh_{i+1}$ 上给定参考测度 $\mu$，记 $\Entropy$ 为相应熵泛函。层级 $\Lambda_i$ 的
+设下层是经由一个\emph{有限编码}的行为描述被观察的：一个可测映射
+$\mathrm{enc} : \Beh_{i+1} \to \mathcal{X}$，其中 $\mathcal{X}$ 是可数集合，$\mu$ 是
+$\mathcal{X}$ 上的概率分布，$\Entropy$ 是离散分布的 Shannon 熵。层级 $\Lambda_i$ 的
 \term{压缩率}定义为被商掉的信息量
 \begin{equation}\label{eq:compression}
-\kappa_i \;=\; \Entropy_{\mu}\bigl(\Beh_{i+1}\bigr) \;-\;
-\Entropy_{\Obs_i \# \mu}\bigl(\Obs_i(\Beh_{i+1})\bigr) \;=\;
-I\bigl(\text{被丢弃的细节} \,;\, \cdot\bigr)\Big|_{\text{在该层观察下}},
+\kappa_i \;=\; \Entropy_{\mu}\bigl(\mathrm{enc}\bigr) \;-\;
+\Entropy_{\Obs_i \# \mu}\bigl(\Obs_i \circ \mathrm{enc}\bigr)
+\;=\; \Entropy_{\mu}\bigl(\mathrm{enc} \mid \Obs_i \circ \mathrm{enc}\bigr),
 \end{equation}
-即在 $(\Obs_i, \Conc_i)$ 下不可恢复的信息量。这一表述直接借用信息论
-\cite{shannon1948}与算法信息论\cite{kolmogorov1965}的语汇。
+最后一个等号成立，因为对离散随机变量的函数 $f$ 有
+$\Entropy(X) - \Entropy(f(X)) = \Entropy(X \mid f(X))$。这就是在 $(\Obs_i, \Conc_i)$ 下
+不可恢复的信息量。这一表述直接借用信息论 \cite{shannon1948}与算法信息论
+\cite{kolmogorov1965}的语汇。
 \end{definition}
+
+这个定义附带三项限定，因为每一处都是该量容易被误用的地方。
+
+第一，编码是数据的一部分，不是呈现细节。$\kappa_i$ 是相对于固定的 $\mathrm{enc}$、
+固定的 $\mu$ 与固定的计数单位定义的；三者中任何一个改变，它都随之改变。行为集合是
+轨迹的集合，因而是无穷对象，在它们之上没有直接定义的熵：被测量的是一个有限描述的熵。
+凡本文后文说某一层级"带来压缩"，或说一个抽象优于另一个抽象，该比较都是相对于一个
+已声明的编码与一个已声明的任务分布而言的，否则它根本不是一个比较。
+
+第二，式 \eqref{eq:compression} 中的恒等式不能经受向连续变量、或向表示空间变更的
+过渡。对微分熵，$\Entropy(X)-\Entropy(f(X)) = \Entropy(X \mid f(X))$ 的对应物不成立
+（微分熵在重参数化下不是不变的），因此一个把状态空间换成连续空间的读者会在不知不觉
+中换掉所测的量。本文并不阻止这种替换；它需要另给一个定义。
+
+第三，$\kappa_i$ 不是描述长度，也绝不能与描述长度等同。本文在别处（定义 \ref{def:mdl}
+与第 \ref{ch:design} 章的技术债落差）使用描述长度 $\DL$，取的是最小描述长度意义，
+其中被度量的对象是一个在固定编码下的\emph{模型}。被一个抽象商掉的量与一个模型的最短
+描述的长度，是定义在不同自变量上的不同泛函；关于其中一个的结果不能迁移到另一个。
+二者只通过编码定理相联系，且只在本文未建立的条件之下相联系。
 
 压缩率本身不是目标：把系统压缩成"什么都不保证"可以获得任意大的 $\kappa$。目标是
 \emph{在保持任务相关预测能力的前提下最大化 $\kappa$}。这引出第
@@ -241,27 +389,40 @@ M^{\star} \;=\; \arg\min_{M} \; \DL(M)
 或等价的拉格朗日形式 $\min_M \; \DL(M) + \lambda\, L_T(M)$。
 \end{definition}
 
-\begin{proposition}[下潜的停止准则]\label{prop:stopping}
-设模型族按"下潜深度"参数化：$M_0 \succ M_1 \succ \cdots$ 表示逐层展开（下标越大，
-保留的下层细节越多），且 $\DL(M_{k+1}) \ge \DL(M_k)$，
-$L_T(M_{k+1}) \le L_T(M_k)$。则率失真目标的最优深度 $k^{\star}$ 满足驻点条件
+\begin{proposition}[连续松弛下的下潜停止准则]\label{prop:stopping}
+设模型族不由离散的下潜深度、而由一个实参数 $t \in [0,1]$ 参数化，$t$ 增大时 $M_t$
+保留更多的下层细节；并设 $\DL(M_t)$ 与 $L_T(M_t)$ 对 $t$ 可微，且
+$\mathrm{d}\DL/\mathrm{d}t \ge 0$，$\mathrm{d}L_T/\mathrm{d}t \le 0$。则在拉格朗日量
+$\DL + \lambda L_T$ 的内点最优 $t^{\star}$ 处，驻点条件
 \begin{equation}\label{eq:stopping}
-\left.\frac{\partial L_T}{\partial \DL}\right|_{k^{\star}} \;=\; -\frac{1}{\lambda} ,
+\left.\frac{\partial L_T}{\partial \DL}\right|_{t^{\star}} \;=\; -\frac{1}{\lambda}
 \end{equation}
-且若在某个深度之后 $\partial L_T / \partial \DL = 0$（边际预测增益为零），则继续下潜
-被严格占优。
+成立；且若在某区间上 $\mathrm{d}L_T/\mathrm{d}t = 0$ 而 $\mathrm{d}\DL/\mathrm{d}t > 0$，
+则继续下潜被严格占优。
 \end{proposition}
 
 \begin{proof}
-拉格朗日量 $\mathcal{L}(k) = \DL(M_k) + \lambda L_T(M_k)$。对 $k$ 的一阶最优性条件为
-$\mathrm{d}\DL/\mathrm{d}k + \lambda\, \mathrm{d}L_T/\mathrm{d}k = 0$，即
-$\mathrm{d}L_T/\mathrm{d}\DL = -1/\lambda$。若在某区间上
-$\mathrm{d}L_T/\mathrm{d}\DL = 0$ 而 $\mathrm{d}\DL/\mathrm{d}k > 0$，则
-$\mathrm{d}\mathcal{L}/\mathrm{d}k = \mathrm{d}\DL/\mathrm{d}k > 0$，目标函数单调上升，
-故继续下潜被严格占优。
+对 $\mathcal{L}(t) = \DL(M_t) + \lambda L_T(M_t)$ 求导并令其为零，得
+$\mathrm{d}\DL/\mathrm{d}t + \lambda\,\mathrm{d}L_T/\mathrm{d}t = 0$，故在
+$\mathrm{d}\DL/\mathrm{d}t \ne 0$ 之处有 $\mathrm{d}L_T/\mathrm{d}\DL = -1/\lambda$。
+若在某区间上 $\mathrm{d}L_T/\mathrm{d}t = 0$ 而 $\mathrm{d}\DL/\mathrm{d}t > 0$，则在该
+区间上 $\mathrm{d}\mathcal{L}/\mathrm{d}t = \mathrm{d}\DL/\mathrm{d}t > 0$，目标函数
+上升，故继续下潜被严格占优。
 \end{proof}
 
-命题 \ref{prop:stopping} 给出一条在工程上可直接使用的规则：
+限定为连续松弛是刻意的，而且这正是该命题的全部内容。真实代码库中的下潜深度是离散的：
+一个模块要么被读到、要么没有被读到，不存在使描述长度平滑变化的半途深度。在离散族上，
+式 \eqref{eq:stopping} 中的导数不存在，拉格朗日量不必是凸的，一阶最优性也无从定义；
+仍然成立的只有命题的后半部分：若越过某个深度后任务损失不再改善、而描述长度继续增长，
+则该深度之后的下潜被占优。这个较弱的陈述完全不需要可微性，而原则 \ref{pr:descent} 用的
+正是它。率失真目标 \eqref{eq:ratedistortion} 不受这一限定影响：有条件的是微分形式，
+不是优化问题本身。
+
+由此得到两条实践推论，它们也是所报告实验应当采取的做法。第一，模型族最好被当作一个
+离散的候选模型集合，其 $(\DL, L_T)$ 点对落在帕累托前沿之上或附近，而在前沿点之间的
+取舍是关于 $D_T$ 的判断，不是一次求导。第二，比较相邻两个深度是一次测量，不是一次
+计算：再下潜一层的边际预测增益由有限差分、留一层消融，或过往改动的实测代价来估计；
+于是式 \eqref{eq:stopping} 的微分规则被读作对前沿形状的描述，而不是一份计算配方。
 
 \begin{principle}[下潜到"必须违反的不变量可见为止"]\label{pr:descent}
 要把某个改动做对，只需下潜到\emph{管辖该改动的那条不变量变为可见}的那一层，然后
@@ -303,8 +464,11 @@ $\Allow(S)$ 为契约 $S$ 允许的轨迹集合。称 $B$ \term{在 $E$ 中满�
 
 \begin{definition}[保证与其条件式]\label{def:assurance}
 一个\term{保证}是一个四元组
-$\mathfrak{A} = (\text{被保证的性质},\; \text{适用的对象},\;
-\text{依赖的前提},\; \text{证据})$。称性质 $\varphi$ 在范围 $\Sigma$ 内成立，
+\[
+\mathfrak{A} = (\text{被保证的性质},\; \text{适用的对象},\;
+\text{依赖的前提},\; \text{证据}),
+\]
+称性质 $\varphi$ 在范围 $\Sigma$ 内成立，
 当且仅当下列条件式成立：
 \begin{equation}\label{eq:assurance}
 \begin{aligned}
@@ -398,6 +562,15 @@ E_{\text{deployed}} \models A_{\text{claimed}} .
 \end{enumerate}
 并要求代换满足结合律与单位律。该定义是标准的（无色）操作元定义在颜色集合上的版本\cite{leinster2004}。直观上：颜色是"这一块承诺什么"，运算是"怎么把它搭
 起来"，代换是"把子块换成更细的实现而不改变外层承诺"。
+
+然而，结合律与单位律只对\emph{资源占用互不相交}的子组件族成立；这是对象本身的一个
+真实限制，而不是其表述上的技术细节。式 \eqref{eq:contract} 中的资源分量 $R$ 不是一个
+可加量。当两个子组件取用同一资源时，合并它们的预算涉及摊销与干扰（缓存、争用、队头
+阻塞），此时 $f \circ (g_1, g_2)$ 与 $(f \circ g_1) \circ g_2$ 可能给同一个复合体
+分配不同的预算。结合律失效，随之失效的是"该结构对这些复合体而言是一个操作元"这一
+主张。诚实的回应有两条：细化颜色，使其携带一个资源占用向量，并给出一个使合并满足
+结合律的资源代数；或者把操作元限制在资源互不相交的族上。本文没有资源代数可提供，
+因此取第二条，并把第一条记为正在进行的工作。
 \end{definition}
 
 \begin{definition}[接口图与自由性]\label{def:interface-graph}
@@ -413,8 +586,12 @@ E_{\text{deployed}} \models A_{\text{claimed}} .
 \item \term{着色良类型}：观察映射相容（命题 \ref{prop:soundness} 条件 (a)）
       $\iff$ 代换在颜色上良定义，即复合体不要求子组件的契约提供其颜色未声明的
       观察；
-\item \term{环境闭合}：环境假设闭合（命题 \ref{prop:soundness} 条件 (b)）
-      $\iff$ 接口图无环，即复合体可由子组件自下而上唯一构造。
+\item \term{环境闭合}：接口图无环是环境假设闭合（命题 \ref{prop:soundness} 条件 (b)）的
+      \emph{充分}条件，且其充分性\emph{只相对于一种拓扑证明策略}而言，即按拓扑序自下
+      而上构造复合体的那种策略。它不是必要条件。当图中存在环时，良基的构造不可用，
+      但复合体并不因此失去意义：它可以被赋予不动点语义，或者契约满足关系可以被加强，
+      使每个组件的保证被要求对其环境的一切允许行为成立，而不只是对环所提供的那一个
+      行为成立。
 \end{enumerate}
 \end{proposition}
 
@@ -426,9 +603,31 @@ E_{\text{deployed}} \models A_{\text{claimed}} .
 (b) 若接口图无环，则存在拓扑序，沿拓扑序逐层代换即得唯一的构造，环境假设的闭合性
 沿该序逐层验证。反之，若存在环 $u_1 \to u_2 \to \cdots \to u_k \to u_1$，则
 $u_1$ 的假设依赖 $u_k$ 的保证，而 $u_k$ 的保证又（经环）依赖 $u_1$ 的假设，
-代换式的两侧互相定义，复合体没有良基的构造；要使其有意义，必须额外引入不动点语义，
-即为该环单独声明一个解的存在唯一性条件。
+代换式的两侧互相定义，复合体\emph{按该序}没有良基的构造。要使其有意义，必须额外引入
+不动点语义，即为该环单独声明一个存在唯一性条件；或者加强满足关系，如下面的注所述。
 \end{proof}
+
+\begin{remark}[无环是充分条件，不是必要条件]\label{rmk:cycles-composable}
+无环互联是最简单的组合论证得以成立的条件：按拓扑序、一次一个组件，每个组件都针对
+已经建立的保证来兑现自己的假设。它不是关于契约组合的一般条件；把它写成一般条件会
+夸大结论，而这种夸大在实践中是有后果的，因为带反馈的系统是常态，不是病态。
+
+这一区分在契约文献中是已知的，且有标准形态。契约框架通常至少承认两种满足关系：
+\emph{弱}满足，其中组件的保证只需对其环境实际表现出的行为成立；以及\emph{强}满足，
+其中保证必须对环境被允许表现出的\emph{一切}行为成立。该一般框架的综述见
+\cite{benveniste2018}。这一区分不是装饰性的，它恰好解决了争点。对构成有向无环图的
+互联，弱满足已经足够，并按拓扑序复合；对含环的互联，弱满足不再足够，需要强满足
+\cite{agcontracts2021}。同一项工作给出了连续时间系统下的对应条件：互联必须是
+\emph{良置的}，而良置性是加在环上的条件，它由不动点论证兑现，而不是靠排除该环。
+
+对本文而言，随之而来的是两个主张的收窄，而不是方向的改变。第一，命题
+\ref{prop:operad-compose}(b) 建立的是拓扑策略下的充分性，而本文对它的使用（重试、
+缓存回写与事件回环使既有的组合论证失效）按原样仍然正确，因为这类改动破坏的是那个
+论证，而不是组合本身。第二，悬而未决的问题不是"如何避免环"，而是第 \ref{ch:program}
+章已经以另一种形式提出的那个问题：如何把功能性性质、环境假设、资源预算、失败恢复与
+重试语义纳入同一个契约系统，使其组合规则覆盖带环的互联。把环当作失败并止步于此，
+会使这个问题被过早地关闭。
+\end{remark}
 
 命题 \ref{prop:operad-compose}(b) 解释了第 \ref{sec:composition} 节三个组合失效反例
 中的两个，也解释了两处既有做法为何必须引入额外假设：
@@ -439,6 +638,23 @@ $u_1$ 的假设依赖 $u_k$ 的保证，而 $u_k$ 的保证又（经环）依赖
 \item 软件契约在网络重试回路上失效，因为重试把一个无环的调用图变成了带环的
       接口图，而契约的着色未随环的出现而重新验证。
 \end{itemize}
+
+\begin{remark}[第四类组合失效]\label{rmk:resource-coupling}
+第 \ref{ch:intent} 章把组合失效分为三类：颜色外延过小、接口图改变，以及契约分量缺失。
+定义 \ref{def:operad} 中的附加条件指出了第四类，而它不是那三类的特例。资源分量
+\emph{确实}在颜色之中，接口图\emph{确实}无环，每个子组件\emph{确实}满足自己的预算，
+而复合体却不满足，因为两个子组件取用了同一资源。
+
+时延预算是干净的例子。设 $g_1$ 与 $g_2$ 在孤立情况下各自满足 $10\,\mu$s 的预算，并设
+$f$ 在二者中任一被装入时都满足自己的预算；同时运行两者，复合体却不达标，因为二者争用
+同一个缓存。任何着色检查与任何无环性检查都看不到这一点，重新验证每一个颜色也同样
+看不到。
+
+第 \ref{ch:intent} 章把缓存争用一例读作契约分量缺失，这一读法在其限度内是正确的：
+资源分量当时根本没有进入颜色。第四类是那次修复\emph{之后}仍然剩下的东西。把 $R$ 放进
+颜色之后，仍然存在预算无法组合的复合体，而本该使组合良定义的代数恰恰是失效之处。
+这就是为什么该限制属于定义，而不属于组合定理的一条脚注。
+\end{remark}
 
 \begin{remark}[反馈是结构性的，不是工程细节]\label{rmk:feedback}
 命题 \ref{prop:operad-compose} 把"能不能组合"归约为"接口图有没有环"。这一归约有一个
@@ -470,7 +686,7 @@ $\phi(\mathcal{G})$ & 抽象骨架（定义 \ref{def:skeleton}）\\
 $T = (Q,d)$ & 任务（定义 \ref{def:task}）\\
 $\DL(M)$ & 模型 $M$ 的描述长度（定义 \ref{def:mdl}）\\
 $L_T(M)$ & 任务损失（定义 \ref{def:mdl}）\\
-$S = (P,Q,E^{+},E^{-},R,I,F,A)$ & 行为契约（定义 \ref{def:contract}）\\
+$S$ & 行为契约：八元组（定义 \ref{def:contract}）\\
 $\Tr(B,E)$ & 工件 $B$ 在环境 $E$ 中的可观察轨迹集（定义 \ref{def:traces}）\\
 $\Allow(S)$ & 契约允许的轨迹集（定义 \ref{def:traces}）\\
 $\mathfrak{A}$ & 保证四元组（定义 \ref{def:assurance}）\\
