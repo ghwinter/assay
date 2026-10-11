@@ -1,0 +1,28 @@
+Licensing
+=========
+
+This repository uses layered licensing: software and scholarly text carry the
+licence appropriate to each.
+
+Software — everything except docs/paper/
+-----------------------------------------
+Dual-licensed under either of
+
+  * Apache License, Version 2.0 (LICENSE-APACHE)
+  * MIT license (LICENSE-MIT)
+
+at your option. This is the conventional Rust dual-licence arrangement.
+The Cargo.toml files declare `license = "MIT OR Apache-2.0"`.
+
+Written report — docs/paper/
+----------------------------
+Copyright 2026 ghwinter. Licensed under the Creative Commons Attribution 4.0
+International License (CC-BY-4.0), full text in docs/paper/LICENSE. You may
+share and adapt the text for any purpose, including commercially, provided you
+give appropriate credit, link to the licence, and indicate if changes were made.
+
+Contributions
+-------------
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this repository by you, as defined in the Apache-2.0 licence,
+shall be licensed as above, without any additional terms or conditions.

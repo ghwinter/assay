@@ -1,0 +1,25 @@
+# 换行归一（权威在这一份文件里，不在每台机器的 core.autocrlf 里）
+#
+# 为什么必须有这一份：本机 `core.autocrlf=true` 且此前没有 .gitattributes，
+# 于是工作树里的 LF 会在下次检出时变成 CRLF。对大多数文件这只是噪音，
+# 但 `.githooks/pre-commit` 是 POSIX sh 脚本——CRLF 会让它报
+# `bad interpreter: /bin/sh^M` 而根本跑不起来。那正是本仓两次踩过的坑：
+# **门看起来装着，其实从来没执行过。** 检出结果不该取决于谁 clone 的、在哪台机器上。
+#
+# `eol=` 属性的优先级高于 core.autocrlf，所以这份文件对所有人一致生效。
+
+* text=auto eol=lf
+
+# Windows 原生脚本：CRLF。它们本来就只在 Windows 上跑，且 cmd.exe 对
+# LF-only 的批处理在标签/goto 上有历史问题。
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# 二进制：git 不要碰（tla2tools.jar 是随 git 固定的判定器，改一个字节即失效）
+*.jar binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
+*.exe binary

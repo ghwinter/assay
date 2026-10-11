@@ -21,3 +21,18 @@ Thumbs.db
 # Spec Ledger / demo runtime state
 pilot/build/
 states/
+
+# Local-only external research inputs; never part of the Assay repository
+/pdf/
+/docs/CLI_REFERENCE_NOTE.md
+# Paper: working dialogue materials, not part of the published artifact
+/docs/new/
+
+# Paper: LaTeX build intermediates (the compiled PDFs are kept)
+/docs/paper/en/build/*
+!/docs/paper/en/build/main.pdf
+/docs/paper/zh/build/*
+!/docs/paper/zh/build/main.pdf
+
+# tmp
+/tmp

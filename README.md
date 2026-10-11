@@ -24,6 +24,9 @@ Spec Ledger 仓库。
 
 可运行的 Rust 服务纵切与全流程验证命令见 [examples/README.md](examples/README.md)。
 
+关于 AI 时代可执行工程、工程运行时及其研究假设与试验路线，见
+[总纲：AI 时代的可执行工程](docs/AI_ENGINEERING_RUNTIME.md)。该文档是探索性提案，不代表仓库已实现完整运行时。
+
 **引擎可丢弃，产物不可丢弃。** 删掉引擎只失去自动化，不失去知识。
 
 证据历史以 `assay/evidence/*.jsonl` 为准，`.json` 是最新事件视图。工作包生成器读取新格式的 Assay 证据；Spec Ledger 的旧 YAML 状态只作为迁移期历史回退，不与新事件争夺权威。
@@ -46,11 +49,16 @@ Spec Ledger 仓库。
 ## 它现在能做什么
 
 ```
+assay --version
+assay version
+assay plan  [--root <p>] --base <git-revision> [--change <id>] [--format text|json]
 assay run   [--root <p>] [--stage <s>] [--check <id>] [--change <id>] [--certify]
+assay run   [--root <p>] --base <git-revision> [--change <id>] [--certify]
 assay map   [--root <p>]
 assay check [--root <p>]
 ```
 
+- `plan` — 根据显式登记的输入路径解释本次 Git 变化会选择哪些检查；未知路径保守选择全部检查。
 - `run` — 跑检查、写证据、报分歧、必要时**当场复现出生证明**、把兑现的检查纳入棘轮。
 - `map` — 由清单机械生成单页地图（手改即红灯）。
 - `check` — 清单自检 + 覆盖 + 出生证明三态 + 变更记录 + 棘轮削弱 + 地图新鲜度。**不需要跑任何检查。**
@@ -102,7 +110,7 @@ assay check [--root <p>]
 
 ## 边界（明确不做）
 
-不建平台，不建中心模型，不做影响分析，不认识任何工具，**不判断分歧里谁对**。
+不建服务端，不建中心模型，不推断语义影响，不认识任何后端验证工具，**不判断分歧里谁对**。
 引擎的每一个特性，都必须能说出是"哪个项目的哪一次真实摩擦"买来的。
 
 项目工作流在引擎之上：Spec Ledger 管目的、决策、假设和义务；项目模板把已裁决的
@@ -110,8 +118,25 @@ assay check [--root <p>]
 当前尚无从 Spec Ledger 自动生成 Assay 清单或形式化模型的转换器；不要把人工确认的
 工程语义伪装成可由引擎推导的事实。
 
-本机 `D:\GitHub` 是按需检索的参考库，不是要求预先读完的教材。遇到具体设计问题时，
-按 [工作流中的参考检索方法](WORKFLOW.md#按需借鉴参考项目) 搜索少量相关项目，读实现与测试，
-再记录适用条件和本项目的决定。
+外部项目与资料只作为设计时的学习输入，不是本仓库的依赖或组成部分。只吸收经本项目决策
+认可的机制，并用 Assay 自己的代码、协议、测试和证据重新表达；不 vendoring 外部项目、复制
+其文档或提交下载的论文文件。`pdf/` 与实现调研速记为本地忽略项。
+
+本仓库用自身账本、清单、引擎测试和示例验证自己。GitHub Actions 的检查与版本发布入口见
+[仓库迭代流程](engine/README.md#仓库迭代与发布)。
 
 详见 [PROTOCOL.md §8](PROTOCOL.md) 与 [engine/README.md](engine/README.md)。
+
+---
+
+## 许可
+本仓库采用**分层许可**——软件与学术文本各自使用适配的许可。
+
+| 范围 | 许可 |
+|---|---|
+| 软件（`docs/paper/` 以外的一切） | **MIT OR Apache-2.0** 双许可，任选其一： [Apache License 2.0](LICENSE-APACHE) · [MIT License](LICENSE-MIT) |
+| 书面报告（`docs/paper/`） | **CC-BY-4.0**：[全文](docs/paper/LICENSE) |
+
+报告的 CC-BY-4.0 允许在署名前提下自由分享与改编，包括商业用途。各 `Cargo.toml`
+已声明 `license = "MIT OR Apache-2.0"`。除非你明确另行声明，任何有意提交以纳入本仓库
+的贡献，均按上述许可授权，不附加任何额外条款。
