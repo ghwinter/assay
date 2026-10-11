@@ -1,0 +1,132 @@
+% =====================================================================
+%  Compression and Verification
+%  Layered Emergence, Structural Convergence, and Verifiable Execution
+%  in Complex Software Systems
+%
+%  English build — authoritative text.
+%  The Chinese build in ../zh is a controlled rendering of this text;
+%  the term mapping is fixed in ../TERMINOLOGY.md.
+%
+%  Compile: xelatex main.tex (three passes)
+% =====================================================================
+\documentclass[11pt,a4paper,oneside,openany]{book}
+
+\input{preamble}
+
+\title{Compression and Verification}
+\author{The Compression--Assurance Working Notes}
+\date{2026}
+\hypersetup{pdfauthor={The Compression--Assurance Working Notes},
+            pdftitle={Compression and Verification}}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+\centering
+\vspace*{2.6cm}
+{\Huge\bfseries Compression and Verification\par}
+\vspace{1.0cm}
+{\LARGE Layered Emergence, Structural Convergence,\\[0.35em]
+ and Verifiable Execution in Complex Software Systems\par}
+\vspace{1.8cm}
+{\large The Compression--Assurance Working Notes\par}
+\vspace{0.45cm}
+{\normalsize\itshape An independent technical report\par}
+\vspace{0.7cm}
+{\small\url{https://github.com/ghwinter/assay}\par}
+\vspace{0.25cm}
+{\footnotesize Correspondence via the repository issue tracker.\\
+ Source of this report: \url{https://github.com/ghwinter/assay/tree/master/docs/paper}\par}
+\vfill
+{\normalsize 2026\par}
+\vspace{1.0cm}
+\end{titlepage}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+We formalise one question. \emph{Do large software systems converge in their high-level
+abstractions, structures and architectures, in the way that low-level ABIs, calling
+conventions and stack frames converge?} The intuition is decomposed into three
+propositions of differing strength, each given a decidable or falsifiable form.
+
+Four theses organise the work. The \term{compression thesis}: a complex system is
+comprehensible to a bounded intelligence exactly to the extent that it is compressible;
+comprehension is task-constrained lossy compression whose optimal descent depth is the
+stationarity condition of a rate--distortion Lagrangian. The \term{necessity thesis}: any
+system with concurrently live entities and contended finite resources, whose operational
+semantics is well defined, has already defined six functions---identity and lifecycle,
+allocation and reclamation, scheduling, naming and addressing, communication and
+synchronisation, and fault isolation and recovery; these may be built or adopted, but not
+omitted. The \term{separation thesis}: generation may be free, probabilistic and untrusted,
+while admission must be deterministic, mechanical and exhaustively inspectable; formal-layer
+guarantees come from a minimal trusted kernel, intent-layer guarantees from adversarial
+consensus, and the two are stitched by artefact binding. The \term{design thesis}:
+architecture is manufactured separation of scales---nature obtains levels free through
+renormalisation, software must pay for them---and design is forward compression while
+comprehension is inverse compression, two reading directions of one structure.
+
+The formal results are as follows. A level's \emph{oblivious set} as the kernel of its
+abstraction map, making ``what this level may ignore'' computable and reducing the reality
+of a level to a compression ratio; Galois connections for inter-level semantic
+preservation; a \emph{contract operad} whose well-definedness reduces the composability
+of local guarantees to well-typed colouring and acyclicity of the interface graph,
+thereby explaining why feedback and retry invalidate existing composition arguments; a
+\emph{level family} distinguishing cross-domain isomorphism of the six functions from
+transport along problem shape; near-decomposability as interface sufficiency, yielding a
+diagnostic for \emph{leak pairs}; a \emph{coarse-graining criterion} making the
+convergence thesis falsifiable within a single project; an amortisation inequality
+$\Theta(nm)\to\mathcal{O}(n+m)$ giving the phase-transition threshold of internal
+infrastructuralisation; expected read-set as a measurable architectural objective, with
+invariant centralisation proved to minimise it; an \emph{observability rank} criterion
+for whether comprehension can converge at all, separating insufficient observation from
+insufficient sampling; \emph{governable complexity}
+$C=\mathbb{E}[\rho]\cdot\lambda$ against comprehension capacity $K=hb$, yielding a
+stability condition and a proof that architecture fixes the scaling exponent of required
+headcount; technical debt as a description-length gap with a rate--distortion reading of
+refactoring; a Hoeffding bound $\exp(-2n(1/2-p)^2)$ for consensus reliability, dominated
+by a correlated error mode $q$ that is in turn reduced to an incentive-design problem;
+and a consolidated assurance condition combining two-layer trust with artefact binding.
+
+Twelve falsifiable hypotheses with operationalisations, controls, falsifiers and risks are
+given, together with a six-phase roadmap, a paper-centred interdisciplinary literature map,
+and an explicit list of non-claims rejecting the use of G\"odel incompleteness, Rice's
+theorem, the open status of $\mathrm{P}$ versus $\mathrm{NP}$, near-decomposability, and
+analogies to the Langlands programme or Landauer's principle, as load-bearing universal
+laws.
+
+\vspace{1em}
+\noindent\textbf{Keywords:} software architecture; structural convergence; abstraction
+levels; information compression; minimum description length; formal verification;
+proof-carrying code; semantic preservation; trusted computing base; consensus;
+intent gap
+
+\tableofcontents
+\listoftables
+
+\mainmatter
+
+\input{ch01-introduction}
+\input{ch02-formal-framework}
+\input{ch03-convergence}
+\input{ch04-infrastructure}
+\input{ch05-comprehension}
+\input{ch06-design}
+\input{ch07-intent-to-execution}
+\input{ch08-levels-as-obligations}
+\input{ch09-research-program}
+\input{ch10-literature-map}
+\input{ch11-objections}
+\input{ch12-conclusion}
+
+\appendix
+\input{appA-proofs}
+\input{appB-templates}
+\input{appC-glossary}
+
+\backmatter
+\input{references}
+
+\end{document}

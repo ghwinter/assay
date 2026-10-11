@@ -1,0 +1,415 @@
+% =====================================================================
+\chapter{Design: forward compression}\label{ch:design}
+% =====================================================================
+
+If comprehension is inverse compression, design is forward compression: compression
+boundaries are built in advance for future readers. This chapter turns that symmetry into
+an optimisable objective function, states its dynamical constraint, and shows where
+layering fails.
+
+\section{Read-sets and the objective function}\label{sec:readset}
+
+The measurable objective of architecture is not an adjective such as ``decoupling'' or
+``high cohesion'' but a number that can be counted.
+
+\begin{definition}[Change read-set]\label{def:readset}
+Let the code base consist of a set of modules $\Mod$, namely
+$\bigcup_{c \in \mathcal{C}} \rho(c)$, where $\mathcal{C}$ is the set of changes. For a
+change $c$, its \term{read-set} $\rho(c) \subseteq \Mod$ is the set of modules that must be
+read in order to complete $c$ correctly. The \term{architectural quality metric} of the
+system is
+\begin{equation}\label{eq:readset}
+Q(\Mod) \;=\; \mathbb{E}_{c \sim \mathcal{C}}\bigl[\,|\rho(c)|\,\bigr],
+\end{equation}
+that is, the mean read-set size weighted by the historical change distribution.
+\end{definition}
+
+Definition \ref{def:readset} is operational: it can be estimated directly from version
+history, by counting for each merged change the number of top-level modules, files and
+directories it touches and taking the resulting distribution. This is not a perfect proxy
+(touching is not having to read), but it is \emph{measurable}, and ``degree of
+modularity'' is not.
+
+\begin{definition}[Enforcement sites of an invariant]\label{def:enforce}
+Let $\Inv$ be the set of invariants of the system. For $\iota \in \Inv$, its
+\term{enforcement-site set} $\mathrm{S}(\iota) \subseteq \Mod$ is the set of all modules
+that \emph{must be implemented correctly for $\iota$ to be guaranteed}. Enforcement is
+\term{effective} if $\iota$ is not violated in any execution.
+\end{definition}
+
+\begin{theorem}[Centralisation of invariants]\label{th:centralise}
+Suppose that enforcement of invariant $\iota$ is effective and that a change $c$ may break
+$\iota$, that is, there exists a legal sequence of changes that breaks $\iota$ in the
+absence of an understanding of $\mathrm{S}(\iota)$. Then
+\begin{equation}\label{eq:central}
+|\rho(c)| \;\ge\; \bigl|\mathrm{S}(\iota)\bigr| .
+\end{equation}
+Hence, other things equal, minimising $\mathbb{E}[|\rho|]$ requires minimising
+$\sum_{\iota \in \Inv} |\mathrm{S}(\iota)|$, whose lower bound is attained by enforcing
+each invariant in a \emph{single module}.
+\end{theorem}
+
+\begin{proof}
+If $c$ may break $\iota$, an agent executing $c$ must know where and how $\iota$ is
+guaranteed; otherwise it cannot judge whether $c$ is safe. Every element of
+$\mathrm{S}(\iota)$ is a necessary source of evidence for that judgement, so
+$\rho(c) \supseteq \mathrm{S}(\iota)$, which gives \eqref{eq:central}.
+Summing over $\iota$: $\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}(\iota)|]$,
+with equality in the optimistic case in which the $\mathrm{S}(\iota)$ are disjoint, where
+the right-hand side is $\sum_\iota |\mathrm{S}(\iota)|$.
+Every non-empty $\mathrm{S}(\iota)$ contains at least one module, so the lower bound is
+attained at $|\mathrm{S}(\iota)| = 1$.
+\end{proof}
+
+\begin{corollary}[Optimal location of enforcement sites]\label{cor:site}
+Among all candidates satisfying the effectiveness constraint, the optimal enforcement sites
+are the modules of \emph{least fan-in}, that is, those on which fewest other modules depend
+and which are therefore least likely to be circumvented by modification.
+\end{corollary}
+
+\begin{remark}[Limits of Theorem \ref{th:centralise}]\label{rmk:central-limit}
+The theorem has one premise: enforcement must be \emph{effective}. In practice,
+concentrating an invariant in a single place often fails, because callers can circumvent
+that place. This is the real reason why ``scattered invariants'' recur in engineering. It
+is not ignorance but a defence against the risk of circumvention. The correct reading of
+Theorem \ref{th:centralise} is therefore: \emph{scattering invariants is a defence with a
+cost; where invariants can genuinely be centralised (for instance by a type system, private
+constructors, capability tokens or database constraints that make circumvention impossible),
+centralisation is strictly better than scattering.}
+This explains why ``encoding invariants in types'' has engineering value beyond
+expressiveness: it lowers $|\mathrm{S}(\iota)|$ to $1$ without increasing the risk of
+circumvention.
+\end{remark}
+
+\section{Near-decomposability}\label{sec:neardecomp}
+
+Simon's near-decomposability \cite{simon1962} is the classical explanation of why a level
+structure is stable: interaction within a layer is dense, interaction between layers is
+sparse. But ``sparse interaction'' is not itself testable. This section gives a testable
+equivalent characterisation.
+
+\begin{definition}[Near-decomposable]\label{def:neardecomp}
+Let module $M$ have an interface $I$. For an execution $e$ of $M$, let
+$\mathrm{trace}_I(e)$ be the sequence of interactions of $e$ on $I$ and
+$\mathrm{behav}_{\mathrm{out}}(e)$ the behaviour of $e$ observable outside $M$. Then $M$ is
+\term{near-decomposable} with respect to $I$ if there exists a function $f$ such that
+\begin{equation}\label{eq:neardecomp}
+\forall e:\quad \mathrm{behav}_{\mathrm{out}}(e) \;=\;
+f\bigl(\mathrm{trace}_I(e)\bigr),
+\end{equation}
+that is, the observation on $I$ is a \emph{sufficient statistic} for the external behaviour
+of $M$.
+\end{definition}
+
+The relation between Definition \ref{def:neardecomp} and Definition \ref{def:sufficient}
+($T$-sufficiency) is immediate: take the query family $Q$ of a task $T$ to be
+``observations of external behaviour''; near-decomposability is then exactly the
+$T$-sufficiency of $M$ with respect to its interface. Simon's qualitative principle is
+thereby translated into a decidable condition.
+
+\begin{proposition}[Leak pairs]\label{prop:leakpair}
+$M$ is \emph{not} near-decomposable with respect to $I$ if and only if there exist two
+executions $e_1, e_2$ such that
+\begin{equation}\label{eq:leakpair}
+\mathrm{trace}_I(e_1) = \mathrm{trace}_I(e_2)
+\qquad\text{and}\qquad
+\mathrm{behav}_{\mathrm{out}}(e_1) \ne \mathrm{behav}_{\mathrm{out}}(e_2).
+\end{equation}
+Such a pair is called a \term{leak pair}.
+\end{proposition}
+
+\begin{proof}
+$(\Leftarrow)$ If such $e_1, e_2$ exist, then no function $f$ can satisfy both
+$f(\mathrm{trace}_I(e_1)) = \mathrm{behav}_{\mathrm{out}}(e_1)$ and
+$f(\mathrm{trace}_I(e_2)) = \mathrm{behav}_{\mathrm{out}}(e_2)$, since the arguments on the
+two sides are equal while the assigned values are not; hence \eqref{eq:neardecomp} fails.
+$(\Rightarrow)$ If \eqref{eq:neardecomp} fails, no $f$ satisfies the condition, and by the
+definition of a function there must exist two points with the same argument and different
+assigned values, which is \eqref{eq:leakpair}.
+\end{proof}
+
+\begin{corollary}[A diagnostic procedure]\label{cor:diagnose}
+Proposition \ref{prop:leakpair} yields an \emph{executable} diagnostic: construct two
+scenarios identical at the interface but differing in internal state or external
+environment, and observe whether the external behaviour diverges. If it diverges, the
+interface is not a sufficient statistic, and the module boundary leaks there.
+\end{corollary}
+
+Corollary \ref{cor:diagnose} turns ``does this module's abstraction leak'' from an aesthetic
+judgement into a differential test. Its practical value is that \emph{whether an abstraction
+leaks is measurable, not merely felt}. The engineering commonplaces of ``shadow state'',
+``implicit globals'' and ``cross-request cache pollution'' are all concrete instances of
+leak pairs.
+
+\begin{principle}[An equivalent design objective]\label{pr:design-eq}
+By Corollary \ref{cor:diagnose}, the testable objective of design can be written as:
+\emph{for every claimed module boundary, the interface observation should be a sufficient
+statistic for external behaviour; the existence of a leak pair is the failure of that
+boundary.}
+\end{principle}
+
+\section{Technical debt}\label{sec:debt}
+
+``Technical debt'' is usually a metaphor in engineering usage. This section gives a
+definition that is precise and still useful.
+
+\begin{definition}[Technical debt]\label{def:debt}
+Given an encoding, let the description length of the system code be $\DL(\text{code})$ and
+let its \term{shortest generating description} be
+$\DL^{\star} = \min\{\,|d| : d \text{ generates code}\,\}$, that is, the shortest program
+that generates that code in the Kolmogorov sense. Define the \term{technical debt}
+\begin{equation}\label{eq:debt}
+D \;=\; \DL(\text{code}) \;-\; \DL^{\star}.
+\end{equation}
+\end{definition}
+
+The definition is defensible but non-computable ($\DL^{\star}$ is not computable), so its
+value lies in the \emph{direction} and the \emph{criterion} it supplies, not in a numerical
+value.
+
+\begin{principle}[How technical debt accrues and is repaid]\label{pr:debt}
+Technical debt grows when \emph{a change is not re-abstracted}: if a modification is not
+re-abstracted, the gap between the code and its ``shortest generating description'' widens.
+Therefore:
+\begin{enumerate}[label=(\alph*)]
+\item refactoring $=$ recompression, a survival necessity for holding the compression ratio
+      above the comprehensibility threshold;
+\item a system that is not refactored does not stop growing; it accumulates
+      incomprehensibility;
+\item deciding whether a refactoring is worthwhile is equivalent to deciding whether it
+      significantly lowers $D$, that is, whether it makes the system easier to generate
+      from a shorter description.
+\end{enumerate}
+\end{principle}
+
+Principle \ref{pr:debt}(c) gives a practical criterion: if a refactoring does not let you
+say in fewer words what the module does, it is probably only reformatting.
+
+\begin{remark}[A rate--distortion reading of refactoring]\label{rmk:rd-refactor}
+Regard $(\DL(M), L_T(M))$ as a point in the rate--distortion plane \cite{shannon1959}
+(Definition \ref{def:mdl}). The current state of a system is a point on the curve or outside
+it: \emph{outside the curve} means that a model of the same description length attains lower
+loss, that is, that there is pure room for improvement; refactoring is then moving along the
+curve or moving the point back onto it.
+
+This reading yields a testable prediction: \emph{the slope of the rate--distortion curve,
+$\partial L_T / \partial \DL$, should predict which refactorings pay off.} A refactoring at
+a point where the slope is zero does not lower task loss and is therefore not worth doing;
+where the slope is large, it is worth doing even at high cost. If that predictive power does
+not hold in real projects, the choice of objective function in this chapter requires
+revision (Chapter \ref{ch:program}, hypothesis $H_{12}$).
+\end{remark}
+
+\section{Governable complexity and comprehension capacity}\label{sec:governable}
+
+Section \ref{sec:readset} defines architectural quality as a static quantity
+$\mathbb{E}[\rho]$. Real systems, however, have a \emph{rate}: changes arrive at some
+frequency, and an organisation's reading capacity is finite. This section supplies that
+dynamics; it is the only place in the paper where time is a variable.
+
+\begin{definition}[Governable complexity and comprehension capacity]\label{def:governable}
+Let $\lambda(t)$ be the change arrival rate (changes per unit time) and let
+$\mathbb{E}[\rho]$ be the expected read-set (Definition \ref{def:readset}). Define the
+\term{governable complexity}
+\begin{equation}\label{eq:governable}
+C(t) \;=\; \mathbb{E}\bigl[\rho\bigr] \cdot \lambda(t),
+\end{equation}
+that is, the information throughput required to maintain the system, in units of
+module-reads per unit time. Let the \term{comprehension capacity} of the organisation be
+\begin{equation}\label{eq:capacity}
+K \;=\; h \cdot b,
+\end{equation}
+where $h$ is the number of people who can be applied to comprehension and $b$ is the
+comprehension bandwidth of one person (module-reads per unit time). The system is in a
+\term{governable state} if $C(t) \le K$ for all relevant $t$.
+\end{definition}
+
+\begin{proposition}[Architecture fixes the scaling exponent]\label{prop:exponent}
+Let a system have $n$ features, each changing independently at rate $\lambda_0$, so that
+$\lambda \propto n$. Let the read-set $\mathbb{E}[\rho]$ scale as $n^{\alpha}$ in $n$, with
+$\alpha \ge 0$ fixed by the architecture, $\alpha = 0$ corresponding to complete
+localisation and $\alpha = 1$ to unconstrained coupling. Then the governable complexity
+scales as
+\begin{equation}\label{eq:exponent}
+C \;\propto\; n^{1+\alpha}.
+\end{equation}
+From $C \le K$, the required headcount scales as $h \propto n^{1+\alpha}$. Therefore:
+\begin{enumerate}[label=(\alph*)]
+\item if the architecture presses $\alpha$ to $0$, headcount grows linearly with system
+      size and the system can persist indefinitely;
+\item if $\alpha = 1$, headcount must grow as the \emph{square} of size, and the system must
+      become unstable at some size.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+By Definition \ref{def:governable}, $C = \mathbb{E}[\rho]\cdot\lambda$. Substituting
+$\lambda = n\lambda_0$ and $\mathbb{E}[\rho] = \Theta(n^{\alpha})$ gives
+$C = \Theta(n^{1+\alpha})$. From $C \le K = hb$ it follows that
+$h \ge C/b = \Theta(n^{1+\alpha})$.
+\end{proof}
+
+\begin{corollary}[The actual role of architecture]\label{cor:arch-role}
+Proposition \ref{prop:exponent} assigns architecture a precise duty: it does not lower the
+cost of an individual change but \emph{lowers the exponent with which cost grows with size}.
+This explains why architectural benefit is invisible in small systems and decisive for
+survival in large ones, and why the charge of ``architectural over-engineering'' always
+appears to hold at small scale.
+\end{corollary}
+
+\begin{corollary}[Derivation of two classical conclusions]\label{cor:brooks}
+Equation \eqref{eq:exponent} yields two classical conclusions:
+\begin{enumerate}[label=(\alph*)]
+\item \term{Relation between organisation size and system size}: from
+      $h \propto n^{1+\alpha}$, organisation size must grow with system size, and the
+      growth exponent is fixed by the architecture. This is the \emph{dynamical} version of
+      the correspondence between organisational structure and system structure
+      \cite{conway1968}; that correspondence is a static statement (structure mirrors
+      organisation), whereas the dynamical version gives the governability bound.
+\item \term{Adding people makes a project slower}: increasing $h$ raises $K$ linearly, but
+      at the same time raises the number of changes in flight and hence $\lambda$, and
+      raises $\mathbb{E}[\rho]$ through the interfaces it adds. When the growth of the
+      latter two exceeds that of the former, $C/K$ worsens rather than improves. This is an
+      in-model explanation of the empirical rule that adding people to a late project makes
+      it later.
+\end{enumerate}
+\end{corollary}
+
+\begin{principle}[Design implication]\label{pr:governable-design}
+By Proposition \ref{prop:exponent}, the criterion of an architecture review should not be
+``is the read-set small'' but \emph{``what is the scaling exponent of the read-set in
+size''}. A system whose read-set is currently small but grows rapidly with size is more
+dangerous than one whose read-set is currently larger but scales flatly. This requires
+hypothesis $H_4$ to be strengthened: the value of a read-set lies mainly in its
+\emph{scaling}, not in its \emph{magnitude}.
+\end{principle}
+
+\begin{remark}[The only dynamics]\label{rmk:only-dynamics}
+The paper has so far been static: structure, invariants, read-sets and contracts are all
+time-invariant quantities. Definition \ref{def:governable} is the only dynamical variable,
+because it is the only place where ``what an organisation can process'' and ``what the
+system demands'' must match in \emph{rate}. Elsewhere time can be eliminated.
+\end{remark}
+
+\section{The design procedure}\label{sec:seven-steps}
+
+\begin{enumerate}[label=(D\arabic*)]
+\item \term{Fix the invariants first}. Before writing any code, write down the propositions
+      that must hold forever of this system (for example ``the total balance is
+      conserved'', ``an I/O thread never blocks'', ``the version number increases
+      monotonically''). Invariants are the gravitation of a level; all structure
+      crystallises around them. By Theorem \ref{th:centralise}, each invariant should
+      designate a single enforcement site and state why circumvention is impossible.
+\item \term{Choose the primitives}. Atoms, components, messages, transactions, entities,
+      and so on. Once the primitives are chosen they become the shared language of all
+      subsequent discussion of the system. \emph{Choosing the primitives is the most
+      important single decision at this level}, because it fixes the shape of every
+      expression thereafter.
+\item \term{Fix the data model}. Entities, relations, lifecycles, ownership. A data model
+      is an order of magnitude more stable than logic, so it should be frozen first.
+\item \term{Cut the organs}. The basis of modularisation is not ``similar
+      functionality'' but \emph{information that changes together being hidden together}
+      \cite{parnas1972}. The test for each module is that its interface is small enough to
+      hold in mind at once and its implementation deep enough to be replaced wholesale
+      \cite{ousterhout2018}. The interface is the compression summary you deliberately
+      maintain; the implementation is the compressed content that may be rewritten.
+\item \term{Make the physical laws executable}. An invariant written in a document rots;
+      only encoded in a type system, assertions, contract tests and property tests does it
+      endure. \emph{Types are architectural documentation enforced by the compiler}. This
+      is the confluence of ``designing for comprehensibility'' and ``designing for
+      correctness'': an invariant that a machine can check need not be maintained from
+      memory by a human or an AI.
+\item \term{Record decisions}. Write down why each choice was made and what was given up.
+      Code is the result; a decision record is part of the generating rules, and it spares
+      the reader performing inverse compression the most expensive guessing.
+\item \term{Refactoring $=$ recompression}. See Principle \ref{pr:debt}.
+\end{enumerate}
+
+One meta-rule runs through all seven:
+
+\begin{principle}[Design for the reader's mental bandwidth]\label{pr:reader}
+Design for the mental bandwidth of your reader, not for your typing speed. Code is read far
+more often than it is written, and the users of an architecture are future comprehenders.
+\end{principle}
+
+\section{Cross-cutting concerns and the limits of layering}\label{sec:crosscutting}
+
+The failure modes of layering must be acknowledged explicitly. One class of concerns cannot
+be localised to any layer:
+
+\begin{itemize}
+\item security and authorisation (every module may introduce a vulnerability);
+\item multi-tenant isolation (spanning storage, computation and network);
+\item distributed tracing (which must run through every call path);
+\item transactions and consistency (across the boundaries of state owners);
+\item observability and quotas (required at every point of resource consumption).
+\end{itemize}
+
+\begin{principle}[Cross-cutting concerns are independent dimensions]\label{pr:crosscutting}
+For cross-cutting concerns, the mature treatment is to acknowledge them as
+\emph{independent dimensions} (policy plane, capability model, taint propagation, service
+mesh) rather than forcing them into the hierarchy and pretending that they are a layer.
+\end{principle}
+
+This principle follows directly from the discussion in Chapter \ref{ch:convergence}: a
+level structure is supported by near-decomposability, and near-decomposability presupposes
+sparse interaction between layers. When a concern has a non-trivial interaction with every
+module, it breaks near-decomposability by definition, and therefore cannot be represented as
+``a layer''. The result of forcing the representation is that the level structure fails, and
+the failure is usually misdiagnosed as ``insufficiently thorough layering''.
+
+\section{Design checklist}\label{sec:checklist}
+
+The following checklist turns this chapter into executable items. Each item should be
+answered explicitly at a design review.
+
+{\small\begin{longtable}{L{1.0cm}L{14.0cm}}
+\caption{Design checklist for large systems}\label{tab:checklist}\\
+\toprule
+\textbf{No.} & \textbf{Check} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{No.} & \textbf{Check} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+A1 & Which propositions must hold forever of the system? Where is each enforced? Why is circumvention impossible?\\
+A2 & Is the enforcement site of each invariant unique? If not, has the cost (the read-set) been explicitly accepted?\\
+A3 & What are the primitives of this level? Are they the shared language of all subsequent discussion?\\
+A4 & Has the data model been frozen before the logic? Are entities, relations, lifecycles and ownership explicit?\\
+\midrule
+B1 & Is each module's interface small enough to hold in mind at once?\\
+B2 & Is each module deep enough to be replaced wholesale?\\
+B3 & For each claimed boundary, does a leak pair exist? (That is: two executions with the same interface trace and different external behaviour.)\\
+B4 & Has each module's \emph{oblivious set} been written down explicitly?\\
+B5 & Which modules change together? Has this been verified against co-change history rather than intuition alone?\\
+\midrule
+C1 & How many unrelated modules must be modified to add a new feature? (The measured read-set.)\\
+C2 & Does replacing the underlying implementation force large-scale modification of the business logic?\\
+C3 & When a subsystem fails, where does the failure propagate?\\
+C4 & Does adding a task type require rewriting the shared scheduling logic?\\
+C5 & Does concurrent access break state invariants? Where is this detected?\\
+C6 & Are performance bottlenecks concentrated in a few critical paths?\\
+\midrule
+D1 & Have the invariants been encoded in executable form (types, assertions, contract tests, property tests)?\\
+D2 & Can each module's contract be verified in isolation? If not, is it a module?\\
+D3 & Does each critical subsystem have a traceable record of what is known about it (Table \ref{tab:record})?\\
+D4 & Does the decision record cover why each choice was made and what was given up?\\
+D5 & Are cross-cutting concerns treated as independent dimensions rather than disguised as a layer?\\
+\midrule
+E1 & Does the system need a unified substrate? Judge by $n \times m$, not by lines of code.\\
+E2 & Of the six functions, which are built and which are adopted? The criterion is the domain-criticality of the invariants.\\
+E3 & For the parts that are built, are their invariants ones that a general-purpose host cannot provide?\\
+E4 & For the parts that are adopted, is the strength of the guarantee offered by the host sufficient to support this layer's contract?\\
+\bottomrule
+\end{longtable}}
+
+Theorem \ref{th:centralise} and Propositions \ref{prop:leakpair} and \ref{prop:exponent}
+hold under the stated models. The empirical content is hypotheses $H_4$ and $H_{12}$: that
+the scaling exponent of the read-set outperforms read-set magnitude and conventional size
+metrics; that centralising invariants (where circumvention is impossible) lowers both the
+read-set and the defect rate; and that the rate--distortion slope predicts the benefit of a
+refactoring. If all three are refuted, the choice of objective function in this chapter
+requires revision.

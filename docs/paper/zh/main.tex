@@ -1,0 +1,184 @@
+% =====================================================================
+%  压缩与验证
+%  复杂软件系统的层级涌现、结构收敛与可验证执行
+%
+%  Compression and Verification:
+%  Layered Emergence, Structural Convergence, and Verifiable Execution
+%  in Complex Software Systems
+%
+%  编译：xelatex main.tex; xelatex main.tex
+% =====================================================================
+\documentclass[UTF8,a4paper,11pt,openany,oneside]{ctexbook}
+
+\input{preamble}
+
+\ctexset{
+  chapter/name   = {第,章},
+  chapter/format = \Large\bfseries\centering,
+  section/format = \large\bfseries,
+  subsection/format = \normalsize\bfseries
+}
+
+\title{\bfseries 压缩与验证\\[0.4em]
+       \large 复杂软件系统的层级涌现、结构收敛与可验证执行}
+\author{压缩—保证工作笔记}
+\date{2026 年}
+\hypersetup{pdfauthor={压缩—保证工作笔记},
+            pdftitle={压缩与验证}}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+\centering
+\vspace*{2.2cm}
+{\Huge\bfseries 压缩与验证\par}
+\vspace{0.9cm}
+{\LARGE 复杂软件系统的层级涌现、\\[0.35em] 结构收敛与可验证执行\par}
+\vspace{1.6cm}
+{\large\itshape Compression and Verification:\\[0.3em]
+ Layered Emergence, Structural Convergence,\\[0.3em]
+ and Verifiable Execution in Complex Software Systems\par}
+\vspace{1.8cm}
+{\large 压缩—保证工作笔记\par}
+\vspace{0.45cm}
+{\normalsize\itshape 独立技术报告\par}
+\vspace{0.7cm}
+{\small\url{https://github.com/ghwinter/assay}\par}
+\vspace{0.25cm}
+{\footnotesize 通讯请通过仓库的 issue 追踪。\\
+ 本报告源文件：\url{https://github.com/ghwinter/assay/tree/master/docs/paper}\par}
+\vfill
+{\normalsize\normalfont 2026 年\par}
+\vspace{1.0cm}
+\end{titlepage}
+
+\chapter*{摘要}
+\addcontentsline{toc}{chapter}{摘要}
+
+本文研究一个问题的形式化：\emph{复杂软件系统在高层的抽象、结构与架构上，是否也像底层
+ABI、调用约定与栈帧那样收敛？} 该直觉被拆分为三个强度不同的命题，各给出可判定或
+可证伪的形式。
+
+四条论题组织全文。\term{压缩论题}：复杂系统可被有限智能理解，当且仅当它可压缩；理解
+即\emph{任务约束下的有损压缩}，其最优下潜深度是率失真拉格朗日量的驻点条件——边际
+预测增益为零处。\term{必然性论题}：任何具有并发存活实体与受争用有限资源的系统，若
+操作语义良定义，则必然已定义六项职能——身份与生命周期、分配与回收、调度、命名与
+寻址、通信与同步、故障隔离与恢复；六项可自建，可外借给宿主，不可在语义上缺失。
+\term{分离论题}：生成可自由、概率、不可信；准入必须确定、机械、可穷尽检视。形式层
+（规格 $\to$ 实现 $\to$ 二进制 $\to$ 执行）的保证来自极小可信内核的机械判定，意图层
+（意图 $\to$ 规格）的保证来自对抗性共识，两层由制品绑定缝合。\term{设计论题}：架构是
+人为制造的尺度分离——自然界的层级由重整化免费获得，软件的层级必须被工程付费制造；
+设计是正向压缩，理解是逆向压缩，两者是同一结构的两个读取方向。
+
+形式化结果如下。以抽象映射的核刻画层级的\emph{无视集}，使"该层可以不关心什么"成为
+可计算对象，并由此把层级的实在性归约为压缩率问题；以 Galois 连接刻画层间语义保持；
+以\emph{契约操作元}给出契约的组合代数，把"局部保证何时可组合"归约为着色良类型与
+接口图无环两个结构条件，从而解释反馈与重试为何使既有组合论证失效；以\emph{层族}
+区分"六职能跨领域同构"与"沿问题形状的传输"，并给出可判别的推论；以"接口是行为的
+充分统计量"给出近可分解性的可检验判据与\emph{泄漏对}诊断程序；提出\emph{粗粒化判据}，
+使收敛论题可在单一项目内被证伪；以集成成本 $\Theta(nm)\to\mathcal{O}(n+m)$ 给出内部
+基础设施化的相变阈值；以读集期望给出架构质量的可测目标函数，并证明不变量集中化
+最小化读集；以\emph{观测秩}给出理解能否收敛的判据，区分观测不足与样本不足两种失败；
+以\emph{可治理复杂度} $C=\mathbb{E}[\rho]\cdot\lambda$ 与理解容量 $K=hb$ 给出稳定
+条件，并证明架构决定所需人力关于系统规模的标度指数；以描述长度差定义技术债并给出
+重构的率失真解释；以 Hoeffding 界给出共识可靠性的 $\exp(-2n(1/2-p)^2)$ 上界，证明
+相关错误模式 $q$ 支配该界，并把 $q$ 归约为一个激励设计问题；以双层信任结构与制品
+绑定给出综合保证条件式。
+
+全文给出十二条可证伪假设及其操作化、对照组、证伪条件与风险，一条六阶段实施路线，一张
+以论文为中心的跨学科文献地图，以及一份\emph{不作主张}清单。该清单拒绝把 Gödel 不完备
+定理、Rice 定理、$\mathrm{P}$ 与 $\mathrm{NP}$ 的未决问题、近可分解性，以及与
+Langlands 纲领或 Landauer 原理的类比，当作已证明的普遍定律来承重。
+
+\vspace{1em}
+\noindent\textbf{关键词：} 软件架构；结构收敛；抽象层级；信息压缩；最小描述长度；
+形式化验证；证明携带代码；语义保持；可信计算基；共识；意图鸿沟
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+We formalise one question. \emph{Do large software systems converge in their high-level
+abstractions, structures and architectures, in the way that low-level ABIs, calling
+conventions and stack frames converge?} The intuition is decomposed into three
+propositions of differing strength, each given a decidable or falsifiable form.
+
+Four theses organise the work. The \term{compression thesis}: a complex system is
+comprehensible to a bounded intelligence exactly to the extent that it is compressible;
+comprehension is task-constrained lossy compression whose optimal descent depth is the
+stationarity condition of a rate--distortion Lagrangian. The \term{necessity thesis}: any
+system with concurrently live entities and contended finite resources, whose operational
+semantics is well defined, has already defined six functions---identity and lifecycle,
+allocation and reclamation, scheduling, naming and addressing, communication and
+synchronisation, and fault isolation and recovery; these may be built or adopted, but not
+omitted. The \term{separation thesis}: generation may be free, probabilistic and untrusted,
+while admission must be mechanical, rigid and exhaustively inspectable; formal-layer
+guarantees come from a minimal trusted kernel, intent-layer guarantees from adversarial
+consensus, and the two are stitched by artefact binding. The \term{design thesis}:
+architecture is manufactured separation of scales---nature obtains levels free through
+renormalisation, software must pay for them---and design is forward compression while
+comprehension is inverse compression, two reading directions of one structure.
+
+The formal results are as follows. A level's \emph{oblivious set} as the kernel of its
+abstraction map, making "what this level may ignore" computable and reducing the reality
+of a level to a compression ratio; Galois connections for inter-level semantic
+preservation; a \emph{contract operad} whose well-definedness reduces the composability
+of local guarantees to well-typed colouring and acyclicity of the interface graph,
+thereby explaining why feedback and retry invalidate existing composition arguments; a
+\emph{level family} distinguishing cross-domain isomorphism of the six functions from
+transport along problem shape; near-decomposability as interface sufficiency, yielding a
+diagnostic for \emph{leak pairs}; a \emph{coarse-graining criterion} making the
+convergence thesis falsifiable within a single project; an amortisation inequality
+$\Theta(nm)\to\mathcal{O}(n+m)$ giving the phase-transition threshold of internal
+infrastructuralisation; expected read-set as a measurable architectural objective, with
+invariant centralisation proved to minimise it; an \emph{observability rank} criterion
+for whether comprehension can converge at all, separating insufficient observation from
+insufficient sampling; \emph{governable complexity}
+$C=\mathbb{E}[\rho]\cdot\lambda$ against comprehension capacity $K=hb$, yielding a
+stability condition and a proof that architecture fixes the scaling exponent of required
+headcount; technical debt as a description-length gap with a rate--distortion reading of
+refactoring; a Hoeffding bound $\exp(-2n(1/2-p)^2)$ for consensus reliability, dominated
+by a correlated error mode $q$ that is in turn reduced to an incentive-design problem;
+and a consolidated assurance condition combining two-layer trust with artefact binding.
+
+Twelve falsifiable hypotheses with operationalisations, controls, falsifiers and risks are
+given, together with a six-phase roadmap, a paper-centred interdisciplinary literature map,
+and an explicit list of non-claims rejecting the use of Gödel incompleteness, Rice's
+theorem, the open status of $\mathrm{P}$ versus $\mathrm{NP}$, near-decomposability, and
+analogies to the Langlands programme or Landauer's principle, as load-bearing universal
+laws.
+
+\vspace{1em}
+\noindent\textbf{Keywords:} software architecture; structural convergence; abstraction
+levels; information compression; minimum description length; formal verification;
+proof-carrying code; semantic preservation; trusted computing base; consensus;
+intent gap
+
+\tableofcontents
+\listoftables
+
+\mainmatter
+
+\input{ch01-introduction}
+\input{ch02-formal-framework}
+\input{ch03-convergence}
+\input{ch04-infrastructure}
+\input{ch05-comprehension}
+\input{ch06-design}
+\input{ch07-intent-to-execution}
+\input{ch08-levels-as-obligations}
+\input{ch09-research-program}
+\input{ch10-literature-map}
+\input{ch11-objections}
+\input{ch12-conclusion}
+
+\appendix
+\input{appA-proofs}
+\input{appB-templates}
+\input{appC-glossary}
+
+\backmatter
+\input{references}
+
+\end{document}

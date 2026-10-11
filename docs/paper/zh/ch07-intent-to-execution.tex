@@ -1,0 +1,618 @@
+% =====================================================================
+\chapter{从意图到可验证执行}\label{ch:intent}
+% =====================================================================
+
+本章处理问题 \ref{prob:trust}：如果编码成本趋近于零、人不再逐行审阅实现，正确性如何
+被机械地保证。答案由三部分构成：把正确拆成可分别处理的维度，把中间过程定义为一条
+可验证细化链，把信任组织成两种生成模式的复合结构。本章同时给出该链条上一个不可机械
+封闭的入口，以及它在何种意义上可以被共识逼近。
+
+\section{正确性的维度}\label{sec:five-correctness}
+
+一个 1\,ns 的调用被 AI 改写成 1\,$\mu$s 的调用，功能完全一致但性能差了一千倍，这个
+例子说明"正确"不是单一维度。
+
+\begin{definition}[五个正确性维度]\label{def:five-correctness}
+见表 \ref{tab:five-correctness}。
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{五个正确性维度及其可机械检查性}\label{tab:five-correctness}
+\begin{tabular}{L{2.3cm}L{6.6cm}L{5.5cm}}
+\toprule
+\textbf{维度} & \textbf{需要回答的问题} & \textbf{能否机械检查} \\
+\midrule
+功能正确性 & 输出与状态变化是否符合要求？ & 对明确规格，可证明或测试 \\
+副作用正确性 & 有没有执行未授权的 I/O、写入、网络请求、状态变更？ &
+  可通过效果规格、权限边界与运行时隔离限制 \\
+资源正确性 & 时间、内存、带宽、能耗是否满足预算？ &
+  部分可静态证明；部分只能测量或在指定环境下给出统计保证 \\
+系统正确性 & 组件组合后，并发、故障恢复、状态一致性是否仍正确？ &
+  部分可形式化证明，部分需模型检查、故障注入与运行验证 \\
+目标表达正确性 & 机器执行的规格是否真的是人想要的目标？ &
+  \textbf{不能从程序正确性证明中自动推出} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表 \ref{tab:five-correctness} 最后一行是整个问题的关键：\emph{一份程序完全可能正确地
+实现了一份错误的规格}。编译器即使百分之百正确，也可以把一个错误的程序百分之百正确
+地编译成机器码；形式化证明同样无法拯救一个遗漏关键要求的规格。这一区分的历史表述
+是软件需求工程中的验证与确认之分\cite{boehm1984}。
+
+\section{可验证细化链}\label{sec:chain}
+
+\begin{definition}[可验证细化链]\label{def:chain}
+\term{可验证细化链}由七个阶段构成：
+\begin{enumerate}[label=(G\arabic*)]
+\item \term{目的与意图}：要实现什么；哪些结果是成功；哪些副作用不可接受；目标冲突时
+      如何取舍。
+\item \term{系统与环境模型}：把运行中的状态、事件、操作、资源、操作系统接口、外部
+      环境与可观察行为表示出来。
+\item \term{形式化行为契约}：按定义 \ref{def:contract} 给出允许行为、禁止行为、
+      必须成立的不变量、进展条件、资源预算与环境假设。
+\item \term{可实现性判定}：检查契约是否自相矛盾，目标在指定资源、硬件、操作系统与
+      环境条件下是否真正可实现。
+\item \term{实现综合与搜索}：由生成器、搜索算法或其他综合器产生候选实现。候选实现
+      不预先获得信任。
+\item \term{从抽象行为到二进制的正确性证明}：检查候选实现及其编译、链接与其他转换，
+      证明生成的机器码在规定环境下满足行为契约。
+\item \term{经认证的部署与实际执行}：核实正在运行的是已验证的二进制，在规定环境中
+      执行，并对无法静态保证的条件进行监测、限制与故障处理。
+\end{enumerate}
+\end{definition}
+
+这条链的意义不在于增加七个流程步骤，而在于\emph{给每一步规定不同的数学任务}。
+(G2) 不应是自然语言描述，而是对系统状态、行为与环境建立可解释的模型；(G3) 判断要求
+是否可满足；(G4) 搜索可能的实现；(G5) 建立从实现到所要求行为的证明；(G6) 确保实际
+执行的对象与证明所对应的对象一致。
+
+\begin{principle}[边界上传递什么]\label{pr:boundary}
+在每一道边界上，不仅传递一个产物，还要传递\emph{这个产物代表什么}，以及
+\emph{它为什么可以被接受的证据}。
+\end{principle}
+
+\begin{remark}[不可机械替代的入口]
+验证结果与反例可以反向进入 (G2)、(G3)、(G4)；唯有 (G1) 中的意图审定，无法被一般性的
+代码正确性证明取代。理由见第 \ref{sec:intent-gap} 节。
+\end{remark}
+
+\section{转换边与证据}\label{sec:five-edges}
+
+把定义 \ref{def:chain} 的七个阶段压成五条转换边，每条边有其典型证据与关键缺口。
+表 \ref{tab:edges} 给出。
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{五条转换边、典型证据与关键缺口}\label{tab:edges}
+\begin{tabular}{L{1.5cm}L{3.4cm}L{4.6cm}L{4.9cm}}
+\toprule
+\textbf{边} & \textbf{输入 $\to$ 输出} & \textbf{典型证明/证据} & \textbf{关键假设与主要缺口} \\
+\midrule
+I$\to$R & 自然语言/对话 $\to$ 结构化需求、领域事实与待澄清项 &
+  利益相关者审定、需求来源链接、例子与反例、冲突报告 &
+  意图没有自动给定的数学真值；外部事实与利益冲突不能只靠类型检查解决 \\
+R$\to$S & 需求 $\to$ 形式化性质/契约 &
+  追溯矩阵、需求级测试、一致/可满足/可实现分析、真空性与变异分析 &
+  形式化映射要同时保留\emph{禁例与正例}；需求遗漏无法只从内部一致性推出 \\
+S$\to$P & 规格 $\to$ 程序/系统候选 &
+  综合算法、SMT、模型检查、Hoare/类型/依赖类型证明、反例引导归纳综合 &
+  有限 DSL、逻辑片段与搜索预算；必须防止前提过强与规格空洞 \\
+P$\to$C$\to$B & 源程序 $\to$ 逐阶段中间表示 $\to$ 机器码/可部署制品 &
+  经验证编译器定理、逐次翻译验证/认证、证明携带代码 &
+  必须定义源/目标语义；链接、装载、汇编、运行时、第三方库与硬件未必在证明范围内 \\
+B$\to$E & 二进制与配置 $\to$ 真实环境行为 &
+  部署完整性、系统验证、运行时监控、隔离与能力机制、性能与调度分析 &
+  模型与真实 CPU、操作系统、网络、调度、故障与服务假设必须对齐 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[关系 $R_i$ 的异质性]
+按注 \ref{rmk:source}，不同转换边上的解释关系不必是同一类。对 I$\to$R 与 R$\to$S
+而言，可用的"关系"可能只是追溯映射而非形式化关系\cite{mucha2024,mokos2020}；
+对 P$\to$C$\to$B 而言，它可能是编译器的语义保持定理\cite{leroy2009,cakeml2019}、
+单次翻译验证\cite{necula2000}或翻译认证\cite{krijnen2024}；
+对 B$\to$E 而言，它可能是运行时监控的判定\cite{taleb2023}。把它们强行统一为
+同一种关系是错误的做法。
+\end{remark}
+
+\begin{remark}[每条边上已有的工程实现]
+表 \ref{tab:edges} 并非纯粹的设想：P$\to$C$\to$B 上的经验证编译
+\cite{leroy2009}与经验证编译器后端\cite{cakeml2019}、内核级的精化证明
+\cite{klein2009}、以及证明携带代码\cite{necula1997}已经在特定语言、编译器、
+内核与系统中取得了重要进展。真正未解决的是：如何把这些高可信度的局部成果，
+扩展到更广泛的目标、更多种类的运行环境，以及实现可以被任意生成或动态调整的系统。
+\end{remark}
+
+\section{组合条件与失效模式}\label{sec:composition}
+
+命题 \ref{prop:soundness} 已经给出组合的充分条件。这里补充三个具体的组合失效反例，
+它们的作用是证明"局部正确"确实不蕴含"整体正确"。
+
+\begin{example}[三个组合失效]\label{ex:compose-fail}
+\begin{enumerate}[label=(\alph*)]
+\item 源程序语义正确，但链接器选错了库。
+\item 每个服务本身满足接口契约，但契约对网络重试的假设互不兼容。
+\item 功能证明成立，但时延预算没有覆盖缓存争用。
+\end{enumerate}
+三者的共同结构是：命题 \ref{prop:soundness} 的条件 (a) 或 (b) 之一被破坏。
+\end{example}
+
+用契约代数（定义 \ref{def:operad}、命题 \ref{prop:operad-compose}）读这三个反例，
+它们不再彼此无关，而是三类失败：
+
+\begin{corollary}[三个反例的共同结构]\label{cor:three-failures}
+\begin{enumerate}[label=(\alph*)]
+\item 链接器选错库：\emph{着色失配}，被链接实现其颜色不等于链接点声明的颜色；
+\item 契约对网络重试的假设互不兼容：\emph{接口图出现环}，重试把无环调用图变成
+      带环图，而着色未随环重新验证（注 \ref{rmk:feedback}）；
+\item 时延预算未覆盖缓存争用：\emph{契约分量缺失}，资源分量 $R$ 未进入颜色，
+      代价被当作实现细节。
+\end{enumerate}
+三者分别是颜色外延不足、接口图改变、契约分量缺失。
+\end{corollary}
+
+结论是：组合规则必须把这些接口条件与\emph{非功能性条件}显式纳入。
+
+\begin{remark}[保证的整体论性质]\label{rmk:duhem}
+推论 \ref{cor:three-failures}(c) 与注 \ref{rmk:monitor-limit} 共同说明：任何验证结论
+实际断言的不是"性质 $\varphi$ 成立"，而是合取式
+\[
+\varphi \;\land\; A_1 \;\land\; A_2 \;\land \cdots \land A_k,
+\]
+其中 $A_i$ 为全部环境假设。$k$ 事先不可枚举，只有当某个 $A_i$ 真被违反时它才显形。
+这是 Duhem--Quine 论题\cite{quine1951}在软件验证中的形态：不存在对单一命题的判决性
+检验，只有对整个合取式的检验。它的直接后果是，"测试通过"的强度严格受限于
+\emph{未被枚举的假设集}。这也解释了表 \ref{tab:evidence} 为何必须为每类证据附一份
+"不应声称"清单，该清单就是已知的 $A_i$。
+\end{remark}
+
+\section{意图鸿沟}\label{sec:intent-gap}
+
+这是本章最需要谨慎的一节。
+
+\begin{problem}[意图鸿沟]
+人最初用自然语言表达的意图 $I$，如何确保被转化为正确的形式化规格 $\Phi$？我们希望
+有 $I \equiv \Phi$，这里的等价指"$\Phi$ 所要求的行为完整地反映了人的真实目标"。
+\end{problem}
+
+一个流行的论证是：由 Gödel 不完备定理与 Rice 定理，意图与规格之间的裂缝是
+\emph{原则性}的、\emph{永远无法机械封死}的。该论证不成立。
+
+\begin{proposition}[本文不接受该论证的理由]\label{prop:no-godel}
+Gödel 不完备定理讨论的是满足特定条件的形式系统中\emph{形式可证明性}的限制，它并不
+直接说明机器无法判断一份需求规格是否符合某个人的真实意图。Rice 定理
+\cite{rice1953}说明对一般程序而言非平凡语义性质不可判定，这是对通用静态分析的
+根本限制，但它不是关于人的心理意图与形式规格之间关系的定理。要从中推出"意图永远
+无法完整形式化"，还需要额外的哲学与认知假设。Turing 的原始结果\cite{turing1936}
+同样只适用于明确编码的计算问题与一般算法主张。
+\end{proposition}
+
+那么意图鸿沟存在吗？存在，但根据是\emph{认识论的}，不是\emph{逻辑的}。
+
+\begin{proposition}[意图鸿沟的三条认识论根据]\label{prop:three-grounds}
+\begin{enumerate}[label=(\roman*)]
+\item \term{需求是生成性的，而非枚举性的}。人在看到系统行为之前无法完整列出自己的
+      需求。"不能泄露隐私"这条要求，在看到系统确实在收集数据之前可能根本没有浮现。
+      这不是逻辑不可判定，而是人类认知的构造性局限：\emph{偏好是被环境激活的，
+      不是预先存在的完整清单}。
+\item \term{规格是意图的有损压缩}。意图存在于一个因果的、具身的、演化塑造的心智中；
+      规格是一个有限的符号对象。有损压缩意味着信息必然丢失，而丢掉的是哪些部分
+      事先不可知。这是信息论层面的现象，不是元数学层面的。
+\item \term{验证与确认的区分至今未被推翻}。验证（verification）回答"实现是否符合
+      规格"；确认（validation）回答"系统是否满足真实需求"。这个区分之所以存在并
+      沿用至今，正是因为后者无法被机械地归约为前者。
+\end{enumerate}
+\end{proposition}
+
+把命题 \ref{prop:no-godel} 与 \ref{prop:three-grounds} 合起来，得到本文对该问题的
+准确表述：
+
+\begin{principle}[意图鸿沟的准确表述]\label{pr:gap}
+规格转换过程不是一个可以\emph{普遍}机械保证的步骤，原因不在逻辑不可判定，而在人的
+偏好是动态的、情境性的、在遭遇之前不可全知的。
+\end{principle}
+
+这一修正没有削弱命题，只是替换了承重墙。它同时说明：机器可以辅助澄清需求、提出反例、
+生成场景、寻找矛盾，并检查规格内部是否一致；而最终采用哪份规格、它是否完整表达了
+目标，仍然需要一个明确的责任主体。
+
+\begin{remark}[意图鸿沟是框架问题]\label{rmk:frame}
+命题 \ref{prop:three-grounds} 的三条根据不是三项独立发现，它们共同指向一个更古老的
+问题。要形式化意图，必须预先判定哪些事实\emph{相关}；而判定相关性需要已经知道哪些
+结论有待推出，这正是框架问题：不预先知道答案，就无法枚举相关前提。
+
+因此意图鸿沟不是形式化方法的缺陷，而是框架问题的一个实例。这一识别有两项后果：
+\begin{enumerate}[label=(\alph*)]
+\item 它解释了为什么更强的形式化工具不解决该问题，工具提高的是\emph{推导}能力，
+      而问题出在\emph{前提的枚举}；
+\item 它解释了为什么\emph{交互}是唯一有效的手段。框架问题在一般情况下未解，只在具备
+      感知--行动闭环的系统中被回避：智能体无需预先枚举相关性，因为环境会对动作给出
+      反馈。第 \ref{ch:comprehension} 章的探测循环与本节的可追溯精化，都是把这一
+      回避机制搬到需求层。
+\end{enumerate}
+于是"交互式精化"是被逼出来的，而不是在若干候选方案中被选中的。
+\end{remark}
+
+\section{验证与生成的不对称}\label{sec:asymmetry}
+
+另一个需要修正的表述是把"判卷比答卷容易"称为"$\mathrm{P}$ 与 $\mathrm{NP}$ 的世界性
+红利"。这一说法不成立：$\mathrm{P}$ 是否等于 $\mathrm{NP}$ 仍是开放问题，我们并不知道
+一般而言找到解是否必然比检查解困难。
+
+但必须把这一修正与另一件事区分开来：$\mathrm{P}$ 与 $\mathrm{NP}$ 的未决，
+\emph{并不}使"验证比生成便宜"这一现象成为虚构。
+
+\begin{proposition}[结构性不对称]\label{prop:asym-struct}
+多项式时间证书检查的结构性不对称是 $\mathrm{NP}$ 类的\emph{定义本身}：一个解可以被
+高效验证，这件事本身是关于计算的一类基本事实，它不依赖于我们是否证明了
+$\mathrm{P} \neq \mathrm{NP}$。
+\end{proposition}
+
+\begin{proof}[论证]
+$\mathrm{NP}$ 的定义为"存在多项式时间的验证器 $V$ 与多项式长度的证书 $w$，使得
+$x \in L \iff \exists w: V(x,w) = 1$"。这一定义本身断言了验证的存在性与高效性，
+而不对寻找 $w$ 的复杂度作任何断言。因此验证器架构的有效性建立在定义层面，与
+$\mathrm{P}$ 对 $\mathrm{NP}$ 问题的最终答案无关。
+\end{proof}
+
+这一成本量级提示了"验证便宜"的准确边界。限制不在 $\mathrm{P}$ 与
+$\mathrm{NP}$ 的未决，而是\emph{证书长度}：检查一份证明可以在多项式时间内完成，
+而这份证明本身可以长到天文数字。因此：
+
+\begin{principle}[验证成本的双分量]\label{pr:two-costs}
+"验证比生成便宜"必须被分解为两个独立命题：
+\begin{enumerate}[label=(\alph*)]
+\item \term{检查时间便宜}：给定证书，判定是高效的（命题 \ref{prop:asym-struct}）；
+\item \term{证书尺寸便宜}：证书本身足够短，可以被存储、传输与复核。
+\end{enumerate}
+(a) 由 $\mathrm{NP}$ 的定义保证；(b) \emph{不}由它保证，且在许多实际系统中是真正的
+瓶颈。一个只满足 (a) 的验证体系在工程上不可用，因为无人能复核一份无法读完的证书。
+\end{principle}
+
+原则 \ref{pr:two-costs}(b) 是可测量的：对给定的证明器与性质类，测量证书尺寸的分布
+即可。它同时解释了为什么"小内核 + 大证明"的架构在实践中总要配合一个\emph{可读的}
+证明摘要层（不变量、契约的散文陈述、反例），而不是只提供证明项。
+
+\begin{example}[形式化验证的历史成本量级]\label{ex:sel4-cost}
+微内核 seL4 的初始功能正确性证明投入了约 11 人年（不计可复用工具与框架的投资），
+当时的证明脚本约 20 万行，用于验证约 8500 行 C 代码\cite{klein2009}。这个量级说明
+形式化验证的历史成本结构。AI 可能显著降低编写证明、寻找不变量与修复证明的成本，
+但规格设计、模型选择、证明架构与可信基础仍然是实际工作。
+\end{example}
+
+\section{证据等级}\label{sec:evidence-levels}
+
+不同的证据提供不同强度的支持，混淆它们是这一领域最常见的错误。
+表 \ref{tab:evidence} 给出证据等级与相应的"不应声称"清单。
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{证据等级}\label{tab:evidence}
+\begin{tabular}{L{2.6cm}L{5.6cm}L{6.2cm}}
+\toprule
+\textbf{证据类型} & \textbf{能够支持的结论} & \textbf{不应声称的结论} \\
+\midrule
+机器检查的形式证明 & 对声明的命题，在给定逻辑、定义、公理、库及检查器假设下成立 &
+  不证明命题完整表达意图；不覆盖未建模环境；不自动说明时延或能耗 \\
+经验证编译器定理/翻译证书 & 特定源/目标语义间存在所定义的保持或精化关系，或单次
+  翻译结果经验证 & 不意味着链接器、操作系统、硬件与外部服务都经过验证 \\
+静态分析与抽象解释 & 相对于可靠近似，证明或保守估计所分析的程序性质 &
+  不保证精确、无误报；不等于实际性能测量 \\
+测试与变异测试 & 发现反例、评估已列测试上的规格行为，提供有限样本证据 &
+  不证明所有输入与所有执行安全；通过率不是规格语义等价的通用证明 \\
+统计性能证据 & 指定数据、采样流程、硬件与置信方法下的经验分布 &
+  不等于硬实时最坏执行时间；不能无条件外推到分布变化后的部署 \\
+运行时监控 & 对被观察到的轨迹及监控器语义给出在线判定 &
+  若观察不完整，不得把"未检测到"表述为"所有执行均满足" \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{principle}[三个必须区分的状态]\label{pr:three-states}
+"检测到违反"、"尚未观察到违反"与"所有执行均被证明安全"是三个不同的状态，绝不能
+互相替代。
+\end{principle}
+
+\begin{definition}[制品证据清单]\label{def:evidence-package}
+每个制品应携带十项证据，见表 \ref{tab:evidence-package}。该清单的作用是使"某个二进制
+是否可被信任"成为一个可审计的问题，而不是一个关于作者身份的问题。
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{制品证据清单}\label{tab:evidence-package}
+\begin{tabular}{L{0.8cm}L{13.4cm}}
+\toprule
+\textbf{编号} & \textbf{证据项} \\
+\midrule
+1 & 规格版本与需求追溯标识 \\
+2 & 形式化规格与环境假设 \\
+3 & 候选源代码哈希 \\
+4 & 编译器、参数、目标架构与依赖版本 \\
+5 & 证明及检查器版本 \\
+6 & 资源分析模型与结果 \\
+7 & 测试与监控策略 \\
+8 & 可信计算基清单 \\
+9 & \textbf{已知未覆盖行为} \\
+10 & \textbf{重新验证规则}（哪些变化触发重新计算受影响的证据）\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+第 9 项与第 10 项是最容易缺失、也最重要的两项：前者把"保证的边界"显式化，后者把
+保证从一次性检查变成生命周期机制。
+
+\section{副作用与约束机制}\label{sec:effects}
+
+问题 \ref{prob:trust} 中的例子混合了不同种类的副作用。分开看才知道各自的机械机制。
+
+\begin{definition}[副作用四分类]\label{def:effects}
+见表 \ref{tab:effects}。
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{副作用分类与相应的机械机制}\label{tab:effects}
+\begin{tabular}{L{1.8cm}L{4.6cm}L{5.0cm}L{3.0cm}}
+\toprule
+\textbf{类别} & \textbf{例子} & \textbf{机械机制} & \textbf{验证时点} \\
+\midrule
+功能性 & 生成的函数修改了不该修改的全局状态 &
+  类型系统、效果类型（把"会碰什么"变成签名的一部分）、所有权系统 &
+  编译期，零运行时成本 \\
+资源性 & 1\,ns 变 1\,$\mu$s、内存暴涨 &
+  燃料/计价计量、最坏执行时间分析、配额 &
+  编译期 $+$ 运行时双重 \\
+安全性 & 越权访问、逃逸沙箱 &
+  能力模型、沙箱、字节码验证器 &
+  准入时 $+$ 运行时 \\
+语义漂移 & 规格本身就错了 &
+  \textbf{没有机械机制} & 人的审定与共识 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+前三类已有机械机制覆盖，且是纵深配置（证明 $>$ 类型 $>$ 测试 $>$ 计价 $>$
+隔离 $>$ 监控，每一层的信任基础都比上一层更简单）。只有第四类（规格偏离意图）永远
+需要人。
+
+\begin{remark}[三类工程原型的保证范围]\label{rmk:three-prototypes}
+三种常见工程机制覆盖的是不同种类的性质，不能并列宣传：
+\begin{enumerate}[label=(\alph*)]
+\item 浏览器沙箱保证的是\emph{执行隔离与权限边界}，不保证功能正确性。它是地球上
+      最大的不可信代码运行时：每天执行数以亿计来源不明、从未审查的代码，它从不审查，
+      它隔离。
+\item 字节码验证器验证的是\emph{其规则所覆盖的安全性质}（无越界访问、循环有界、
+      无悬挂指针），不是任意业务逻辑正确性。一个几万行的确定性验证器裁决着百万行自由
+      代码的准入，这正是"编译器式的、不以意志为转移的保证"的实例。
+\item 资源计价机制保证的是\emph{抽象资源计量下的约束}，不是真实的墙上时钟时间。
+      它把性能副作用从"需要人看出来"变成"预算违规自动拒绝执行"，但 1\,ns 到
+      1\,$\mu$s 的退化它未必能捕获，因为它计量的是抽象操作成本而非实际硬件延迟。
+      实时性能保证需要时序分析与受限的运行环境，这是另一套完全不同的工程。
+\end{enumerate}
+\end{remark}
+
+\section{运行时保证}\label{sec:runtime}
+
+形式化证明依赖环境假设，而实际环境可能变化。因此除静态证明外，还需要让执行系统在
+假设失效时仍然保持安全。
+
+\begin{principle}[分层防御]\label{pr:layered-defense}
+理想的架构应结合静态证明（针对已知确定性行为）与动态监控（针对未知或非确定性
+行为），形成分层防御：静态证明能证明的先证明；剩余风险由独立监控检测；严重违规由
+隔离或回退限制影响。
+\end{principle}
+
+\begin{remark}[监控自身的边界]\label{rmk:monitor-limit}
+即使运行时监控器本身正确，也不代表它掌握了完整的执行事实。观测轨迹缺失、事件模糊、
+传输不可靠与并发不可见行为都会限制结论。因此监控系统的观测机制本身必须被纳入保证链。
+\end{remark}
+
+\begin{remark}[契约组合的四个条件]\label{rmk:contract-conds}
+局部性质组合依赖：环境确实满足子组件假设；连接拓扑是良置的；反馈条件可检查；
+观察与时间语义兼容。组件"单独正确"与系统"整体正确"不能互换。
+\end{remark}
+
+\begin{principle}[不变量的条件式]\label{pr:ag}
+一条可用的假设--保证契约应当同时写明：它依赖的环境条件、它向外保证的行为、它可以
+产生的副作用、它必须消耗与占用的资源、以及它与其他子系统组合时必须满足的约束。
+\end{principle}
+
+\section{制品绑定}\label{sec:fourth}
+
+保证条件式 \eqref{eq:assurance} 的最后一项，即实际执行的对象就是被验证的对象，在既有
+讨论中经常被遗漏。它不是边角细节：即使验证器正确地接受了某个二进制，如果部署系统
+使用的是另一个文件，或者加载时的环境改变了关键前提，前面的验证结论不能自动套用。
+供应链攻击恰好瞄准这条裂缝。
+
+因此完整的信任链条必须包含：内容寻址的构建产物、验证证据与二进制的密码学绑定、
+以及部署时的再次校验。用式 \eqref{eq:binding} 的记号，即
+$\mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}})$
+且 $E_{\text{deployed}} \models A_{\text{claimed}}$。
+
+\begin{principle}[可复现构建的三层区分]\label{pr:reproducible}
+应当区分三种不同强度的性质：
+\begin{enumerate}[label=(\alph*)]
+\item \term{可复现}（reproducible）：同样的输入产生逐字节相同的输出；
+\item \term{可验证}（verifiable）：独立第三方可以从输入重新构建并比对；
+\item \term{已验证}（verified）：证明某个特定二进制满足其声明的性质。
+\end{enumerate}
+(a) 与 (b) 是 (c) 得以生效的前提条件；(c) 不含 (a)。三者不可互相替代。
+\end{principle}
+
+\section{共识层的可靠性界}\label{sec:consensus}
+
+第 \ref{sec:trust} 节指出，意图层不存在机械解。那么它存在什么？本节给出一个精确的
+答案，并证明一个反直觉的结论。
+
+\begin{theorem}[共识可靠性界]\label{th:condorcet}
+设 $n$ 个验证者对"某规格是否忠实表达意图"这一命题独立作出判断，每人判断错误的
+概率至多为 $p < 1/2$。则多数表决出错的概率满足
+\begin{equation}\label{eq:chernoff}
+\Pr\bigl[\text{多数出错}\bigr] \;\le\; \exp\Bigl(-2n\Bigl(\tfrac{1}{2} - p\Bigr)^{2}\Bigr).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+设 $X$ 为出错人数，$X = \sum_{i=1}^{n} X_i$，$X_i$ 独立且
+$\Pr[X_i = 1] \le p$，故 $\mathbb{E}[X] \le np$。多数出错等价于
+$X \ge n/2$。由 Hoeffding 不等式\cite{hoeffding1963}，对 $t > 0$，
+$\Pr[X - \mathbb{E}[X] \ge t] \le \exp(-2t^{2}/n)$。取
+$t = n(1/2 - p)$（此时 $X \ge n/2$ 蕴含 $X - \mathbb{E}[X] \ge t$），得
+\[
+\Pr\Bigl[X \ge \tfrac{n}{2}\Bigr] \;\le\;
+\exp\Bigl(-\frac{2n^{2}(1/2 - p)^{2}}{n}\Bigr) \;=\;
+\exp\Bigl(-2n\bigl(\tfrac{1}{2} - p\bigr)^{2}\Bigr). \qedhere
+\]
+\end{proof}
+
+这一结论是陪审团定理\cite{condorcet1785}的定量形式。但它依赖独立性，而独立性是脆弱
+假设；其失效有一个同样精确的形式。
+
+\begin{proposition}[相关错误模式支配界]\label{th:correlated}
+设 $n$ 个验证者的错误具有如下结构：以概率 $q$ 发生一个\emph{共同错误模式} $C$
+（例如共享的训练数据偏差、共享的领域误解、共享的利益激励），此时全部验证者同时出错；
+以概率 $1-q$ 各验证者独立出错，错误率 $p' < 1/2$。则
+\begin{equation}\label{eq:correlated}
+\Pr\bigl[\text{多数出错}\bigr] \;\ge\; q .
+\end{equation}
+特别地，当 $q$ 有正下界时，增加 $n$ 不能把多数出错的概率压到 $q$ 以下。
+\end{proposition}
+
+\begin{proof}
+当 $C = 1$ 时，全部 $n$ 个验证者出错，多数必然出错。故
+$\Pr[\text{多数出错}] \ge \Pr[C = 1] = q$。对 $n$ 取极限不改变该下界。
+\end{proof}
+
+\begin{corollary}[多样性而非数量]\label{cor:diversity}
+由命题 \ref{th:correlated}，共识层可靠性的支配变量是\emph{错误的独立性}
+（即 $q$ 的大小），而不是验证者的数量。因此共识设计的核心目标是降低 $q$：
+引入不同背景的参与者、不同训练来源的模型、不同利益立场的审查方，以及显式设计的
+\emph{对抗性}角色。
+\end{corollary}
+
+\begin{remark}[这一结论的用途]\label{rmk:diversity-use}
+推论 \ref{cor:diversity} 给出一个可直接用于工程判断的准则：当有人提议"再加几个
+智能体来审查"时，正确的问题是"新增的审查者与现有的审查者在错误模式上是否独立"。
+若不独立，增加数量只增加成本，不增加可靠性。这也解释了为什么"用另一个同源模型来
+审查"在结构上不构成保证。
+\end{remark}
+
+\section{意图层的激励结构}\label{sec:mechanism}
+
+命题 \ref{th:correlated} 把共识可靠性归因于参数 $q$，但没有给出 $q$ 的估计方法。
+本节指出这一遗漏的性质：$q$ 的主要来源是\emph{合谋}与\emph{共同利益}，因此它不是一个
+统计参数，而是一个\emph{激励设计}问题。
+
+\begin{principle}[$q$ 的构成]\label{pr:q-decomposition}
+共同错误模式可分解为三类来源：
+\begin{enumerate}[label=(\alph*)]
+\item \term{认知同构}：验证者共享训练来源、领域假设或思维定式；
+\item \term{利益同构}：验证者的收益与"通过"相关，而非与"正确"相关；
+\item \term{信息同构}：验证者读取同一份被审查材料，故其误差由同一处缺陷决定。
+\end{enumerate}
+三类来源对应三种不同的干预：引入异质参与者（对 (a)）、改变收益结构（对 (b)）、
+引入独立信息通道（对 (c)）。只做第一类干预是常见做法，也是效用最低的做法。
+\end{principle}
+
+\begin{principle}[适当评分规则]\label{pr:scoring}
+对第二类来源，正解是让验证者的报酬与其判断的\emph{准确性}而非其判断的\emph{倾向}
+挂钩。适当评分规则\cite{brier1950}提供了现成工具：报酬函数在真实信念处取唯一极大值，从而对
+"迎合多数"与"讨好提交方"两种行为同时去激励。具体形式可以是一个针对"该规格是否忠实
+表达意图"的预测市场，其结算依据是后续观察到的缺陷与返工数据。该机制有两个副产品：
+\begin{enumerate}[label=(\alph*)]
+\item 它为降低 $q$ 提供了除"换人"之外的手段；
+\item 它给出 $q$ 的后验估计，测量验证者误差的历史相关性即可。
+\end{enumerate}
+\end{principle}
+
+这一节补上了第 \ref{sec:consensus} 节留下的缺口。那里的界是条件性的，其条件
+（独立性）在此被归约为一个可设计、可测量、可付费的量。第 \ref{ch:program} 章把
+它写成假设 $H_{11}$。
+
+\section{综合保证条件}\label{sec:assurance-final}
+
+把本章各部分组合起来，得到一个完整的、条件性的保证陈述。
+
+\begin{definition}[双层信任结构]\label{def:two-layer}
+从意图到执行的链条是一个双层信任结构的复合体：
+\begin{equation}\label{eq:twolayer}
+\underbrace{I \xrightarrow{\;\text{共识}\;} \Phi}_{\text{不可形式化层}}
+\;\longrightarrow\;
+\underbrace{\Phi \xrightarrow{\;\text{机械}\;} P \xrightarrow{\;\text{机械}\;} B
+\xrightarrow{\;\text{机械}+\text{监控}\;} E}_{\text{可形式化层}}
+\end{equation}
+在可形式化层，信任由机械验证器保证；在不可形式化层，信任由对抗性共识保证；
+两层之间的边界、共识的记录以及整个链条的可追溯性，由密码学锚定的基础设施机械保证。
+\end{definition}
+
+\begin{theorem}[综合保证条件式]\label{th:assurance}
+设意图 $I$、已审定规格 $\Phi$、候选实现（二进制）$B$、运行环境 $E$，
+$A$ 为声明的环境假设。则"在所声明的范围 $\Sigma$ 内满足性质 $\varphi$"成立，当且仅当
+下列条件同时成立：
+\begin{align}
+&\text{(i)}\quad \Pr\bigl[\Phi \text{ 忠实于 } I\bigr] \;\ge\; 1 - \varepsilon_{\text{cons}},
+\qquad \varepsilon_{\text{cons}} \text{ 由式 \eqref{eq:chernoff} 与 } q \text{ 决定};\\
+&\text{(ii)}\quad \Tr(B, E) \;\subseteq\; \Allow(\Phi);\\
+&\text{(iii)}\quad E \models A;\\
+&\text{(iv)}\quad \mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}});\\
+&\text{(v)}\quad \varphi \text{ 在所用的解释关系 } R \text{ 下被保持}.
+\end{align}
+\end{theorem}
+
+条件 (i) 是概率性的，其可靠性受 $q$ 支配；条件 (ii)--(v) 是机械性的，其强度受
+$\TCB$ 与语义模型限制。式 \eqref{eq:twolayer} 与定理 \ref{th:assurance} 一起给出了
+对问题 \ref{prob:trust} 的完整回答：
+
+\begin{principle}[对问题 \ref{prob:trust} 的回答]\label{pr:answer}
+"人不再读代码"是可达的；"人不必再为目标的表达负责"是不可达的。可行的分工是：
+人确立并承担目标与约束的责任；生成器负责大规模生成、搜索与优化；机械化的验证与
+执行边界负责判断与限制实现；系统始终携带可追溯的保证证据。
+\end{principle}
+
+\begin{remark}[中心问题 Q1--Q8 的结论摘要]\label{rmk:q1q8}
+\begin{longtable}{L{5.4cm}L{9.0cm}}
+\toprule
+\textbf{问题} & \textbf{本文的判断} \\
+\midrule
+\endhead
+Q1 能否证明意图与规格一致？ &
+  不能依靠通用自动方法。受控语言、领域本体、例子与人工审定可缩小问题范围，
+  但无法覆盖未表达的隐含需求（命题 \ref{prop:three-grounds}）\\
+Q2 如何证明规格充分？ &
+  可检查一致性、可满足性、可实现性、空洞成立与形式化覆盖指标；这些都不能证明规格
+  包含了所有未声明的禁令 \\
+Q3 局部保证如何推出端到端保证？ &
+  需要关系可复合、环境假设闭合、观察映射兼容（命题 \ref{prop:soundness}）；
+  活性与实时性质通常还需额外条件 \\
+Q4 能否统一功能与资源保证？ &
+  可以在联合行为--成本语义中表达多种约束，但时间、内存、能耗与信息流需要不同的
+  分析模型；联合表达不等于统一求解 \\
+Q5 如何降低对生成模型的信任？ &
+  生成器提出候选，独立检查器验证。这降低了对生成器正确性的依赖，但不消除对逻辑
+  内核、定理陈述、外部假设与制品对应关系的信任要求 \\
+Q6 给定规格是否总能有效综合？ &
+  不能。有限语法、受限逻辑与特定模板可使部分问题可解；任意程序语义性质存在
+  不可判定性与搜索空间爆炸的边界 \\
+Q7 实际延迟能否严格保证？ &
+  在特定硬件、输入、调度与成本模型假设下可得到可用的最坏执行时间上界；基准测试
+  与渐近复杂度本身不足以证明纳秒级上界 \\
+Q8 是否需要统一理论？ &
+  更有根据的选择是建立共享的证明接口与证据格式，同时保留各领域不同的语义、假设与
+  分析工具。统一形式体系可以是目标之一，但不是必要的先验条件 \\
+\bottomrule
+\end{longtable}
+\end{remark}
+
+本章的经验内容是方向 1--3（第 \ref{ch:program} 章）与假设 $H_7$、$H_8$、$H_{11}$。
+命题 \ref{prop:no-godel} 与 \ref{prop:three-grounds} 是论证而非定理，其可挑战之处
+在于三条根据是否穷尽。定理 \ref{th:condorcet} 与命题 \ref{th:correlated} 是标准
+概率论结果的应用，其结论依赖独立性假设。

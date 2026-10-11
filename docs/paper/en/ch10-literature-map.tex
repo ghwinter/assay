@@ -1,0 +1,268 @@
+% =====================================================================
+\chapter{Literature Map and Positioning}\label{ch:literature}
+% =====================================================================
+
+This chapter places the paper's claims in their literature context, states their relation
+to existing theory, and marks where the gaps lie.
+
+\section{Six Groups of Literature}\label{sec:six-groups}
+
+\paragraph{First Group: Modern Specification Generation and Joint Evaluation.}
+This is the frontier closest to the intent $\to$ specification step. The relevant
+literature reports measurable results: a specification-generation benchmark for
+operating-system kernel verification tasks still shows model limits on long context and
+specification completeness \cite{osvbench2026}; a benchmark that evaluates code
+correctness, specification quality and proof generation separately reports a significant
+gap among the three dimensions (on a particular task set, code correctness, specification
+soundness and completeness, and single-pass proof success rate are 72.6\%, 52.3\% and
+4.9\% respectively) \cite{verina2026}; an evaluation framework that instantiates
+specifications as trusted tests points out that proof difficulty interferes with the
+assessment of specification quality \cite{coins2026}; a traceable refinement method
+decomposes natural-language requirements into atomic requirements and establishes
+requirement-level traceability \cite{verispecgen2026}; a mutation-driven method tests
+specification strength with semantically non-equivalent variants \cite{specsyn2026}; and
+the route of generating specifications from code should be studied separately from the
+route of generating specifications from intent \cite{specgen2025}. Vacuity detection
+\cite{kupferman2003} supplies a theoretical route to identifying the case in which
+verification passes while the specification holds vacuously. Together these results support
+one important judgement: \emph{code generation ability, specification expressiveness and
+formal proof ability are distinct research variables and should be evaluated separately}.
+
+\paragraph{Second Group: Program Semantics, Refinement and Observable Behaviour.}
+Operational semantics, denotational semantics, the lattice model of abstract interpretation
+\cite{cousot1977}, monadic semantics \cite{moggi1991,plotkin2002}, domain theory,
+refinement relations \cite{hoare1969} and separation logic \cite{appel2007} together supply
+the mathematical tools for the question of when two systems at different levels implement
+the same behavioural specification. Semantic refinement is not simple information
+compression: it must define the \emph{behavioural relation} between levels.
+
+\paragraph{Third Group: Type Theory, Constructive Mathematics and Proof Extraction.}
+Constructive type theory \cite{hott2013}, the correspondence between proofs and programs
+\cite{howard1980}, and the mechanisms that connect proof objects with constructive
+computation supply the mathematical foundation for ``an AI proposes candidate proofs and a
+mechanical kernel checks them''. One inference must be avoided: \emph{if a specification
+has already been translated into a type, then the specification necessarily expresses human
+intent faithfully}. The correspondence guarantees only the stipulated structural
+correspondence among propositions, types, proofs and terms within a chosen logic and type
+system; how human intent is turned into a proposition is a separate process that requires
+verification. Refinement types \cite{rondon2008} and SMT solving \cite{z32008} are the
+engineering representatives of this direction; automated theorem-proving environments and
+retrieval-augmented proof search \cite{leandojo2023,leancopilot2024} are its continuation
+in the age of AI.
+
+\paragraph{Fourth Group: From Proof to Machine Code.}
+This is the most mature group. A verified compiler turns the compilation transformation
+itself into a proved object \cite{leroy2009}; the back ends of a verified compiler cover
+several target architectures \cite{cakeml2019}; a refinement proof for an operating-system
+kernel shows how far the formal verification of large-scale low-level system software can
+reach \cite{klein2009}; translation validation checks a \emph{single} compilation result
+independently \cite{necula2000}; translation certification establishes a verifiable
+relational certificate for a \emph{specific artefact} \cite{krijnen2024}; and proof-carrying
+code lets a code provider attach a proof that a machine can check independently
+\cite{necula1997}.
+
+The key lesson of this group is that \emph{verifying the correctness of a compiler and
+verifying the correctness of a particular binary are two different strategies}. The former
+proves that the compiler satisfies a universal property; the latter verifies one build
+output independently. The two can be combined, without staking all trust on a single tool.
+
+\paragraph{Fifth Group: Resource Correctness.}
+Automatic amortised resource analysis can derive symbolic resource bounds for a program
+under a particular language and cost model, with a soundness proof; worst-case execution
+time analysis derives timing bounds for particular hardware and assumptions; static cache
+analysis shows the influence of the hardware model on bound inference. Three notions of
+time must be distinguished: algorithmic complexity gives a bound on the growth of cost as
+input size varies; worst-case execution time analysis gives an upper bound under a
+particular platform and assumptions; measurement provides latency data under particular
+experimental conditions. \emph{None of the three substitutes for another}. Equally, linear
+use is not optimal use: a program may consume each input resource exactly once and still use
+a poor algorithm or introduce excessive latency.
+
+\paragraph{Sixth Group: Runtime Verification, Contract Composition and the Emergence of Levels.}
+This group contains two classes of material of different kinds, which must be treated
+separately.
+
+The first class is \emph{runtime assurance and contracts}: assume--guarantee reasoning
+requires a subsystem to give the corresponding guarantee when its input assumption is
+satisfied \cite{henzinger1998}; contract composition for dynamical systems gives composition
+rules and checking methods under arbitrary interconnection topologies
+\cite{sharf2021,sharf2024,shali2026}; work on the uncertainty of runtime verification shows
+that observation, event transport and trace integrity are components of monitoring
+reliability \cite{taleb2023}; online monitoring of temporal logic \cite{leucker2009} and
+information-flow security \cite{goguen1982} address trace properties and access
+restrictions respectively.
+
+The second class is \emph{explanatory frameworks}: the near-decomposability of complex
+systems provides an explanation for level structures \cite{simon1962}; minimum description
+length supplies the statistical and information-theoretic background for ``abstraction is
+compression'' \cite{rissanen1978,grunwald2006,grunwald2019}; computational thermodynamics
+gives a physical lower bound on computation \cite{landauer1961}. This group can supply an
+explanatory framework for architecture, compression, model selection and complex systems,
+but it \emph{cannot automatically supply a correctness proof for a particular program}.
+
+\section{The Five Layers Rearranged by Mathematical Function}\label{sec:five-layers}
+
+Rearranged by which segment of the chain it solves, this literature yields a structure
+deeper than ``an AI writes code and a verifier checks it'':
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{The five layers rearranged by mathematical function}\label{tab:five-layers}
+\begin{tabular}{L{1.6cm}L{5.4cm}L{7.2cm}}
+\toprule
+\textbf{Layer} & \textbf{Function} & \textbf{Representative lines of work} \\
+\midrule
+A & Expressibility of the objective: formal specification generation, intent traceability,
+  requirement decomposition, counterexample generation &
+  Specification-generation benchmarks, traceable refinement, mutation-driven strength
+  testing, vacuity detection, requirement formalisation \\
+B & Realisability of the objective: logical consistency, program synthesis, constraint
+  solving, realisability decision &
+  Counterexample-guided inductive synthesis, syntax-guided synthesis, program-skeleton
+  completion, constructive type theory, SMT solving \\
+C & Cross-layer semantic preservation: operational semantics, refinement relations, proof
+  checking, compiler correctness, binary verification &
+  Verified compilers, verified compiler back ends, kernel refinement proofs, proof-carrying
+  code, translation validation \\
+D & Resource and environment assurance: complexity, resource bounds, runtime monitoring,
+  assume--guarantee contracts, execution constraints &
+  Automatic amortised resource analysis, worst-case execution time analysis, runtime
+  verification, contract composition, information-flow security \\
+E & Structure and physical limits: model compression, levels of complex systems,
+  thermodynamics and physical realisation &
+  Minimum description length, near-decomposability of complex systems, computational
+  thermodynamics, molecular self-assembly \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The most important finding is that these areas \emph{do not share one ready-made, fully
+unified mathematical object}. Each has nonetheless solved a different problem along this
+chain. The research opportunity therefore lies in defining the composition relations among
+them, not in inventing the entire mathematical toolkit from scratch.
+
+\section{The Unoccupied Intersection}\label{sec:gaps}
+
+\begin{principle}[Shape of the literature map]\label{pr:map-shape}
+Every step from specification to binary has a mature literature; automated synthesis from
+proof to implementation has an active frontier; but the gap from \emph{intent} to
+\emph{specification} has no formal solution, only consensus structures, and the literatures
+of social epistemology, Byzantine fault tolerance and adversarial review exist in entirely
+different disciplines and have not been systematically coupled with formal verification
+systems.
+\end{principle}
+
+On these grounds, the most valuable position to occupy is the following.
+
+\begin{principle}[Proposed research position]\label{pr:position}
+Integrate adversarial consensus in the style of social epistemology with mechanical
+admission in the style of proof-carrying code inside one framework: let a
+consensus-attested specification be the direct input to a proof-carrying artefact, and
+anchor consensus records, specification versions and artefact identity together
+cryptographically. As far as the review conducted for this paper extends, few works address
+both literatures at once.
+\end{principle}
+
+This position is valuable because it satisfies three conditions at once: it corresponds to a
+real and still unsolved technical gap (no mechanical solution at the intent layer); both of
+its components already have mature theoretical foundations; and its composition rules can
+be written out explicitly (Definition \ref{def:two-layer} and Theorem \ref{th:assurance})
+and can therefore be tested.
+
+\section{Relation to Existing Theory}\label{sec:relations-lit}
+
+\begin{longtable}{L{3.6cm}L{10.8cm}}
+\caption{Relation of this paper to existing theory}\label{tab:relations}\\
+\toprule
+\textbf{Theory} & \textbf{How this paper uses it, and how it does not use it} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Theory} & \textbf{How this paper uses it, and how it does not use it} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+Near-decomposability of complex systems &
+  \emph{Used}: as the explanation of why level structures are stable, and recast into a
+  testable sufficient-statistic condition (Definition \ref{def:neardecomp}, Proposition
+  \ref{prop:leakpair}).
+  \emph{Not used}: as evidence that ``all complex systems necessarily have the same
+  levels''; the source work does not prove this, nor does it give a general theorem about
+  verification cost. \\
+Abstract interpretation and Galois connections &
+  \emph{Used}: as the formal tool for semantic preservation between levels (Definition
+  \ref{def:galois}).
+  \emph{Not used}: no claim that all inter-level relations can be expressed as Galois
+  connections; where they cannot, the paper falls back on simulation relations or on an
+  explicit human argument. \\
+Minimum description length &
+  \emph{Used}: as the formal background for ``comprehension is compression'' and the source
+  of the stopping rule for descent (Definition \ref{def:mdl}, Proposition
+  \ref{prop:stopping}).
+  \emph{Not used}: no claim that the shortest description is the most correct description.
+  MDL is a model-selection principle; its conclusions depend on the chosen model family,
+  encoding and data, and it cannot by itself determine what purpose a system should
+  achieve. \\
+Information hiding and deep modules &
+  \emph{Used}: as the normative basis for module boundaries.
+  \emph{Not used} as it stands: the paper adds a testable version of it, namely whether an
+  interface is a sufficient statistic of behaviour (Definition \ref{def:neardecomp}),
+  because how well information is hidden is not itself measurable. \\
+Correspondence between organisational structure and system structure &
+  \emph{Used}: as one of the mechanisms of high-level convergence and one of the causes of
+  divergence.
+  \emph{Not used}: not as a technical necessity; it is a source of constraints, not a
+  source of uniqueness for solutions. \\
+Program logic and refinement &
+  \emph{Used}: as the mathematical interface for the specification--implementation
+  relation.
+  \emph{Not used}: no claim that safety refinement automatically guarantees liveness,
+  timing and fairness properties. \\
+Proof-carrying code &
+  \emph{Used}: as the classic implementation of a trust structure in which generation is
+  free and admission is strict, and as the predecessor of the fourth pillar of this paper.
+  \emph{Not used}: its premise is not ignored: the receiver must fix a safety policy in
+  advance, and the correctness of the policy itself is an external problem. \\
+Assume--guarantee reasoning &
+  \emph{Used}: as the source of the rules by which local guarantees compose into a global
+  guarantee (Proposition \ref{prop:soundness}).
+  \emph{Not used}: its four composition conditions are not ignored; a component's being
+  ``correct in isolation'' and a system's being ``correct as a whole'' are not
+  interchangeable. \\
+Resource analysis &
+  \emph{Used}: as evidence that resource correctness can enter formal analysis.
+  \emph{Not used}: a symbolic bound is not equated with a time bound on a particular
+  processor; complexity order, worst-case execution time, statistical quantiles and
+  measurement are not conflated. \\
+Computational thermodynamics &
+  \emph{Used}: as the basis for the boundary condition that the physical cost of computation
+  is incompressible.
+  \emph{Not used}: it is not used to predict the power consumption of a piece of ordinary
+  code, nor folded into semantic correctness.
+  (The paper mentions it only in Chapter \ref{ch:objections}, and not as a load-bearing
+  structure.) \\
+The halting problem and Rice's theorem &
+  \emph{Used}: as the boundary at which a general synthesis algorithm and a general decision
+  algorithm cannot exist.
+  \emph{Not used}: they are not used to prove that ``intent can never be formalised''
+  (Proposition \ref{prop:no-godel}). \\
+$\mathrm{P}$ and $\mathrm{NP}$ &
+  \emph{Used}: only the structural asymmetry entailed by the \emph{definition} of the class
+  $\mathrm{NP}$ (Proposition \ref{prop:asym-struct}).
+  \emph{Not used}: no open assertion of ``$\mathrm{P} \neq \mathrm{NP}$'' or
+  ``$\mathrm{P} = \mathrm{NP}$'' serves as a load-bearing structure. \\
+\bottomrule
+\end{longtable}
+
+\begin{principle}[Positioning of this paper]\label{pr:self-position}
+The contribution of this paper lies at the \emph{interface layer}, not in a new semantic
+theory: it promotes levels from a comprehension aid to the unit into which verification
+obligations decompose; it formalises oblivious sets, near-decomposability and read-sets as
+computable or measurable objects; it attributes the necessity of internal
+infrastructuralisation to the completeness of the operational semantics rather than to code
+volume; and it writes the trust structure as the composite of the two modes of trust
+generation and gives a bound on consensus reliability. These interfaces connect existing
+theory rather than replace it.
+\end{principle}

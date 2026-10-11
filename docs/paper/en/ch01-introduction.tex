@@ -1,0 +1,275 @@
+% =====================================================================
+\chapter{Introduction}
+% =====================================================================
+
+\section{The questions}
+
+The following three questions share one structure. They are stated here in the form in
+which they can be discussed, proved and falsified.
+
+\begin{problem}[Generality of low-level determinism]\label{prob:low}
+Software at the execution level is strikingly uniform: ABIs and calling conventions, the
+call stack, heap and object lifetime, control and data flow, synchronisation primitives
+and thread scheduling. That uniformity is imposed by a shared computational model,
+hardware architecture, language runtime and operating-system interface. Does the same
+determinism extend upwards? Do most large software systems, normally biased and normally
+engineered, converge on the same or similar abstractions, structures and architectures?
+\end{problem}
+
+\begin{problem}[Coercion by scale]\label{prob:scale}
+When a system crosses some order of magnitude, does it necessarily begin to design and
+optimise for recurrent problems of one kind, and thereby grow a unified internal
+infrastructure? An operating-system kernel defines how memory is managed and allocated,
+how threads and processes are defined and scheduled, and what runtime interface is
+offered upwards. A browser, a game engine, an asynchronous runtime, a distributed store
+and a relational engine address the same class of questions at different levels. Once the
+code base is large enough, do all of them exhibit the same kind of reasoning---unified
+function, unified interfaces, managed planning, runtime structure?
+\end{problem}
+
+\begin{problem}[Comprehension and design]\label{prob:mind}
+Software is written by humans and machines, but it is not easy to understand. A large
+system can hardly be read sequentially from the micro level. At what level of abstraction
+should it be approached, and how does comprehension lead into development without
+dissolving into a sea of code? The question bears equally on machines: an intelligence
+cannot descend into unbounded low-level information, and must retain an understanding of
+first principles---call this \Lk{0}---together with the levels above it, \Lk{1}, \Lk{2},
+\Lk{3}, and so on. What an intelligence needs is compressed information. Conversely, how
+should a large complex system be designed so that its purpose is achieved?
+\end{problem}
+
+The third question has a contemporary variant that moves it from comprehension to
+warranty:
+
+\begin{problem}[Correctness without review]\label{prob:trust}
+If machine generation drives the cost of code towards zero and no human reads the
+implementation line by line, how is correctness guaranteed \emph{mechanically} and
+\emph{non-self-referentially}? How is it guaranteed that the stated purpose is achieved,
+and that no unauthorised side effect accompanies it? A concrete instance: a hand-written
+call takes 1\,ns; a generated implementation takes 1\,$\mu$s. Functionally identical,
+purpose achieved, and a performance side effect introduced.
+\end{problem}
+
+\section{Three gaps in existing treatments}
+
+Each question has local counterparts in the literature: architectural convergence in
+pattern languages and complex-systems theory, coercion by scale in information hiding and
+near-decomposability, comprehension and design in cognitive models and multi-view
+modelling, correctness in program logic, refinement calculi and verified compilation.
+Treating them as a whole exposes three structural gaps.
+
+\paragraph{The strength of the convergence claim is not graded.}
+``Large software architectures converge'' contains at least three propositions of very
+different strength: recurrent local architectural patterns (well supported by engineering
+experience); measurable structural similarity above a random baseline after abstraction
+(plausible and worth systematic testing); and convergence of nearly all large systems on
+one high-level architecture (unsupported, and probably too strong). Conflating them makes
+the claim untestable.
+
+\paragraph{Necessity claims lack a load-bearing structure.}
+``Scale forces a unified infrastructure'' is a necessity claim, but it is usually stated
+as an empirical observation, and therefore cannot answer where the necessity comes from,
+what fixes the threshold, or why some equally large systems grow no kernel. The answers
+given below are that the necessity comes from the completeness of the operational
+semantics, the threshold from an amortisation inequality, and the apparent exceptions
+from systems that \emph{adopt} a kernel rather than build one.
+
+\paragraph{Comprehension, design and assurance are three readings of one structure.}
+Comprehension is treated as a cognitive problem, design as an engineering problem and
+assurance as a logical problem, in three separate literatures. They are in fact different
+reading directions of one object: a level is the unit into which assurance obligations
+decompose; comprehension recovers that decomposition and design prescribes it.
+
+\section{Core theses}
+
+Four theses organise the paper. Each is annotated with its formal location and its
+strength: \textbf{[P]} proved, \textbf{[A]} argued under stated assumptions,
+\textbf{[H]} advanced as a falsifiable hypothesis.
+
+\begin{principle}[Compression]\label{th:compression}\textbf{[A]}
+A complex system is comprehensible to a bounded intelligence if and only if it is
+compressible. Comprehension is task-constrained lossy compression: description length is
+minimised subject to preserved task-relevant predictive power. The optimal descent depth
+is therefore the stationarity condition of a rate--distortion Lagrangian, that is, the
+point at which marginal predictive gain vanishes.
+\end{principle}
+
+\begin{principle}[Necessity]\label{th:necessity}\textbf{[A]}
+Any system with concurrently live entities and contended finite resources, whose
+operational semantics is well defined, has already defined six functions: identity and
+lifecycle, allocation and reclamation, scheduling, naming and addressing, communication
+and synchronisation, and fault isolation and recovery. These may be built or adopted from
+a host---an operating system, a language runtime, a framework---but they cannot be omitted
+from the semantics.
+\end{principle}
+
+\begin{principle}[Separation]\label{th:separation}\textbf{[A]}
+Generation may be free, probabilistic, open and untrusted; admission must be
+deterministic, mechanical and exhaustively inspectable. Guarantees on the formal layer
+(specification $\to$ implementation $\to$ binary $\to$ execution) come from mechanical
+decision by a minimal trusted kernel. Guarantees on the intent layer (intent $\to$
+specification) come from adversarial consensus, and that layer admits no mechanical
+solution. The two are stitched by artefact binding: only the verified binary is admitted
+to run, and the environmental assumptions are checked or monitored on it.
+\end{principle}
+
+\begin{principle}[Design]\label{th:design}\textbf{[A]}
+Architecture is manufactured separation of scales. Nature obtains levels free from scale
+separation and renormalisation; software levels do not emerge spontaneously and must be
+paid for in interfaces, encapsulation and invariants, and they leak. Design is therefore
+forward compression and comprehension is inverse compression, two reading directions of
+one structure. The measurable objective of architecture is the expected read-set
+$\mathbb{E}[\rho]$ of a typical change.
+\end{principle}
+
+The four theses and their formal results are referred to collectively as the
+\term{compression--assurance framework}. The name is taken from the two ends of the claim:
+\emph{compression} is the mechanism of comprehension and design, \emph{assurance} is the
+mode in which trust is anchored. The central assertion is that a complex system is
+comprehensible to a bounded agent if and only if it is compressible, and that it is
+compressible if and only if it admits a separation of scales in which every level has an
+explicitly declared oblivious set.
+
+\section{Epistemic discipline}
+
+The material crosses engineering intuition, complex-systems theory, information theory,
+mathematical logic and social epistemology, and the risk of overreach is high. Five rules
+are observed throughout.
+
+\begin{enumerate}[label=(\roman*)]
+\item \term{Strength labelling.} Every claim is labelled as a theorem, proposition,
+      conjecture, hypothesis or heuristic. Heuristics are not written as theorems.
+\item \term{Non-claims list.} Chapter \ref{ch:objections} states explicitly what the paper
+      does \emph{not} claim, including several ``authoritative theorems'' that are declined.
+\item \term{Explicit assumptions.} Any conclusion that depends on an environmental
+      assumption states it, and any guarantee that has a boundary marks it.
+\item \term{Falsifiability.} Chapter \ref{ch:program} reduces the core claims to twelve
+      falsifiable hypotheses with operationalisations, controls, falsifiers and risks.
+\item \term{Verification not isomorphic to the conclusion.} Where the paper argues that
+      generation must be untrusted and verification independent, that rule applies to the
+      paper itself: its load-bearing propositions must be independently checkable and must
+      not depend on any unproved conjecture.
+\end{enumerate}
+
+Rule (v) constrains the paper's own rhetoric. Several claims have been removed from the
+load-bearing structure: G\"odel incompleteness and Rice's theorem are not used to prove
+that a gap between intent and specification is principled
+(Chapter \ref{ch:intent}, \S\ref{sec:intent-gap}); the open status of $\mathrm{P}$ versus
+$\mathrm{NP}$ is not used to support ``verification is cheaper than generation''
+(\S\ref{sec:asymmetry}); and near-decomposability is not treated as a universal law
+(Chapters \ref{ch:convergence} and \ref{ch:objections}). Each of these gains strength by
+being unloaded rather than reinforced.
+
+\section{Contributions}
+
+Formal contributions:
+
+\begin{enumerate}[label=(C\arabic*)]
+\item The \emph{oblivious set} of a level as the kernel of its abstraction map, which makes
+      ``what this level need not care about'' a computable object
+      (Definition \ref{def:oblivious}).
+\item Galois connections as the condition for inter-level semantic preservation
+      (Definitions \ref{def:galois}, \ref{def:soundness}, Proposition \ref{prop:soundness}).
+\item A \emph{contract operad} whose well-definedness reduces the composability of local
+      guarantees to well-typed colouring and acyclicity of the interface graph
+      (Definition \ref{def:operad}, Proposition \ref{prop:operad-compose}).
+\item A \emph{level family} $\pi:\mathcal{L}\to\mathcal{P}$ that separates cross-domain
+      isomorphism of the six functions from transport along problem shape
+      (Definition \ref{def:fibration}, Proposition \ref{prop:transport}).
+\item A \emph{coarse-graining criterion} under which the convergence thesis can be
+      falsified inside a single project (Definition \ref{def:coarsegrain},
+      Conjecture \ref{conj:relevant}).
+\item An amortisation inequality $\Theta(nm)\to\mathcal{O}(n+m)$ giving the phase-transition
+      threshold of internal infrastructuralisation (Theorem \ref{th:integration}).
+\item Conditional necessity of the six functions from the well-definedness of the
+      operational semantics (Theorem \ref{th:six}), and the resulting build-or-adopt
+      criterion (Corollary \ref{cor:buildadopt}).
+\item A criterion for over- and under-constraint that renders ``unique below, manifold
+      above'' as solution-set geometry (Proposition \ref{prop:overconstrain}).
+\item Expected read-set as the measurable objective of architecture, with a proof that
+      invariant centralisation minimises it (Definition \ref{def:readset},
+      Theorem \ref{th:centralise}).
+\item Technical debt as a description-length gap (Definition \ref{def:debt}), with a
+      rate--distortion reading of refactoring.
+\item An observability-rank criterion for whether comprehension can converge, separating
+      insufficient observation from insufficient sampling (Definition
+      \ref{def:observability}, Proposition \ref{prop:observability}).
+\item A governable-complexity stability condition and a scaling law for required
+      headcount (Definition \ref{def:governable}, Proposition \ref{prop:exponent}).
+\item A Hoeffding bound for consensus reliability and the proof that a correlated error
+      mode dominates it, reducing the governing parameter to an incentive-design problem
+      (Theorem \ref{th:condorcet}, Proposition \ref{th:correlated}, \S\ref{sec:mechanism}).
+\item A consolidated assurance condition combining two-layer trust with artefact binding
+      (Definition \ref{def:assurance}, Theorem \ref{th:assurance}).
+\end{enumerate}
+
+Methodological contributions:
+
+\begin{enumerate}[label=(M\arabic*)]
+\item A descent protocol that converts comprehension of a large system from sequential
+      reading into layered modelling and active identification.
+\item An executable list of seam detectors for locating real module boundaries in an
+      unfamiliar code base.
+\item A design procedure that replaces adjectival goals with an optimisable objective and
+      a stability condition.
+\item Twelve falsifiable hypotheses with experimental designs.
+\item A cross-disciplinary research position that couples social epistemology to
+      proof-carrying code, which the literature map identifies as unoccupied.
+\end{enumerate}
+
+\section{Structure}
+
+Chapter \ref{ch:framework} establishes the formal language: levels, abstraction maps,
+oblivious sets, contracts, traces, assurance and trust. Chapter \ref{ch:convergence}
+addresses Problem \ref{prob:low}, grading the convergence claim and stating its strength
+law. Chapter \ref{ch:infrastructure} addresses Problem \ref{prob:scale}, proving the
+conditional necessity of the six functions and deriving the phase-transition threshold.
+Chapter \ref{ch:comprehension} addresses the first half of Problem \ref{prob:mind}:
+comprehension as inverse compression. Chapter \ref{ch:design} addresses the second half:
+design as forward compression. Chapter \ref{ch:intent} addresses Problem \ref{prob:trust}
+with a verifiable refinement chain and a two-layer trust structure. Chapter
+\ref{ch:levels} promotes levels from a comprehension aid to the unit into which assurance
+obligations decompose. Chapter \ref{ch:program} states the falsifiable programme. Chapter
+\ref{ch:literature} positions the work. Chapter \ref{ch:objections} lists objections and
+limits. Chapter \ref{ch:conclusion} concludes.
+
+\section{Terminology}
+
+Several terms drift between communities. They are fixed once here; the full glossary is
+Appendix \ref{app:glossary}, and the Chinese rendering is fixed term by term in the
+companion terminology file.
+
+\begin{longtable}{L{3.1cm}L{11.4cm}}
+\toprule
+\textbf{Term} & \textbf{Meaning in this paper} \\
+\midrule
+\endhead
+level & A tuple (representation space, behaviour set, observation map, environment
+  assumptions, cost model, invariants), defined relative to a study object and a task;
+  a cognitive scale, not a physical directory. \\
+oblivious set & The differences a level can never distinguish; the kernel of its
+  abstraction map. \\
+separation of scales & The condition under which adjacent levels each support a valid
+  description and the lower level's implementation details do not appear in the upper
+  level's semantics. \\
+internal infrastructuralisation & The process by which a system promotes recurrent
+  management problems to unified mechanisms on which the upper layers then depend. \\
+the six functions & Identity and lifecycle; allocation and reclamation; scheduling;
+  naming and addressing; communication and synchronisation; fault isolation and recovery. \\
+read-set & The set of modules that must be read to complete a typical change. \\
+assurance & A traceable evidential relation holding a property within stated premises and
+  a stated scope. \\
+mechanical assurance & Assurance by a single deterministic, exhaustively inspectable
+  decision procedure. \\
+consensus assurance & Assurance by multiple independent, adversarial participants. \\
+artefact binding & The identity relation between the verified artefact and the executed
+  artefact. \\
+intent gap & The distortion between an intent and its formal projection. \\
+\bottomrule
+\end{longtable}
+
+One terminological caution is load-bearing. A \emph{level} is a cognitive scale, not a
+physical tier. The same component occupies different levels in different tasks: an
+asynchronous runtime is infrastructure to an application developer and a complex system in
+its own right to its maintainer. Levels are defined relative to the study object and the
+task (Chapter \ref{ch:levels}).

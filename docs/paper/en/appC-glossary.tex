@@ -1,0 +1,131 @@
+\chapter{Glossary}\label{app:glossary}
+
+\begin{longtable}{L{3.4cm}L{11.0cm}}
+\toprule
+\textbf{Term} & \textbf{Definition and location} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Term} & \textbf{Definition and location} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+Level & The six-tuple $(X, \Beh, \Obs, \Env, \Cost, \Inv)$; a cognitive scale, not a
+  physical directory. Definition \ref{def:level}. \\
+Abstraction map & The map $\Obs_i$ projecting lower-level behaviour onto upper-level
+  behaviour. Definition \ref{def:galois}. \\
+Concretisation map & The map $\Conc_i$ expanding an upper-level behaviour into the set of
+  its lower-level implementations. Definition \ref{def:galois}. \\
+Galois connection & $\Obs_i \dashv \Conc_i$, stating what abstraction discards and what it
+  retains. Definition \ref{def:galois}. \\
+Inter-level soundness & $\Obs_i(\Beh_{i+1}\!\upharpoonright\!A) \subseteq \Beh_i$.
+  Definition \ref{def:soundness}. \\
+Oblivious set & The kernel $\Ker \Obs_i$ of the abstraction map, that is, the set of
+  differences the level can in principle never distinguish. Definition \ref{def:oblivious}. \\
+Compression ratio & The information that cannot be recovered under the abstraction map.
+  Definition \ref{def:compression}. \\
+Architecture relational graph & A typed multigraph whose edges fall into five classes:
+  abstraction, dependency, composition, control and contract. Definition
+  \ref{def:relgraph}. \\
+Abstract skeleton & The graph obtained by replacing each component with its duty role,
+  retaining the type of each relation and erasing its instance. Definition
+  \ref{def:skeleton}. \\
+Task & The pair $T = (Q, d)$, where $Q$ is a query family and $d$ a loss on answers.
+  Definition \ref{def:task}. \\
+$T$-sufficiency & The model answers every query as the real system does. Definition
+  \ref{def:sufficient}. \\
+Description length & The length $\DL(M)$ of a model under a fixed encoding. Definition
+  \ref{def:mdl}. \\
+Behaviour contract & The eight-tuple $(P, Q, E^{+}, E^{-}, R, I, F, A)$. Definition
+  \ref{def:contract}. \\
+Observable traces & The set $\Tr(B,E)$ of observable execution traces an artefact may
+  produce in an environment. Definition \ref{def:traces}. \\
+Assurance & The four-tuple (property, object, premises, evidence); the condition under
+  which it holds is \eqref{eq:assurance}. Definition \ref{def:assurance}. \\
+Trusted computing base (TCB) & The set of components that must be trusted unconditionally
+  for the assurance to hold. Definition \ref{def:tcb}. \\
+Mechanical assurance & Assurance given by a single deterministic, exhaustively inspectable
+  decision procedure. Definition \ref{def:twotrust}. \\
+Consensus assurance & Assurance given by the adversarial scrutiny of multiple independent
+  participants. Definition \ref{def:twotrust}. \\
+Internal infrastructuralisation & The three-stage process: identification of commonality
+  $\to$ unification of mechanisms $\to$ upper-layer composition. Definition
+  \ref{def:infra}. \\
+Participant-resource structure & The five-tuple
+  $(E, \mathcal{R}, \to, \mathrm{Ready}, \mathrm{Fault})$. Definition
+  \ref{def:pr-structure}. \\
+Unified substrate & The set of mechanisms through whose declared interfaces every
+  interaction of an entity with a resource passes. Definition \ref{def:substrate}. \\
+The six functions & Identity and lifecycle; allocation and reclamation; scheduling; naming
+  and addressing; communication and synchronisation; fault isolation and recovery.
+  Definition \ref{def:six}. \\
+Read-set of a change & The set $\rho(c)$ of modules that must be read to complete a change
+  correctly. Definition \ref{def:readset}. \\
+Enforcement sites of an invariant & The set $\mathrm{S}(\iota)$ of modules that must be
+  implemented correctly for the invariant to hold. Definition \ref{def:enforce}. \\
+Near-decomposability & A module's interface observations are a sufficient statistic for
+  its external behaviour. Definition \ref{def:neardecomp}. \\
+Leak pair & Two executions with equal interface trace and different external behaviour.
+  Proposition \ref{prop:leakpair}. \\
+Technical debt & The difference between the description length of the code and its shortest
+  generating description. Definition \ref{def:debt}. \\
+Verifiable refinement chain & The seven-stage chain from purpose to certified deployment,
+  $(\mathrm{G}1)\dots(\mathrm{G}7)$. Definition \ref{def:chain}. \\
+The five dimensions of correctness & Functional, side-effect, resource, system and
+  goal-expression correctness. Definition \ref{def:five-correctness}. \\
+Four classes of side effect & Functional, resource, security and semantic drift.
+  Definition \ref{def:effects}. \\
+Artefact evidence package & The ten items of evidence every artefact should carry.
+  Definition \ref{def:evidence-package}. \\
+Cognitive scale & $\Lk{0}$ principles of computation, $\Lk{1}$ infrastructure and runtime,
+  $\Lk{2}$ components and subsystems, $\Lk{3}$ domain function and business semantics,
+  $\Lk{4}$ and above: scenarios and system-level behaviour, $\Lk{\infty}$ purpose and
+  responsibility. Definition \ref{def:cognitive-scale}. \\
+Level contract four-tuple & (participant, invariant assured, contract form, mode of
+  verification), plus the oblivious set. Definition \ref{def:level-contract}. \\
+Level attribution of a verification obligation & A property $\varphi$ belongs to the lowest
+  level that can express it. Definition \ref{def:obligation-assign}. \\
+Domain binding & The fraction $\mathrm{Dom}$ of the level's axioms that are
+  domain-specific. Definition \ref{def:dom}. \\
+Two-layer trust structure & A composite in which the intent layer is assured by consensus
+  and the formalisable layer by mechanical assurance. Definition \ref{def:two-layer}. \\
+\bottomrule
+\end{longtable}
+
+\section*{Symbol Index}
+
+\begin{longtable}{L{3.0cm}L{11.4cm}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+$\Lambda_i$ & level $i$ \\
+$\Beh_i$ & behaviour set of level $i$ \\
+$\Obs_i, \Conc_i$ & abstraction and concretisation maps \\
+$\Env_i, \Cost_i, \Inv_i$ & environmental assumptions, cost model, invariant set \\
+$\Obl(\Lambda)$ & oblivious set \\
+$\kappa$ & compression ratio \\
+$\mathcal{G}, \phi$ & architecture relational graph, abstract skeleton \\
+$T, Q, d$ & task, query family, loss functional \\
+$\DL, L_T$ & description length, task loss \\
+$S$ & behaviour contract \\
+$\Tr(B,E), \Allow(S)$ & set of observable traces, set of permitted traces \\
+$\mathfrak{A}, \TCB$ & assurance four-tuple, trusted computing base \\
+$\Pi$ & participant-resource structure \\
+$\mathcal{K}_6$ & the six functions \\
+$n, m, k, F$ & number of entities, number of resources, interfaces per entity, fixed cost
+  of the substrate \\
+$\rho(c), \mathrm{S}(\iota)$ & read-set, set of enforcement sites \\
+$D$ & technical debt \\
+$\mathrm{Dom}, \mathrm{Conv}$ & domain binding, convergence strength \\
+$q, p, \varepsilon_{\text{cons}}$ & correlated error probability, individual error rate,
+  consensus error bound \\
+\bottomrule
+\end{longtable}

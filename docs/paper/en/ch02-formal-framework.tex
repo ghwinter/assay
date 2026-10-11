@@ -1,0 +1,563 @@
+% =====================================================================
+\chapter{Formal framework}\label{ch:framework}
+% =====================================================================
+
+This chapter establishes the shared formal language. It does not invent new mathematics;
+it names objects that engineering practice already uses but does not define: what a level
+may ignore, under what conditions semantic preservation holds across levels, how far
+comprehension should descend, and within what scope a guarantee holds.
+
+\section{Levels and abstraction maps}\label{sec:level}
+
+\begin{definition}[Level]\label{def:level}
+A \term{level} is a six-tuple
+\[
+\Lambda \;=\; \bigl(X,\; \Beh,\; \Obs,\; \Env,\; \Cost,\; \Inv\bigr),
+\]
+where $X$ is the \term{representation space} of states admissible at that level;
+$\Beh \subseteq X^{\mathbb{N}}$ is the \term{behaviour set} of admissible execution
+traces; $\Obs$ is the \term{observation map} projecting the level's behaviour onto the
+observable algebra of the level above; $\Env$ is a set of \term{environmental assumptions}
+on which the level's conclusions depend; $\Cost : \Beh \to \mathbb{R}_{\ge 0}^{k}$ is a
+\term{cost model} with $k$ components (time, space, energy, bandwidth); and
+$\Inv \subseteq \Beh$ is the \term{invariant set} that must hold under every admissible
+transition.
+\end{definition}
+
+The six components are not of equal weight. $X$ and $\Beh$ describe what exists, $\Obs$
+describes what cannot be seen, $\Env$ describes what is depended upon, $\Cost$ describes
+what it costs, and $\Inv$ describes what must not break. Chapter \ref{ch:levels} argues
+that $\Obs$ and $\Inv$ decide whether a level is real: a level that cannot state its
+observation map and its invariants is not a level but a directory.
+
+\begin{definition}[Abstraction and concretisation]\label{def:galois}
+Let $\Lambda_i$ and $\Lambda_{i+1}$ be adjacent levels, with the smaller index the upper
+level. The \term{abstraction map} $\Obs_i : \Beh_{i+1} \to \Beh_i$ projects lower-level
+behaviour onto upper-level behaviour; the \term{concretisation map}
+$\Conc_i : \Beh_i \to 2^{\Beh_{i+1}}$ expands an upper-level behaviour into the set of its
+lower-level implementations. If there are partial orders $\sqsubseteq_i$ and
+$\sqsubseteq_{i+1}$ such that
+\begin{equation}\label{eq:galois}
+b \sqsubseteq_{i+1} \Conc_i(b') \quad\Longleftrightarrow\quad \Obs_i(b) \sqsubseteq_i b',
+\qquad \forall b \in \Beh_{i+1},\; b' \in \Beh_i,
+\end{equation}
+then $(\Obs_i, \Conc_i)$ is a \term{Galois connection}, written $\Obs_i \dashv \Conc_i$.
+\end{definition}
+
+A Galois connection states precisely what abstraction discards and what it retains, and is
+the central tool of the abstract-interpretation framework \cite{cousot1977}. Where an
+inter-level relation can be expressed as a Galois connection, the semantic-preservation
+condition becomes mechanically decidable; where it cannot, one must fall back on
+simulation relations or on an explicit human argument.
+
+\begin{definition}[Inter-level soundness]\label{def:soundness}
+Let $A \in \Env_i$ be an environmental assumption declared at the upper level, and let
+$\Beh_{i+1}\!\upharpoonright\! A$ denote the lower-level behaviours admissible under $A$.
+Then $\Lambda_i$ is \term{sound} with respect to $\Lambda_{i+1}$ under $A$ if
+\begin{equation}\label{eq:soundness}
+\Obs_i\bigl(\Beh_{i+1}\!\upharpoonright\! A\bigr) \;\subseteq\; \Beh_i .
+\end{equation}
+\end{definition}
+
+\begin{proposition}[Composition of soundness]\label{prop:soundness}
+Let there be a chain $\Lambda_0, \Lambda_1, \dots, \Lambda_n$, with increasing index
+denoting increasing concreteness, and suppose that for each $i$ there exists
+$A_i \in \Env_i$ satisfying \eqref{eq:soundness}. If
+\begin{enumerate}[label=(\alph*)]
+\item \emph{observation compatibility}: $\Obs_i \circ \Obs_{i+1} = \Obs_i^{(i+2)}$, where
+      $\Obs_i^{(i+2)}$ is the direct observation from $\Beh_{i+2}$ to $\Beh_i$; and
+\item \emph{assumption closure}:
+      $\Obs_i(\Beh_{i+1}\!\upharpoonright\! A_i) \subseteq \Beh_i\!\upharpoonright\! A_{i-1}$,
+      that is, the assumptions satisfied below suffice to discharge those above,
+\end{enumerate}
+then $\Obs_0^{(n)}\bigl(\Beh_n \upharpoonright \bigcap_i A_i\bigr) \subseteq \Beh_0$.
+\end{proposition}
+
+\begin{proof}
+Induction on $n$. The case $n = 1$ is \eqref{eq:soundness}. Condition (b) ensures that at
+each inductive step the upper level's environmental assumption holds of the upper-level
+behaviour set, so that \eqref{eq:soundness} can be applied level by level. Condition (a)
+ensures that the composite observation agrees with the level-by-level observations, so
+that the conclusion holds at the top level.
+\end{proof}
+
+\begin{remark}[Why composition fails]\label{rmk:why-compose-fails}
+Proposition \ref{prop:soundness} is the precise form of ``how do local guarantees compose
+into an end-to-end guarantee'', and equally the precise form of why they often do not:
+composition requires both conditions simultaneously. In practice (a) fails when observation
+maps disagree---for instance when ``the transaction committed'' denotes different
+observations at the application layer and the storage layer---and (b) fails when
+environmental assumptions are not closed, for instance when the upper layer assumes that
+``a write is durable'' while the lower layer's durability depends on an undeclared flush
+policy. Chapter \ref{ch:intent} uses these two failure modes as the skeleton of its
+evidence-boundary table.
+\end{remark}
+
+\begin{remark}[Relation to the source model of the companion report]\label{rmk:source}
+Definition \ref{def:level} extends the four-tuple
+$M_i = (X_i, \mathrm{Beh}_i, \mathrm{Obs}_i, A_i)$ used in the companion research report
+by adding $\Cost$ and $\Inv$, which Chapters \ref{ch:design} and \ref{ch:intent} require in
+order to place resource guarantees and invariant enforcement inside the level object. The
+companion report describes inter-level semantics by an \emph{interpretation relation}
+$R_i \subseteq \mathrm{Beh}_{i+1} \times \mathrm{Beh}_i$, requiring that for every
+admissible target behaviour $b_{i+1}$ of a successful transformation
+$x_{i+1} = T_i(x_i)$ there exists a source behaviour $b_i$ with $R_i(b_{i+1}, b_i)$. That
+is a \emph{simulation condition} and is more general than the set inclusion of
+\eqref{eq:soundness}; the two coincide when $R_i$ is induced by a function, that is when
+$R_i = \{(b, \Obs_i(b))\}$. This paper uses $R_i$ where a general relation is needed and
+$\Obs_i$ where the abstraction is functional. The companion report stresses that, across
+different languages and observation domains, $R_i$ may be a forward simulation, a backward
+simulation, a bisimulation, a contextual equivalence or a refinement relation, and that
+one must not assume a single relation throughout. That qualification is accepted here.
+\end{remark}
+
+\section{Oblivious sets and compression}\label{sec:oblivious}
+
+The next two definitions are the formal centre of the paper. They turn ``what this level
+need not care about'' from an engineering phrase into a computable object.
+
+\begin{definition}[Oblivious set]\label{def:oblivious}
+The \term{oblivious set} of level $\Lambda_i$ with respect to the level below is the kernel
+of the abstraction map:
+\begin{equation}\label{eq:oblivious}
+\Obl(\Lambda_i) \;:=\; \Ker \Obs_i \;=\;
+\bigl\{(b,b') \in \Beh_{i+1}^{2} \;:\; \Obs_i(b) = \Obs_i(b')\bigr\}.
+\end{equation}
+If $(b,b') \in \Obl(\Lambda_i)$, the level is \term{oblivious} to the difference between
+$b$ and $b'$.
+\end{definition}
+
+\begin{proposition}[Basic properties]\label{prop:oblivious}
+$\Obl(\Lambda_i)$ is an equivalence relation on $\Beh_{i+1}$, and the quotient satisfies
+\[
+\Beh_{i+1} \big/ \Obl(\Lambda_i) \;\cong\; \Obs_i(\Beh_{i+1}) .
+\]
+\end{proposition}
+
+\begin{proof}
+The three properties of an equivalence relation follow from those of $=$. The surjection
+$\Obs_i: \Beh_{i+1} \to \Obs_i(\Beh_{i+1})$ induces a bijection
+$\Beh_{i+1}/\Ker\Obs_i \to \Obs_i(\Beh_{i+1})$, by the universal property of the quotient.
+\end{proof}
+
+Proposition \ref{prop:oblivious} yields a direct consequence: \emph{abstraction is
+quotienting by the kernel}. Everything a level exposes to the level above is the quotient
+of lower-level behaviour by that kernel. Hence:
+
+\begin{itemize}
+\item ``what this level guarantees'' is an element of the quotient
+      $\Obs_i(\Beh_{i+1})$;
+\item ``what this level does not guarantee'' is what has been quotiented away, namely
+      $\Obl(\Lambda_i)$;
+\item ``what this level may ignore'' is every lower-level detail compatible with
+      $\Obl(\Lambda_i)$.
+\end{itemize}
+
+The third item has the deepest consequence: it makes ignorance a property that can be
+declared, checked and held to account. A module that has never declared its oblivious set
+has an incomplete contract.
+
+\begin{remark}[A criterion for pattern realism]\label{rmk:dennett}
+Proposition \ref{prop:oblivious} is isomorphic to an independent philosophical criterion.
+Dennett's criterion for a \emph{real pattern} states that a pattern is real exactly when
+describing the system in terms of it is more economical than describing the raw data
+\cite{dennett1991}. Under that criterion, whether a level exists is not an ontological
+question but a question of compression ratio---precisely the quantity measured by
+Definition \ref{def:compression}.
+
+Three consequences follow, and are used in later chapters.
+\begin{enumerate}[label=(\alph*)]
+\item Levels are neither discovered natural kinds nor arbitrary conventions; they are fixed
+      points of a compression operator.
+\item The convergence thesis of Chapter \ref{ch:convergence} needs no separate
+      philosophical defence: if two systems compress independently under similar
+      constraints, that their fixed points are similar follows from properties of the
+      compression operator rather than from an additional assumption about the world.
+\item The criterion is quantitative, so whether a given level is real is measurable rather
+      than arguable.
+\end{enumerate}
+\end{remark}
+
+\begin{definition}[Compression ratio]\label{def:compression}
+Let $\mu$ be a reference measure on $\Beh_{i+1}$ and let $\Entropy$ denote the
+corresponding entropy functional. The \term{compression ratio} of level $\Lambda_i$ is the
+information annihilated:
+\begin{equation}\label{eq:compression}
+\kappa_i \;=\; \Entropy_{\mu}\bigl(\Beh_{i+1}\bigr) \;-\;
+\Entropy_{\Obs_i \# \mu}\bigl(\Obs_i(\Beh_{i+1})\bigr),
+\end{equation}
+that is, the information that cannot be recovered under $(\Obs_i, \Conc_i)$. The wording
+is borrowed from information theory \cite{shannon1948} and algorithmic information theory
+\cite{kolmogorov1965}.
+\end{definition}
+
+Compression is not itself the objective: a system that guarantees nothing attains
+arbitrarily large $\kappa$. The objective is to maximise $\kappa$ \emph{subject to
+preserving task-relevant predictive power}, which is the subject of
+\S\ref{sec:comprehension-formal}.
+
+\section{Architecture as a typed relational graph}\label{sec:relations}
+
+Describing a system by levels alone is insufficient. Chapter \ref{ch:convergence} argues
+that cross-system similarity resides mainly in \emph{relations} rather than in components,
+so the relations themselves must be typed.
+
+\begin{definition}[Architecture relational graph]\label{def:relgraph}
+The \term{architecture relational graph} of a system is a typed directed multigraph
+\begin{equation}\label{eq:relgraph}
+\mathcal{G} \;=\; \bigl(V,\; E_{\mathrm{abs}} \sqcup E_{\mathrm{dep}} \sqcup
+E_{\mathrm{cmp}} \sqcup E_{\mathrm{ctl}} \sqcup E_{\mathrm{ctr}}\bigr),
+\end{equation}
+where $V$ is a set of components and the five edge classes are:
+\begin{enumerate}[label=(\alph*)]
+\item $E_{\mathrm{abs}}$, \term{abstraction}: $u \to v$ when several details of $v$ are
+      expressed uniformly by $u$; annotated with which semantics of $v$ are retained and
+      which are hidden.
+\item $E_{\mathrm{dep}}$, \term{dependency}: $u \to v$ when $u$ requires $v$ to discharge
+      its own duty; annotated with whether the dependency is on an abstract interface or on
+      a concrete implementation.
+\item $E_{\mathrm{cmp}}$, \term{composition}: $u \to v$ when $u$ is constituted by $v$;
+      annotated with ownership versus mere use.
+\item $E_{\mathrm{ctl}}$, \term{control}: $u \to v$ when execution passes from $u$ to $v$;
+      annotated with synchronous call, asynchronous message, event callback or data-driven
+      dispatch, and with who schedules.
+\item $E_{\mathrm{ctr}}$, \term{contract}: $u \to v$ when $u$ promises something to $v$ and
+      requires something of $v$; annotated with preconditions, postconditions, invariants
+      and failure semantics.
+\end{enumerate}
+\end{definition}
+
+Keeping the five classes separate is not formalism for its own sake. Consider a single
+call graph: it would compress four distinct facts into one edge class---that a thread pool
+composes threads and queues, that it depends on synchronisation primitives, that it is
+invoked through a submission interface, and that it promises to accept no new tasks after
+shutdown---and would lose all structural information in doing so. The seam detectors of
+Chapter \ref{ch:comprehension} are, in effect, procedures for recovering this five-way
+distinction.
+
+\begin{definition}[Abstract skeleton]\label{def:skeleton}
+A \term{skeleton map} $\phi$ replaces each component by its role label in some duty
+classification and retains the type of each relation while discarding its instance. The
+image $\phi(\mathcal{G})$ is the \term{abstract skeleton} of $\mathcal{G}$.
+\end{definition}
+
+The central proposition of Chapter \ref{ch:convergence} is stated with $\phi$:
+$\phi(\mathcal{G}_1) \approx \phi(\mathcal{G}_2)$ can hold even when
+$\mathcal{G}_1$ and $\mathcal{G}_2$ have nothing in common at the source level.
+
+\section{Comprehension as task-constrained lossy compression}\label{sec:comprehension-formal}
+
+\begin{definition}[Task]\label{def:task}
+A \term{task} is a pair $T = (Q, d)$, where $Q$ is a family of \term{queries}
+$q : \Beh \to \mathcal{A}_q$ mapping system behaviour to observable answers, and $d$ is a
+loss functional on answers.
+\end{definition}
+
+Typical queries are: if I change this, which behaviours change? under what conditions does
+this path fail? who enforces this invariant? which modules must change to add a new entity
+type?
+
+\begin{definition}[$T$-sufficiency]\label{def:sufficient}
+Let $M$ be a model of system $S$ at some level of abstraction. $M$ is
+\term{$T$-sufficient} for $S$ if
+\begin{equation}\label{eq:sufficient}
+\forall q \in Q:\quad q\bigl(\Beh(M)\bigr) = q\bigl(\Beh(S)\bigr),
+\end{equation}
+or, in the approximate form,
+$\mathbb{E}_{q \sim Q}\bigl[d\bigl(q(\Beh(M)), q(\Beh(S))\bigr)\bigr] \le D_T$.
+\end{definition}
+
+\begin{definition}[Description length and the rate--distortion objective]\label{def:mdl}
+The definition rests on the minimum description length principle
+\cite{rissanen1978,grunwald2006,grunwald2019}. Let $\DL(M)$ be the description length of
+$M$ under a fixed encoding, and let
+$L_T(M) = \mathbb{E}[d(q(\Beh(M)), q(\Beh(S)))]$ be the task loss. Comprehending $S$ means
+solving
+\begin{equation}\label{eq:ratedistortion}
+M^{\star} \;=\; \arg\min_{M} \; \DL(M)
+\qquad \text{s.t.} \qquad L_T(M) \le D_T ,
+\end{equation}
+or equivalently the Lagrangian form $\min_M \; \DL(M) + \lambda\, L_T(M)$.
+\end{definition}
+
+\begin{proposition}[Stopping rule for descent]\label{prop:stopping}
+Parameterise the model family by descent depth, $M_0 \succ M_1 \succ \cdots$, with
+increasing index meaning increasing retention of lower-level detail, and suppose
+$\DL(M_{k+1}) \ge \DL(M_k)$ and $L_T(M_{k+1}) \le L_T(M_k)$. Then the optimal depth
+$k^{\star}$ satisfies the stationarity condition
+\begin{equation}\label{eq:stopping}
+\left.\frac{\partial L_T}{\partial \DL}\right|_{k^{\star}} \;=\; -\frac{1}{\lambda} ,
+\end{equation}
+and once $\partial L_T / \partial \DL = 0$ beyond some depth, further descent is strictly
+dominated.
+\end{proposition}
+
+\begin{proof}
+The Lagrangian is $\mathcal{L}(k) = \DL(M_k) + \lambda L_T(M_k)$. First-order optimality
+gives $\mathrm{d}\DL/\mathrm{d}k + \lambda\, \mathrm{d}L_T/\mathrm{d}k = 0$, that is
+$\mathrm{d}L_T/\mathrm{d}\DL = -1/\lambda$. If
+$\mathrm{d}L_T/\mathrm{d}\DL = 0$ on an interval while $\mathrm{d}\DL/\mathrm{d}k > 0$,
+then $\mathrm{d}\mathcal{L}/\mathrm{d}k = \mathrm{d}\DL/\mathrm{d}k > 0$ and the objective
+increases monotonically, so further descent is strictly dominated.
+\end{proof}
+
+Proposition \ref{prop:stopping} yields a rule usable in practice.
+
+\begin{principle}[Descent depth]\label{pr:descent}
+To make a change correctly it suffices to descend until the invariant governing that change
+becomes visible, and then to stop. Further descent increases description length without
+reducing task loss.
+\end{principle}
+
+The rule explains both why reading all the source is not comprehension and why reading only
+an architecture diagram is not comprehension either: the former passes the stationary point
+into the dominated region, the latter has not yet reached $T$-sufficiency.
+
+\section{Contracts, traces and assurance}\label{sec:contract}
+
+\begin{definition}[Behaviour contract]\label{def:contract}
+A \term{behaviour contract} is an eight-tuple
+\begin{equation}\label{eq:contract}
+S \;=\; \bigl(P,\; Q,\; E^{+},\; E^{-},\; R,\; I,\; F,\; A\bigr),
+\end{equation}
+where $P$ is a precondition; $Q$ a postcondition; $E^{+}$ the set of permitted side
+effects; $E^{-}$ the set of forbidden side effects; $R$ a resource budget (time, space,
+bandwidth, energy); $I$ the invariants that must hold throughout execution; $F$ the
+failure, cancellation, retry and recovery semantics; and $A$ the environmental assumptions
+(hardware, operating system, load, external services).
+\end{definition}
+
+Equation \eqref{eq:contract} is not claimed to be a recognised specification format. Its
+purpose is to state that \emph{correctness is not compressed into a return value but
+defined as a set of constraints on the whole execution}. That is the starting point of
+Chapter \ref{ch:intent}.
+
+\begin{definition}[Traces and the admissible set]\label{def:traces}
+Let $B$ be an executable artefact and $E$ a runtime environment (processor, instruction
+set, operating system, loader, configuration, external services and devices). Let
+$\Tr(B,E)$ be the set of \emph{observable execution traces} $B$ may produce in $E$,
+including input and output, system calls, state mutations, I/O, concurrency events and
+failure behaviour, and let $\Allow(S)$ be the traces permitted by contract $S$. Then $B$
+\term{satisfies} $S$ in $E$ if
+\begin{equation}\label{eq:inclusion}
+\Tr(B,E) \;\subseteq\; \Allow(S).
+\end{equation}
+\end{definition}
+
+Inclusion \eqref{eq:inclusion} is far stronger than output correctness: it constrains
+\emph{all possible behaviours}, including side effects that were never intended.
+
+\begin{definition}[Assurance and its condition]\label{def:assurance}
+An \term{assurance} is a four-tuple (property assured, object, premises, evidence). A
+property $\varphi$ holds within scope $\Sigma$ exactly when
+\begin{equation}\label{eq:assurance}
+\begin{aligned}
+&\text{environmental assumptions hold} \\
+&\land\; \text{the contract is explicit and authorised} \\
+&\land\; \text{the verifier accepts the implementation and its proof} \\
+&\land\; \text{the transformations preserve the required semantics} \\
+&\land\; \text{the execution boundary is effective} \\
+&\land\; \text{the object executed is the object verified} \\
+&\qquad\Longrightarrow\; \varphi \text{ holds within the declared scope } \Sigma .
+\end{aligned}
+\end{equation}
+\end{definition}
+
+The last conjunct---called here the \term{fourth pillar}---is frequently omitted, but it
+is not a detail: even if a verifier correctly accepts a binary, the preceding conclusion
+does not transfer if the deployment system actually runs a different file, or if loading
+changes a critical premise. Its formal expression is an identity assertion:
+\begin{equation}\label{eq:binding}
+\mathrm{digest}\bigl(B_{\text{deployed}}\bigr) \;=\;
+\mathrm{digest}\bigl(B_{\text{verified}}\bigr)
+\quad \land \quad
+E_{\text{deployed}} \models A_{\text{claimed}} .
+\end{equation}
+Equation \eqref{eq:binding} is why content addressing, reproducible builds and load-chain
+integrity belong to the theory rather than to deployment housekeeping.
+
+\section{Two modes of trust generation}\label{sec:trust}
+
+\begin{definition}[Trusted computing base]\label{def:tcb}
+For an assurance regime, the \term{trusted computing base} $\TCB$ is the set of components
+that must be trusted unconditionally for the assurance to hold: the proof checker and its
+execution, the logic and semantic definitions in use, the identity between the program a
+proof is about and the program that executes, the compilation, linking, loading and
+runtime mechanisms, and the assumed hardware and environmental conditions.
+\end{definition}
+
+\term{TCB minimisation} is the precise restatement of the intuition that a system must not
+verify itself. Its exact content is this: a mechanical system does not \emph{betray}, but
+it can be defective, can fail, and can embody an incomplete model. The basis of trust is
+therefore not that the mechanism is error-free, but that its decision does not depend on
+the generator's will. The two are not the same.
+
+\begin{definition}[Mechanical and consensus assurance]\label{def:twotrust}
+\term{Mechanical assurance} is provided by a single deterministic, exhaustively inspectable
+decision procedure whose objects are finite, static and unambiguous symbolic objects, such
+as proof terms, typing derivations or constraint systems. \term{Consensus assurance} is
+provided by the adversarial scrutiny of multiple independent participants, and its objects
+are high-dimensional, dynamic and partly self-referential judgements, such as whether a
+specification faithfully expresses an intent.
+\end{definition}
+
+The two modes are complementary rather than competing. Table \ref{tab:twotrust} states the
+difference.
+
+\begin{table}[htbp]
+\centering
+\caption{The two modes of trust generation}\label{tab:twotrust}
+\begin{tabular}{L{2.7cm}L{5.3cm}L{5.3cm}}
+\toprule
+\textbf{Dimension} & \textbf{Mechanical assurance} & \textbf{Consensus assurance} \\
+\midrule
+Generation & A minimal decision procedure examines symbolic objects &
+  Independent parties scrutinise adversarially and sign \\
+Object & Formalised properties & Judgements that cannot be formalised \\
+Strength & Absolute under the declared premises & Statistically reliable, not absolute \\
+Failure mode & Defective decision procedure; lapsed premise &
+  Collusion, capture, \emph{cognitive isomorphism} \\
+Failure shape & Discrete (defective or not) & Continuous (higher independence, lower failure) \\
+Cost & Proportional to the complexity of the property & Proportional to participant count and independence \\
+Disciplinary analogue & Checking a mathematical proof & Peer review, a jury, the judiciary \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The load-bearing row is failure shape. Mechanical assurance fails discretely---not because
+it is more reliable, but because its object is a finite static object and the check can be
+exhausted. Consensus assurance fails continuously, because its object is intentional and
+can only be approached by a network. \S\ref{sec:consensus} gives the precise form of that
+continuity and proves a counter-intuitive consequence: the governing variable of consensus
+reliability is not the number of participants but the independence of their errors.
+
+\section{Contract operads and composition}\label{sec:operad}
+
+Proposition \ref{prop:soundness} gives sufficient conditions for composition, but it lists
+them one by one. This section supplies the algebraic structure of contracts, so that the
+composition conditions become well-definedness conditions on that structure rather than a
+checklist.
+
+\begin{definition}[Contract operad]\label{def:operad}
+A \term{contract operad} $\mathcal{O}$ consists of:
+\begin{enumerate}[label=(\roman*)]
+\item a set of \term{colours} $\mathrm{Col}$, whose elements are behaviour contracts
+      (Definition \ref{def:contract});
+\item for each $n \ge 0$ and colours $S_0, S_1, \dots, S_n$, a set of \term{operations}
+      $\mathcal{O}(S_1, \dots, S_n;\, S_0)$ whose elements are \emph{composites taking
+      $S_1,\dots,S_n$ as subcomponent contracts and satisfying $S_0$};
+\item \term{substitution}: from $f \in \mathcal{O}(S_1,\dots,S_n;\,S_0)$ and
+      $g_i \in \mathcal{O}(T_{i,1},\dots,T_{i,m_i};\,S_i)$ for $i = 1..n$,
+      \[
+      f \circ (g_1, \dots, g_n) \;\in\;
+      \mathcal{O}\bigl(T_{1,1},\dots,T_{1,m_1},\dots,T_{n,1},\dots,T_{n,m_n};\,S_0\bigr);
+      \]
+\item \term{units} $\mathrm{id}_S \in \mathcal{O}(S;\,S)$.
+\end{enumerate}
+Substitution is required to be associative and unital. Informally, a colour is what a part
+promises, an operation is how parts are assembled, and substitution refines a part without
+altering the promise of the whole. The definition is the standard one for an operad,
+coloured by contracts \cite{leinster2004}.
+\end{definition}
+
+\begin{definition}[Interface graph and freeness]\label{def:interface-graph}
+Let $f \in \mathcal{O}(S_1,\dots,S_n;\,S_0)$. Take the subcomponents as vertices and draw a
+directed edge $u \to v$ when the guarantee of $u$ is required by an assumption of $v$. The
+resulting digraph is the \term{interface graph} of $f$. If it is acyclic, $f$ is said to be
+\term{freely generated} by its interface graph.
+\end{definition}
+
+\begin{proposition}[Structural form of the composition conditions]\label{prop:operad-compose}
+Conditions (a) and (b) of Proposition \ref{prop:soundness} are respectively equivalent to
+two structural conditions on the contract operad:
+\begin{enumerate}[label=(\alph*)]
+\item \term{Well-typed colouring}: observation compatibility (condition (a) of
+      Proposition \ref{prop:soundness}) holds if and only if substitution is well defined
+      on colours, that is, the composite never demands of a subcomponent an observation its
+      colour does not declare;
+\item \term{Environmental closure}: assumption closure (condition (b) of
+      Proposition \ref{prop:soundness}) holds if and only if the interface graph is
+      acyclic, that is, the composite can be built uniquely bottom-up from its
+      subcomponents.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+For (a): if the observation maps are compatible, the projection of each subcomponent onto
+the interface agrees with the composite's observation, so substitution introduces no new
+colour requirement; conversely, if substitution is well typed on colours, every observable
+of the composite is traceable to an observation declared by some subcomponent colour, which
+is observation compatibility.
+
+For (b): if the interface graph is acyclic, a topological order exists and substitution
+along that order yields the unique construction, with assumption closure verified level by
+level. Conversely, if there is a cycle $u_1 \to u_2 \to \cdots \to u_k \to u_1$, then the
+assumption of $u_1$ depends on the guarantee of $u_k$, whose guarantee depends (around the
+cycle) on the assumption of $u_1$; the two sides of the substitution define each other and
+the composite has no well-founded construction. To give it meaning one must supply a
+fixed-point semantics, that is, a separate existence-and-uniqueness condition for that
+cycle.
+\end{proof}
+
+Part (b) accounts for two of the three composition failures in \S\ref{sec:composition}, and
+explains why two established practices must introduce an additional hypothesis:
+
+\begin{itemize}
+\item contract composition for dynamical systems must assume that the interconnection is
+      \emph{well posed}, which is exactly the fixed-point semantics supplied for a feedback
+      cycle;
+\item software contracts fail on network-retry loops because retry turns an acyclic call
+      graph into a cyclic interface graph, and the colouring is not re-verified once the
+      cycle appears.
+\end{itemize}
+
+\begin{remark}[Feedback is a structural change]\label{rmk:feedback}
+Proposition \ref{prop:operad-compose} reduces composability to acyclicity of the interface
+graph. This has a non-trivial consequence: \emph{introducing feedback is not a local
+change}. Any edit that turns an acyclic interface graph into a cyclic one---retry, cache
+write-back, bidirectional synchronisation, an event loop---invalidates the existing
+composition argument, regardless of whether the components remain individually correct.
+This agrees with engineering experience: such edits are a high-incidence region for
+regressions.
+\end{remark}
+
+\section{Notation}\label{sec:notation}
+
+\begin{longtable}{L{3.2cm}L{11.3cm}}
+\caption{Notation used throughout.}\label{tab:notation}\\
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+$\Lambda_i$ & level: the six-tuple (Definition \ref{def:level}) \\
+$\Obs_i \dashv \Conc_i$ & Galois connection between levels (Definition \ref{def:galois}) \\
+$\Obl(\Lambda_i) = \Ker \Obs_i$ & oblivious set (Definition \ref{def:oblivious}) \\
+$\kappa_i$ & compression ratio (Definition \ref{def:compression}) \\
+$\mathcal{G}$ & architecture relational graph (Definition \ref{def:relgraph}) \\
+$\phi(\mathcal{G})$ & abstract skeleton (Definition \ref{def:skeleton}) \\
+$T = (Q,d)$ & task (Definition \ref{def:task}) \\
+$\DL(M)$ & description length (Definition \ref{def:mdl}) \\
+$L_T(M)$ & task loss (Definition \ref{def:mdl}) \\
+$S$ & behaviour contract: the eight-tuple (Definition \ref{def:contract}) \\
+$\Tr(B,E)$, $\Allow(S)$ & observable traces, permitted traces
+  (Definition \ref{def:traces}) \\
+$\mathfrak{A}$ & assurance (Definition \ref{def:assurance}) \\
+$\TCB$ & trusted computing base (Definition \ref{def:tcb}) \\
+$\mathcal{O}$, $\mathrm{Col}$ & contract operad and its colours (Definition \ref{def:operad}) \\
+$R_i$ & inter-level interpretation relation (Remark \ref{rmk:source}) \\
+$\rho(c)$ & read-set of change $c$ (Definition \ref{def:readset}) \\
+$\mathcal{K}_6$ & the six functions (Definition \ref{def:six}) \\
+$D$ & technical debt (Definition \ref{def:debt}) \\
+$C(t)$, $K$ & governable complexity, comprehension capacity
+  (Definition \ref{def:governable}) \\
+$\mathcal{J}$ & observation operator (Definition \ref{def:observability}) \\
+$\operatorname{rank}_{\mathcal{T}}\mathcal{J}$ & observability rank on the task subspace
+  (Definition \ref{def:observability}) \\
+$q$ & correlated error mode (\S\ref{sec:consensus}) \\
+\end{longtable}

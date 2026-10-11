@@ -1,0 +1,83 @@
+\chapter{模板}\label{app:templates}
+
+本附录给出三份可直接使用的模板。它们把正文中的形式对象转换为工程文档。
+
+\section{架构地图模板}
+
+用于记录一个系统的层级阶梯。每一行是一层。
+
+{\small\begin{longtable}{L{1.1cm}L{2.2cm}L{2.9cm}L{2.5cm}L{2.6cm}L{2.3cm}}
+\caption{架构地图}\label{tab:tpl-architecture}\\
+\toprule
+\textbf{层} & \textbf{参与者} & \textbf{保证的不变量} & \textbf{假设下层} &
+\textbf{可以无视} & \textbf{验证方式} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{层} & \textbf{参与者} & \textbf{保证的不变量} & \textbf{假设下层} &
+\textbf{可以无视} & \textbf{验证方式} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+$\Lk{4}$ & & & & & \\
+$\Lk{3}$ & & & & & \\
+$\Lk{2}$ & & & & & \\
+$\Lk{1}$ & & & & & \\
+$\Lk{0}$ & & & & & \\
+\end{longtable}}
+
+填写要求：
+
+\begin{enumerate}[label=(\arabic*)]
+\item "可以无视"一列不得留空。留空意味着该层不是层级（原则 \ref{pr:level-real}）。
+\item "保证的不变量"必须写成可以被检验或至少可以被判定的命题。
+\item "验证方式"必须指明该不变量归入表 \ref{tab:assurance-matrix} 中的哪一类保证
+      （机械、监控、共识）。
+\end{enumerate}
+
+\section{模块契约模板}
+
+\begin{description}
+\item[身份] 模块名、所属层、唯一标识。
+\item[职责] 它解决什么问题（一句话，不超过一行）。
+\item[边界] 它负责什么、明确不负责什么。
+\item[对外接口] 上层通过哪些函数、类型或接口使用它。
+\item[前置条件 $P$] 调用者必须满足什么。
+\item[后置条件 $Q$] 返回时保证什么。
+\item[不变量 $I$] 在何处被强制；为什么绕过不可能。
+\item[副作用 $E^{+}$ / $E^{-}$] 允许发生什么；明确禁止什么。
+\item[资源预算 $R$] 时间、空间、带宽、并发度的上界及其成本模型。
+\item[失败语义 $F$] 出错、取消、重试与恢复时会发生什么。
+\item[环境假设 $A$] 结论成立所依赖的硬件、操作系统、负载与外部服务条件。
+\item[所有权与生命周期] 关键对象如何创建、初始化、关闭与销毁；谁拥有。
+\item[并发模型] 线程安全保证、锁序、可重入性。
+\item[依赖] 依赖哪些模块；依赖抽象接口还是具体实现。
+\item[\textbf{无视集}] 本模块被允许永远不关心的内容（必填，见正文定义
+      \ref{def:oblivious}）。
+\item[验证要求] 哪些测试或检查能证明上述结论；是否存在可隔离的验证单位。
+\item[泄漏对风险] 已知的"接口相同而外部行为不同"的场景。
+\item[未决问题] 尚未确定的设计问题。
+\end{description}
+
+\section{决策记录模板}
+
+\begin{description}
+\item[标识与标题] \code{ADR-XXXX}: 决策标题。
+\item[状态] 草案 / 已接受 / 已取代 / 已废弃。
+\item[背景] 什么情况迫使必须作出这一决策。
+\item[决策驱动因素] 影响该决策的约束与目标（性能、一致性、团队规模、
+      演化速度、成本）。
+\item[候选方案] 逐一列出，每个方案写明其假设与代价。
+\item[决策] 选择哪一个，以及一句话理由。
+\item[影响] 该决策使什么变容易了，使什么变难了。
+\item[被排除方案的完整论证] 为什么其他方案被拒绝。这一项是决策记录最有价值的部分：
+      它记录了当时可得的信息与判断，使未来的读者不必重新推导。
+\item[验证] 该决策的后果如何被检验；哪些外部证据会表明它是错的。
+\item[重新评估条件] 出现什么情况时应当重新审视这一决策。
+\end{description}
+
+\begin{principle}
+若一个架构像底层 ABI 一样是物理事实，就没有必要写决策记录。
+\emph{决策记录的普遍存在，本身就是高层架构没有唯一正确答案的证据。}
+\end{principle}

@@ -1,0 +1,101 @@
+\chapter{Templates}\label{app:templates}
+
+This appendix provides three templates for direct use. They convert the formal objects of the
+main text into engineering documents.
+
+\section{Architecture Map Template}
+
+The template records the level ladder of a system. Each row is one level.
+
+{\small\begin{longtable}{L{1.1cm}L{2.2cm}L{2.9cm}L{2.5cm}L{2.6cm}L{2.3cm}}
+\caption{Architecture map}\label{tab:tpl-architecture}\\
+\toprule
+\textbf{Level} & \textbf{Participant} & \textbf{Guaranteed invariants} &
+\textbf{Assumed of the level below} & \textbf{May be ignored} &
+\textbf{Verification method} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Level} & \textbf{Participant} & \textbf{Guaranteed invariants} &
+\textbf{Assumed of the level below} & \textbf{May be ignored} &
+\textbf{Verification method} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+$\Lk{4}$ & & & & & \\
+$\Lk{3}$ & & & & & \\
+$\Lk{2}$ & & & & & \\
+$\Lk{1}$ & & & & & \\
+$\Lk{0}$ & & & & & \\
+\end{longtable}}
+
+The following requirements apply when filling in the table:
+
+\begin{enumerate}[label=(\arabic*)]
+\item The ``may be ignored'' column must not be left blank. A blank means the level is not a
+      level (Principle \ref{pr:level-real}).
+\item ``Guaranteed invariants'' must be written as propositions that can be checked, or at
+      least decided.
+\item ``Verification method'' must state which class of assurance in
+      Table \ref{tab:assurance-matrix} the invariant falls under (mechanical, monitoring,
+      consensus).
+\end{enumerate}
+
+\section{Module Contract Template}
+
+\begin{description}
+\item[Identity] Module name, the level it belongs to, unique identifier.
+\item[Responsibility] What problem it solves (one sentence, no longer than one line).
+\item[Boundary] What it is responsible for, and what it is explicitly not responsible for.
+\item[External interface] The functions, types or interfaces through which the level above
+      uses it.
+\item[Precondition $P$] What the caller must satisfy.
+\item[Postcondition $Q$] What is guaranteed on return.
+\item[Invariant $I$] Where it is enforced; why circumvention is impossible.
+\item[Side effects $E^{+}$ / $E^{-}$] What is permitted to occur; what is explicitly
+      forbidden.
+\item[Resource budget $R$] Upper bounds on time, space, bandwidth and concurrency, and their
+      cost model.
+\item[Failure semantics $F$] What happens on error, cancellation, retry and recovery.
+\item[Environmental assumptions $A$] The hardware, operating system, load and external-service
+      conditions on which the conclusions depend.
+\item[Ownership and lifecycle] How key objects are created, initialised, closed and destroyed;
+      who owns them.
+\item[Concurrency model] Thread-safety guarantees, lock ordering, reentrancy.
+\item[Dependencies] Which modules it depends on; whether the dependency is on an abstract
+      interface or on a concrete implementation.
+\item[\textbf{Oblivious set}] What this module is permitted never to care about (required; see
+      Definition \ref{def:oblivious}).
+\item[Verification requirements] Which tests or checks can demonstrate the above conclusions;
+      whether there is an isolable unit of verification.
+\item[Leak-pair risk] Known scenarios in which ``the interface is the same but the external
+      behaviour differs''.
+\item[Open questions] Design questions not yet settled.
+\end{description}
+
+\section{Decision Record Template}
+
+\begin{description}
+\item[Identifier and title] \code{ADR-XXXX}: decision title.
+\item[Status] Draft / accepted / superseded / deprecated.
+\item[Context] What situation forces the decision to be made.
+\item[Decision drivers] The constraints and goals that bear on the decision (performance,
+      consistency, team size, rate of evolution, cost).
+\item[Candidate options] Listed one by one, each with its assumptions and its cost.
+\item[Decision] Which one is chosen, and the reason in one sentence.
+\item[Impact] What the decision makes easier and what it makes harder.
+\item[Full argument for the excluded options] Why the other options were rejected. This item
+      is the most valuable part of a decision record: it records the information and judgement
+      available at the time, so that future readers need not derive it again.
+\item[Verification] How the consequences of the decision are checked; which external evidence
+      would show that it is wrong.
+\item[Reassessment conditions] What circumstances should prompt this decision to be revisited.
+\end{description}
+
+\begin{principle}
+If an architecture is a physical fact like a low-level ABI, there is no need to write a
+decision record.
+\emph{The ubiquity of decision records is itself evidence that high-level architecture has no
+single correct answer.}
+\end{principle}

@@ -1,0 +1,109 @@
+\chapter{术语表}\label{app:glossary}
+
+\begin{longtable}{L{3.4cm}L{11.0cm}}
+\toprule
+\textbf{术语} & \textbf{定义与所在位置} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{术语} & \textbf{定义与所在位置} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+层级 (level) & 六元组 $(X, \Beh, \Obs, \Env, \Cost, \Inv)$；认知尺度而非物理目录。
+  定义 \ref{def:level}。 \\
+抽象映射 & 把下层行为投影为上层行为的映射 $\Obs_i$。定义 \ref{def:galois}。 \\
+具体化映射 & 把上层行为展开为下层实现集合的映射 $\Conc_i$。定义 \ref{def:galois}。 \\
+Galois 连接 & $\Obs_i \dashv \Conc_i$，刻画抽象化丢失了什么、保住了什么。
+  定义 \ref{def:galois}。 \\
+层间可靠性 & $\Obs_i(\Beh_{i+1}\!\upharpoonright\!A) \subseteq \Beh_i$。
+  定义 \ref{def:soundness}。 \\
+无视集 (oblivious set) & 抽象映射的核 $\Ker \Obs_i$，即该层在原理上永远无法区分的
+  差异集合。定义 \ref{def:oblivious}。 \\
+压缩率 & 在抽象映射下不可恢复的信息量。定义 \ref{def:compression}。 \\
+架构关系型 & 带类型的多重图，边分为抽象、依赖、组合、控制、契约五类。
+  定义 \ref{def:relgraph}。 \\
+抽象骨架 & 把构件替换为职责角色、保留关系类型而抹去实例后的图。定义
+  \ref{def:skeleton}。 \\
+任务 & 二元组 $T = (Q, d)$，$Q$ 为查询族，$d$ 为答案损失。定义
+  \ref{def:task}。 \\
+$T$-充分性 & 模型对所有查询给出与真实系统一致的答案。定义 \ref{def:sufficient}。 \\
+描述长度 & 模型在固定编码方案下的长度 $\DL(M)$。定义 \ref{def:mdl}。 \\
+行为契约 & 八元组 $(P, Q, E^{+}, E^{-}, R, I, F, A)$。定义 \ref{def:contract}。 \\
+可观察轨迹 & 工件在环境中可能产生的可观察执行序列集合 $\Tr(B,E)$。定义
+  \ref{def:traces}。 \\
+保证 & 四元组（性质、对象、前提、证据）；其成立条件为式 \eqref{eq:assurance}。
+  定义 \ref{def:assurance}。 \\
+可信计算基 (TCB) & 必须被无条件信任才能使保证成立的组件集合。定义 \ref{def:tcb}。 \\
+机械保证 & 由单个确定性、可穷尽检视的判定器给出的保证。定义 \ref{def:twotrust}。 \\
+共识保证 & 由多个独立参与方的对抗性审查给出的保证。定义 \ref{def:twotrust}。 \\
+内部基础设施化 & 共性识别 $\to$ 机制统一 $\to$ 上层组合的三阶段过程。定义
+  \ref{def:infra}。 \\
+参与者-资源结构 & 五元组 $(E, \mathcal{R}, \to, \mathrm{Ready}, \mathrm{Fault})$。
+  定义 \ref{def:pr-structure}。 \\
+统一基座 & 使所有实体与资源的交互都经过其声明接口的机制集合。定义
+  \ref{def:substrate}。 \\
+内核六职能 & 身份与生命周期、分配与回收、调度、命名与寻址、通信与同步、故障隔离与
+  恢复。定义 \ref{def:six}。 \\
+变更读集 & 为正确完成一次变更而必须阅读的模块集合 $\rho(c)$。定义
+  \ref{def:readset}。 \\
+不变量强制点 & 必须正确实现才能保证某不变量成立的模块集合 $\mathrm{S}(\iota)$。
+  定义 \ref{def:enforce}。 \\
+近可分解 & 模块接口观察是其外部行为的充分统计量。定义 \ref{def:neardecomp}。 \\
+泄漏对 & 接口相同而外部行为不同的两次执行。命题 \ref{prop:leakpair}。 \\
+技术债 & 代码描述长度与最短生成描述之差。定义 \ref{def:debt}。 \\
+可验证细化链 & 从目的到经认证部署的七段链 $(\mathrm{G}1)\dots(\mathrm{G}7)$。
+  定义 \ref{def:chain}。 \\
+五个正确性维度 & 功能、副作用、资源、系统、目标表达。定义
+  \ref{def:five-correctness}。 \\
+副作用四分类 & 功能性、资源性、安全性、语义漂移。定义 \ref{def:effects}。 \\
+制品证据清单 & 每个制品应携带的十项证据。定义 \ref{def:evidence-package}。 \\
+认知尺度 & $\Lk{0}$ 计算原理、$\Lk{1}$ 基础设施与运行时、$\Lk{2}$ 组件与子系统、
+  $\Lk{3}$ 领域功能与业务语义、$\Lk{4}$ 及以上场景与系统级行为、
+  $\Lk{\infty}$ 目的与责任。定义 \ref{def:cognitive-scale}。 \\
+层契约四元组 & （参与者、保证的不变量、契约形式、验证方式）加无视集。定义
+  \ref{def:level-contract}。 \\
+验证义务的层级归属 & 性质 $\varphi$ 归属于能表达它的最低层级。定义
+  \ref{def:obligation-assign}。 \\
+领域绑定度 & 领域特有公理在该层全部公理中的占比 $\mathrm{Dom}$。定义
+  \ref{def:dom}。 \\
+双层信任结构 & 意图层由共识保证、可形式化层由机械保证的复合结构。定义
+  \ref{def:two-layer}。 \\
+\bottomrule
+\end{longtable}
+
+\section*{符号索引}
+
+\begin{longtable}{L{3.0cm}L{11.4cm}}
+\toprule
+\textbf{符号} & \textbf{含义} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{符号} & \textbf{含义} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+$\Lambda_i$ & 第 $i$ 层 \\
+$\Beh_i$ & 第 $i$ 层的行为集合 \\
+$\Obs_i, \Conc_i$ & 抽象与具体化映射 \\
+$\Env_i, \Cost_i, \Inv_i$ & 环境假设、成本模型、不变量集合 \\
+$\Obl(\Lambda)$ & 无视集 \\
+$\kappa$ & 压缩率 \\
+$\mathcal{G}, \phi$ & 架构关系型、抽象骨架 \\
+$T, Q, d$ & 任务、查询族、损失泛函 \\
+$\DL, L_T$ & 描述长度、任务损失 \\
+$S$ & 行为契约 \\
+$\Tr(B,E), \Allow(S)$ & 可观察轨迹集、允许轨迹集 \\
+$\mathfrak{A}, \TCB$ & 保证四元组、可信计算基 \\
+$\Pi$ & 参与者-资源结构 \\
+$\mathcal{K}_6$ & 内核六职能 \\
+$n, m, k, F$ & 实体数、资源数、每实体接口数、基座固定成本 \\
+$\rho(c), \mathrm{S}(\iota)$ & 读集、强制点集 \\
+$D$ & 技术债 \\
+$\mathrm{Dom}, \mathrm{Conv}$ & 领域绑定度、收敛强度 \\
+$q, p, \varepsilon_{\text{cons}}$ & 相关错误概率、个体错误率、共识错误上界 \\
+\bottomrule
+\end{longtable}

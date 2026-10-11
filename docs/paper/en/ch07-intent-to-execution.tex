@@ -1,0 +1,784 @@
+% =====================================================================
+\chapter[From Intent to Verifiable Execution]{From Intent to Verifiable Execution}\label{ch:intent}
+% =====================================================================
+
+This chapter addresses Problem \ref{prob:trust}: if the cost of coding tends to zero and no
+human reviews the implementation line by line, how is correctness guaranteed
+mechanically. The answer has three parts: decompose correctness into dimensions that can be
+treated separately, define the intermediate process as a verifiable refinement chain, and
+organise trust as a composite of two modes of generation. The chapter also identifies an
+entry point on that chain which cannot be mechanically closed, and the sense in which
+consensus can approximate it.
+
+\section{Dimensions of Correctness}\label{sec:five-correctness}
+
+An AI rewrites a 1\,ns call into a 1\,$\mu$s call: functionally identical, but a thousand
+times slower. The example shows that ``correct'' is not a single dimension.
+
+\begin{definition}[The five dimensions of correctness]\label{def:five-correctness}
+See Table \ref{tab:five-correctness}.
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{The five dimensions of correctness and their mechanical checkability}\label{tab:five-correctness}
+\begin{tabular}{L{2.3cm}L{6.6cm}L{5.5cm}}
+\toprule
+\textbf{Dimension} & \textbf{Question to be answered} & \textbf{Mechanically checkable?} \\
+\midrule
+Functional correctness & Do the outputs and the state changes meet the requirements? &
+  For an explicit specification, provable or testable \\
+Side-effect correctness & Has the program performed unauthorised I/O, writes, network
+  requests or state changes? &
+  Constrainable by effect specifications, permission boundaries and runtime isolation \\
+Resource correctness & Do time, memory, bandwidth and energy meet the budget? &
+  Partly provable statically; partly measurable only, or statistically guaranteed in a
+  specified environment \\
+System correctness & After components are composed, are concurrency, failure recovery
+  and state consistency still correct? &
+  Partly formally provable; partly requiring model checking, fault injection and runtime
+  verification \\
+Correctness of goal expression & Is the specification the machine executes really the goal
+  the human wants? &
+  \textbf{Not derivable automatically from a program-correctness proof} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The last row of Table \ref{tab:five-correctness} is the crux of the whole problem: \emph{a
+program may implement a wrong specification correctly}. A compiler that is entirely correct
+can compile a wrong program into machine code entirely correctly; a formal proof is equally
+unable to rescue a specification that omits a critical requirement. The historical
+statement of this distinction is the separation of verification from validation in software
+requirements engineering \cite{boehm1984}.
+
+\section{The Verifiable Refinement Chain}\label{sec:chain}
+
+\begin{definition}[Verifiable refinement chain]\label{def:chain}
+A \term{verifiable refinement chain} consists of seven stages:
+\begin{enumerate}[label=(G\arabic*)]
+\item \term{Purpose and intent}: what is to be achieved; which outcomes count as success;
+      which side effects are unacceptable; how to trade off conflicting goals.
+\item \term{System and environment model}: a representation of runtime states, events,
+      operations, resources, operating-system interfaces, the external environment and
+      observable behaviour.
+\item \term{Formal behaviour contract}: permitted behaviour, forbidden behaviour,
+      invariants that must hold, progress conditions, resource budgets and environmental
+      assumptions, as in Definition \ref{def:contract}.
+\item \term{Realisability decision}: check whether the contract is self-contradictory, and
+      whether the goal is genuinely achievable under the specified resources, hardware,
+      operating system and environmental conditions.
+\item \term{Implementation synthesis and search}: generators, search algorithms or other
+      synthesisers produce candidate implementations. A candidate implementation is not
+      trusted in advance.
+\item \term{Correctness proof from abstract behaviour to binary}: check the candidate
+      implementation together with its compilation, linking and other transformations, and
+      prove that the generated machine code satisfies the behaviour contract in the
+      specified environment.
+\item \term{Attested deployment and actual execution}: ascertain that what is running is
+      the verified binary, execute it in the specified environment, and monitor, constrain
+      and handle failures for the conditions that cannot be guaranteed statically.
+\end{enumerate}
+\end{definition}
+
+The significance of this chain lies not in adding seven process steps but in \emph{assigning
+a different mathematical task to each}. The model (G2) should not be a natural-language
+description but an interpretable model of system state, behaviour and environment; the
+realisability decision (G4) asks whether the requirements are satisfiable; synthesis (G5)
+searches for possible implementations; (G6) establishes a proof from the implementation to
+the required behaviour; and (G7) ensures that the object actually executed is the object the
+proof is about.
+
+\begin{principle}[What crosses a boundary]\label{pr:boundary}
+At every boundary what crosses is not only an artefact but also \emph{what that artefact
+stands for}, and \emph{the evidence for why it may be accepted}.
+\end{principle}
+
+\begin{remark}[The entry point that cannot be mechanically replaced]
+Verification results and counterexamples can feed back into (G2), (G3) and (G4); only the
+attestation of intent in (G1) cannot be replaced by a general code-correctness proof. The
+reason is given in \S\ref{sec:intent-gap}.
+\end{remark}
+
+\section{Transition Edges and Evidence}\label{sec:five-edges}
+
+The seven stages of Definition \ref{def:chain} compress into five transition edges, each
+with its typical evidence and its critical gap. Table \ref{tab:edges} states them.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Five transition edges, typical evidence and critical gaps}\label{tab:edges}
+\begin{tabular}{L{1.5cm}L{3.4cm}L{4.6cm}L{4.9cm}}
+\toprule
+\textbf{Edge} & \textbf{Input $\to$ output} & \textbf{Typical proof/evidence} &
+  \textbf{Key assumptions and principal gaps} \\
+\midrule
+I$\to$R & Natural language/dialogue $\to$ structured requirements, domain facts and
+  items requiring clarification &
+  Stakeholder attestation, links to requirement sources, examples and counterexamples,
+  conflict reports &
+  Intent has no automatically given mathematical truth value; external facts and conflicts
+  of interest cannot be settled by type checking alone \\
+R$\to$S & Requirements $\to$ formal properties/contracts &
+  Traceability matrices, requirement-level tests, consistency/satisfiability/realisability
+  analysis, vacuity and mutation analysis &
+  A formal mapping must preserve \emph{prohibitions and positive examples} alike; an
+  omitted requirement cannot be derived from internal consistency alone \\
+S$\to$P & Specification $\to$ program/system candidates &
+  Synthesis algorithms, SMT, model checking, Hoare/type/dependent-type proofs,
+  counterexample-guided inductive synthesis &
+  Finite DSLs, logic fragments and search budgets; over-strong premises and vacuous
+  specifications must be prevented \\
+P$\to$C$\to$B & Source program $\to$ stage-by-stage intermediate representations $\to$
+  machine code/deployable artefact &
+  Verified-compiler theorems, per-translation verification/attestation, proof-carrying code &
+  Source and target semantics must be defined; linking, loading, assembly, the runtime,
+  third-party libraries and hardware are not necessarily within the proof's scope \\
+B$\to$E & Binary and configuration $\to$ behaviour in the real environment &
+  Deployment integrity, system verification, runtime monitoring, isolation and capability
+  mechanisms, performance and scheduling analysis &
+  The model must be aligned with the real CPU, operating system, network, scheduling,
+  failure and service assumptions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{remark}[Heterogeneity of the relations $R_i$]
+By Remark \ref{rmk:source}, the interpretation relation on different transition edges need
+not be of the same kind. For I$\to$R and R$\to$S the available ``relation'' may be only a
+traceability mapping rather than a formal relation \cite{mucha2024,mokos2020}; for
+P$\to$C$\to$B it may be a compiler's semantics-preservation theorem
+\cite{leroy2009,cakeml2019}, a single translation verification \cite{necula2000} or a
+translation attestation \cite{krijnen2024}; for B$\to$E it may be a decision by runtime
+monitoring \cite{taleb2023}. Forcing them into one kind of relation is a mistake.
+\end{remark}
+
+\begin{remark}[Existing engineering on each edge]
+Table \ref{tab:edges} is not a purely speculative scheme: verified compilation
+\cite{leroy2009} and verified compiler back ends \cite{cakeml2019} on P$\to$C$\to$B,
+kernel-level refinement proofs \cite{klein2009}, and proof-carrying code \cite{necula1997}
+have already achieved substantial progress for specific languages, compilers, kernels and
+systems. What remains genuinely unresolved is how to extend these high-assurance local
+results to a wider range of targets and a greater variety of runtime environments, and to
+systems whose implementations may be generated arbitrarily or adjusted dynamically.
+\end{remark}
+
+\section{Composition Conditions and Failure Modes}\label{sec:composition}
+
+Proposition \ref{prop:soundness} already gives sufficient conditions for composition. Three
+concrete counterexamples of composition failure are added here; their role is to show that
+``locally correct'' does not entail ``globally correct''.
+
+\begin{example}[Three composition failures]\label{ex:compose-fail}
+\begin{enumerate}[label=(\alph*)]
+\item The source program is semantically correct, but the linker selects the wrong library.
+\item Each service satisfies its interface contract on its own, but the contracts'
+      assumptions about network retry are mutually incompatible.
+\item The functional proof holds, but the latency budget does not cover cache contention.
+\end{enumerate}
+The common structure of the three is that one of conditions (a) or (b) of
+Proposition \ref{prop:soundness} is violated.
+\end{example}
+
+Read through the contract algebra (Definition \ref{def:operad},
+Proposition \ref{prop:operad-compose}), the three counterexamples are no longer mutually
+unrelated; they fall into three classes of failure:
+
+\begin{corollary}[Common structure of the three counterexamples]\label{cor:three-failures}
+\begin{enumerate}[label=(\alph*)]
+\item Linker selects the wrong library: \emph{colour mismatch}, the colour of the linked
+      implementation being unequal to the colour declared at the link point;
+\item Contracts' assumptions about network retry are mutually incompatible: \emph{a cycle
+      appears in the interface graph}, retry turning an acyclic call graph into a cyclic
+      one while the colouring is not re-verified after the cycle appears
+      (Remark \ref{rmk:feedback});
+\item The latency budget does not cover cache contention: \emph{a missing contract
+      component}, the resource component $R$ never entering the colour, so that cost is
+      treated as an implementation detail.
+\end{enumerate}
+The three are, respectively, a colour whose extension is too small, a changed interface
+graph, and a missing contract component.
+\end{corollary}
+
+The conclusion is that composition rules must explicitly incorporate these interface
+conditions together with \emph{non-functional conditions}.
+
+\begin{remark}[The holistic character of assurance]\label{rmk:duhem}
+Corollary \ref{cor:three-failures}(c) and Remark \ref{rmk:monitor-limit} together show that
+no verification conclusion actually asserts ``property $\varphi$ holds''; what it asserts is
+the conjunction
+\[
+\varphi \;\land\; A_1 \;\land\; A_2 \;\land \cdots \land A_k,
+\]
+where the $A_i$ are the full set of environmental assumptions. The number $k$ cannot be
+enumerated in advance, and an assumption $A_i$ becomes visible only when it is actually
+violated.
+This is the form taken by the Duhem--Quine thesis \cite{quine1951} in software verification:
+there is no decisive test of a single proposition, only a test of the whole conjunction. Its
+immediate consequence is that the strength of ``the tests pass'' is strictly limited by the
+\emph{set of assumptions that were not enumerated}. This also explains why
+Table \ref{tab:evidence} must attach a ``what must not be claimed'' list to every class of
+evidence: that list is the known $A_i$.
+\end{remark}
+
+\section{The Intent Gap}\label{sec:intent-gap}
+
+This is the section that requires the most care.
+
+\begin{problem}[The intent gap]
+How is an intent $I$, first expressed by a human in natural language, guaranteed to be
+transformed into a correct formal specification $\Phi$? The hope is that $I \equiv \Phi$,
+where the equivalence means that ``the behaviour $\Phi$ requires fully reflects the human's
+real goal''.
+\end{problem}
+
+A popular argument holds that, by G\"odel's incompleteness theorem and Rice's theorem, the
+gap between intent and specification is \emph{principled} and \emph{can never be
+mechanically closed}. The argument does not hold.
+
+\begin{proposition}[Why this paper does not accept that argument]\label{prop:no-godel}
+G\"odel's incompleteness theorem concerns the limits of \emph{formal provability} in formal
+systems satisfying certain conditions; it does not directly state that a machine cannot
+decide whether a requirements specification matches a particular person's real intent.
+Rice's theorem \cite{rice1953} states that non-trivial semantic properties of general
+programs are undecidable; that is a fundamental limit on general static analysis, but it is
+not a theorem about the relation between a person's mental intent and a formal
+specification. Deriving ``intent can never be fully formalised'' from it requires additional
+philosophical and cognitive assumptions. Turing's original result \cite{turing1936}
+likewise applies only to explicitly encoded computational problems and general algorithmic
+claims.
+\end{proposition}
+
+Does the intent gap exist, then? It does, but the grounds are \emph{epistemic}, not
+\emph{logical}.
+
+\begin{proposition}[Three epistemic grounds for the intent gap]\label{prop:three-grounds}
+\begin{enumerate}[label=(\roman*)]
+\item \term{Requirements are generative, not enumerative}. A person cannot list their
+      requirements completely before seeing the system's behaviour. The requirement ``do
+      not leak privacy'' may not surface at all until the system is seen actually
+      collecting data. This is not logical undecidability but a constructive limitation of
+      human cognition: \emph{preferences are activated by the environment, not present
+      beforehand as a complete list}.
+\item \term{A specification is lossy compression of intent}. Intent lives in a causal,
+      embodied, evolutionarily shaped mind; a specification is a finite symbolic object.
+      Lossy compression means that information is necessarily lost, and which parts are
+      lost cannot be known in advance. This is a phenomenon of information theory, not of
+      metamathematics.
+\item \term{The distinction between verification and validation has not been overturned}.
+      Verification answers ``does the implementation conform to the specification'';
+      validation answers ``does the system meet the real need''. The distinction exists and
+      persists precisely because the latter cannot be mechanically reduced to the former.
+\end{enumerate}
+\end{proposition}
+
+Combining Proposition \ref{prop:no-godel} with \ref{prop:three-grounds} gives the paper's
+precise statement of the problem:
+
+\begin{principle}[The precise statement of the intent gap]\label{pr:gap}
+The specification-transformation process is not a step that can be mechanically guaranteed
+\emph{in general}; the reason is not logical undecidability but that human preferences are
+dynamic, situational, and not fully knowable before they are encountered.
+\end{principle}
+
+This correction does not weaken the claim; it replaces the load-bearing wall. It also shows
+that machines can help clarify requirements, propose counterexamples, generate scenarios,
+find contradictions and check a specification for internal consistency, whereas which
+specification is finally adopted, and whether it fully expresses the goal, still requires an
+identifiable accountable party.
+
+\begin{remark}[The intent gap is the frame problem]\label{rmk:frame}
+The three grounds of Proposition \ref{prop:three-grounds} are not three independent
+findings; they point jointly to an older problem. To formalise an intent one must first
+decide which facts are \emph{relevant}; and deciding relevance requires already knowing
+which conclusions are to be drawn, which is exactly the frame problem: without knowing the
+answer in advance, one cannot enumerate the relevant premises.
+
+The intent gap is therefore not a defect of formal methods but an instance of the frame
+problem. The identification has two consequences:
+\begin{enumerate}[label=(\alph*)]
+\item It explains why stronger formal tools do not solve the problem: tools improve
+      \emph{derivation}, whereas the problem lies in \emph{the enumeration of premises};
+\item It explains why \emph{interaction} is the only effective means. The frame problem is
+      unsolved in general and is evaded only in systems that possess a perception--action
+      loop: an agent need not enumerate relevance in advance, because the environment gives
+      feedback on its actions. The probing loop of Chapter \ref{ch:comprehension} and the
+      traceable refinement of this section both move that evasion mechanism up to the
+      requirements layer.
+\end{enumerate}
+Interactive refinement is therefore forced, not selected from among candidate approaches.
+\end{remark}
+
+\section{The Asymmetry Between Verification and Generation}\label{sec:asymmetry}
+
+A second formulation requiring correction is the description of ``grading is easier than
+sitting the exam'' as ``the universal dividend of $\mathrm{P}$ versus $\mathrm{NP}$''. The
+description does not hold: whether $\mathrm{P}$ equals $\mathrm{NP}$ remains open, and it is
+not known in general whether finding a solution is necessarily harder than checking one.
+
+This correction must be distinguished from a second point: the open status of
+$\mathrm{P}$ versus $\mathrm{NP}$ does \emph{not} make the phenomenon ``verification is
+cheaper than generation'' fictitious.
+
+\begin{proposition}[Structural asymmetry]\label{prop:asym-struct}
+The structural asymmetry of polynomial-time certificate checking is \emph{the definition of}
+the class $\mathrm{NP}$ itself: that a solution can be verified efficiently is a basic fact
+about computation, and it does not depend on whether $\mathrm{P} \neq \mathrm{NP}$ has been
+proved.
+\end{proposition}
+
+\begin{proof}[Argument]
+The definition of $\mathrm{NP}$ is ``there exists a polynomial-time verifier $V$ and a
+certificate $w$ of polynomial length such that
+$x \in L \iff \exists w: V(x,w) = 1$''. The definition itself asserts the existence and the
+efficiency of verification, and asserts nothing about the complexity of finding $w$. The
+effectiveness of the verifier architecture therefore rests on the definition itself and is
+independent of the eventual answer to $\mathrm{P}$ versus $\mathrm{NP}$.
+\end{proof}
+
+This cost scale indicates the precise boundary of ``verification is cheap''. The limit is
+not the open status of $\mathrm{P}$ versus $\mathrm{NP}$ but \emph{certificate length}:
+checking a proof can be done in polynomial time, while the proof itself can be
+astronomically long. Hence:
+
+\begin{principle}[The two components of verification cost]\label{pr:two-costs}
+``Verification is cheaper than generation'' must be decomposed into two independent
+propositions:
+\begin{enumerate}[label=(\alph*)]
+\item \term{Checking time is cheap}: given a certificate, the decision is efficient
+      (Proposition \ref{prop:asym-struct});
+\item \term{Certificate size is cheap}: the certificate itself is short enough to be
+      stored, transmitted and re-checked.
+\end{enumerate}
+(a) is guaranteed by the definition of $\mathrm{NP}$; (b) is \emph{not}, and in many
+practical systems it is the real bottleneck. A verification regime that satisfies only (a)
+is unusable in engineering, because no one can re-check a certificate they cannot finish
+reading.
+\end{principle}
+
+Principle \ref{pr:two-costs}(b) is measurable: for a given prover and class of properties it
+suffices to measure the distribution of certificate sizes. It also explains why a ``small
+kernel plus large proof'' architecture must in practice always be paired with a
+\emph{readable} proof-summary layer (invariants, prose statements of contracts,
+counterexamples) rather than supplying only proof terms.
+
+\begin{example}[Historical cost scale of formal verification]\label{ex:sel4-cost}
+The initial functional-correctness proof of the microkernel seL4 took about 11 person-years
+(excluding investment in reusable tools and frameworks); the proof scripts of the time ran
+to about 200{,}000 lines and verified about 8{,}500 lines of C code \cite{klein2009}. That
+scale indicates the historical cost structure of formal verification. AI may substantially
+reduce the cost of writing proofs, finding invariants and repairing proofs, but
+specification design, model selection, proof architecture and the trusted base remain real
+work.
+\end{example}
+
+\section{Grades of Evidence}\label{sec:evidence-levels}
+
+Different kinds of evidence provide support of different strength, and conflating them is
+the most common error in this area. Table \ref{tab:evidence} gives the grades of evidence
+together with the corresponding ``what must not be claimed'' list.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Grades of evidence}\label{tab:evidence}
+\begin{tabular}{L{2.6cm}L{5.6cm}L{6.2cm}}
+\toprule
+\textbf{Type of evidence} & \textbf{Conclusions it can support} &
+  \textbf{Conclusions that must not be claimed} \\
+\midrule
+Machine-checked formal proof & For the stated proposition, holds under the given logic,
+  definitions, axioms, libraries and checker assumptions &
+  Does not prove that the proposition fully expresses the intent; does not cover unmodelled
+  environments; does not by itself establish latency or energy consumption \\
+Verified-compiler theorem/translation certificate & Between specific source and target
+  semantics, the defined preservation or refinement relation holds, or a single translation
+  result is verified &
+  Does not mean that the linker, operating system, hardware and external services are
+  verified \\
+Static analysis and abstract interpretation & Proves or conservatively estimates the
+  properties of the analysed program, relative to a sound approximation &
+  Does not guarantee precision or the absence of false alarms; is not a measurement of
+  actual performance \\
+Testing and mutation testing & Finds counterexamples, assesses the specified behaviour on
+  the listed tests, and provides evidence over a finite sample &
+  Does not prove that all inputs and all executions are safe; a pass rate is not a general
+  proof of semantic equivalence of specifications \\
+Statistical performance evidence & An empirical distribution under specified data, sampling
+  procedure, hardware and confidence method &
+  Is not a hard-real-time worst-case execution time; cannot be extrapolated unconditionally
+  to a deployment whose distribution has changed \\
+Runtime monitoring & Gives an online decision about the observed traces under the monitor's
+  semantics &
+  If observation is incomplete, ``not detected'' must not be stated as ``all executions
+  satisfy'' \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{principle}[Three states that must be distinguished]\label{pr:three-states}
+``A violation was detected'', ``no violation has yet been observed'' and ``all executions
+are proved safe'' are three different states, and none may be substituted for another.
+\end{principle}
+
+\begin{definition}[Artefact evidence list]\label{def:evidence-package}
+Every artefact should carry ten items of evidence, listed in
+Table \ref{tab:evidence-package}. The purpose of the list is to make ``may this binary be
+trusted'' an auditable question rather than a question about the identity of its author.
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Artefact evidence list}\label{tab:evidence-package}
+\begin{tabular}{L{0.8cm}L{13.4cm}}
+\toprule
+\textbf{No.} & \textbf{Evidence item} \\
+\midrule
+1 & Specification version and requirement traceability identifiers \\
+2 & Formal specification and environmental assumptions \\
+3 & Hash of the candidate source code \\
+4 & Compiler, flags, target architecture and dependency versions \\
+5 & Proof and checker versions \\
+6 & Resource-analysis model and results \\
+7 & Test and monitoring strategy \\
+8 & Trusted computing base inventory \\
+9 & \textbf{Known uncovered behaviour} \\
+10 & \textbf{Re-verification rules} (which changes trigger recomputation of the affected
+  evidence) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Items 9 and 10 are the two most easily omitted and the most important: the former makes the
+boundary of the guarantee explicit, the latter turns assurance from a one-off check into a
+lifecycle mechanism.
+
+\section{Side Effects and Constraint Mechanisms}\label{sec:effects}
+
+The example in Problem \ref{prob:trust} mixes side effects of several kinds. Their
+mechanical mechanisms become visible only when the kinds are separated.
+
+\begin{definition}[Four classes of side effect]\label{def:effects}
+See Table \ref{tab:effects}.
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Classification of side effects and the corresponding mechanical mechanisms}\label{tab:effects}
+\begin{tabular}{L{1.8cm}L{4.6cm}L{5.0cm}L{3.0cm}}
+\toprule
+\textbf{Class} & \textbf{Example} & \textbf{Mechanical mechanism} &
+  \textbf{Point of verification} \\
+\midrule
+Functional & A generated function modifies global state it must not modify &
+  Type systems, effect types (which make ``what will be touched'' part of the signature),
+  ownership systems &
+  Compile time, at zero runtime cost \\
+Resource & 1\,ns becomes 1\,$\mu$s; memory blows up &
+  Fuel/gas metering, worst-case execution time analysis, quotas &
+  Both compile time $+$ runtime \\
+Security & Unauthorised access, sandbox escape &
+  Capability models, sandboxes, bytecode verifiers &
+  At admission $+$ at runtime \\
+Semantic drift & The specification itself is wrong &
+  \textbf{No mechanical mechanism} & Human attestation and consensus \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The first three classes are already covered by mechanical mechanisms, and are arranged in
+depth (proof $>$ types $>$ testing $>$ metering $>$ isolation $>$ monitoring, each layer
+having a simpler trust base than the layer above it). Only the fourth class, a specification
+that departs from the intent, always requires humans.
+
+\begin{remark}[Assurance scope of three engineering prototypes]\label{rmk:three-prototypes}
+Three common engineering mechanisms cover different kinds of property and must not be
+advertised side by side:
+\begin{enumerate}[label=(\alph*)]
+\item A browser sandbox guarantees \emph{execution isolation and a permission boundary}, not
+      functional correctness. It is the largest untrusted-code runtime on earth: every day
+      it executes hundreds of millions of pieces of code of unknown provenance that have
+      never been reviewed; it never reviews, it isolates.
+\item A bytecode verifier verifies \emph{the safety properties its rules cover} (no
+      out-of-bounds access, bounded loops, no dangling pointers), not the correctness of
+      arbitrary business logic. A deterministic verifier of a few tens of thousands of
+      lines adjudicates the admission of millions of lines of free code; this is precisely
+      an instance of ``compiler-like assurance that does not depend on anyone's will''.
+\item A resource-metering mechanism guarantees \emph{constraints under an abstract resource
+      accounting}, not real wall-clock time. It turns a performance side effect from
+      something ``a human must notice'' into ``a budget violation automatically refuses
+      execution'', but it need not catch a degradation from 1\,ns to 1\,$\mu$s, because it
+      meters abstract operation costs rather than actual hardware latency. Real-time
+      performance assurance requires timing analysis and a restricted runtime environment,
+      a completely different engineering discipline.
+\end{enumerate}
+\end{remark}
+
+\section{Runtime Assurance}\label{sec:runtime}
+
+Formal proofs depend on environmental assumptions, and the actual environment may change.
+Beyond static proof, therefore, the executing system must remain safe when an assumption
+fails.
+
+\begin{principle}[Layered defence]\label{pr:layered-defense}
+An ideal architecture combines static proof (for known deterministic behaviour) with dynamic
+monitoring (for unknown or non-deterministic behaviour), forming a layered defence: whatever
+can be proved is proved first; residual risk is detected by independent monitoring; serious
+violations have their impact limited by isolation or rollback.
+\end{principle}
+
+\begin{remark}[The monitor's own boundary]\label{rmk:monitor-limit}
+Even a runtime monitor that is itself correct does not thereby possess the complete facts of
+an execution. Missing observation traces, ambiguous events, unreliable transport and
+concurrency that cannot be seen all limit its conclusions. The observation mechanism of the
+monitoring system must therefore itself be included in the assurance chain.
+\end{remark}
+
+\begin{remark}[Four conditions for contract composition]\label{rmk:contract-conds}
+The composition of local properties depends on four things: the environment genuinely
+satisfies the subcomponent assumptions; the connection topology is well posed; the feedback
+condition is checkable; and the observation and time semantics are compatible. ``Individually
+correct'' for components and ``globally correct'' for the system are not interchangeable.
+\end{remark}
+
+\begin{principle}[The conditional form of an invariant]\label{pr:ag}
+A usable assume--guarantee contract should state simultaneously: the environmental
+conditions it depends on, the behaviour it guarantees outwards, the side effects it may
+produce, the resources it must consume and occupy, and the constraints that must hold when
+it is composed with other subsystems.
+\end{principle}
+
+\section{Artefact Binding}\label{sec:fourth}
+
+The last conjunct of the assurance condition \eqref{eq:assurance}, namely that the object
+actually executed is the object verified, is frequently omitted from existing discussions.
+It is not a marginal detail: even if a verifier correctly accepts a binary, the preceding
+verification conclusion does not transfer automatically if the deployment system uses a
+different file, or if the loading environment changes a critical premise. Supply-chain
+attacks aim precisely at this crack.
+
+The complete trust chain must therefore include content-addressed build outputs, a
+cryptographic binding between the verification evidence and the binary, and re-verification
+at deployment. In the notation of \eqref{eq:binding},
+$\mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}})$
+and $E_{\text{deployed}} \models A_{\text{claimed}}$.
+
+\begin{principle}[A three-way distinction for reproducible builds]\label{pr:reproducible}
+Three properties of different strength must be distinguished:
+\begin{enumerate}[label=(\alph*)]
+\item \term{Reproducible}: the same inputs produce a byte-for-byte identical output;
+\item \term{Verifiable}: an independent third party can rebuild from the inputs and compare;
+\item \term{Verified}: a proof that a particular binary satisfies its declared properties.
+\end{enumerate}
+(a) and (b) are preconditions for (c) to take effect; (c) does not imply (a). The three are
+not interchangeable.
+\end{principle}
+
+\section{The Reliability Bound of the Consensus Layer}\label{sec:consensus}
+
+\S\ref{sec:trust} showed that the intent layer admits no mechanical solution. What does it
+admit? This section gives a precise answer and proves a counter-intuitive result.
+
+\begin{theorem}[Consensus reliability bound]\label{th:condorcet}
+Let $n$ verifiers judge independently the proposition ``whether a specification faithfully
+expresses the intent'', each erring with probability at most $p < 1/2$. Then the probability
+that majority voting errs satisfies
+\begin{equation}\label{eq:chernoff}
+\Pr\bigl[\text{majority errs}\bigr] \;\le\; \exp\Bigl(-2n\Bigl(\tfrac{1}{2} - p\Bigr)^{2}\Bigr).
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Let $X$ be the number of verifiers who err, $X = \sum_{i=1}^{n} X_i$, with the $X_i$
+independent and $\Pr[X_i = 1] \le p$, so $\mathbb{E}[X] \le np$. A majority errs exactly
+when $X \ge n/2$. By Hoeffding's inequality \cite{hoeffding1963}, for $t > 0$,
+$\Pr[X - \mathbb{E}[X] \ge t] \le \exp(-2t^{2}/n)$. Taking
+$t = n(1/2 - p)$ (so that $X \ge n/2$ implies $X - \mathbb{E}[X] \ge t$) gives
+\[
+\Pr\Bigl[X \ge \tfrac{n}{2}\Bigr] \;\le\;
+\exp\Bigl(-\frac{2n^{2}(1/2 - p)^{2}}{n}\Bigr) \;=\;
+\exp\Bigl(-2n\bigl(\tfrac{1}{2} - p\bigr)^{2}\Bigr). \qedhere
+\]
+\end{proof}
+
+This result is the quantitative form of the jury theorem \cite{condorcet1785}. It relies on
+independence, however, and independence is a fragile assumption; its failure has an equally
+precise form.
+
+\begin{proposition}[Bound dominated by a correlated error mode]\label{th:correlated}
+Suppose that the errors of $n$ verifiers have the following structure: with probability $q$
+a \emph{common error mode} $C$ occurs (for instance a shared training-data bias, a shared
+domain misunderstanding or a shared incentive), in which case all verifiers err
+simultaneously; with probability $1-q$ the verifiers err independently, with error rate
+$p' < 1/2$. Then
+\begin{equation}\label{eq:correlated}
+\Pr\bigl[\text{majority errs}\bigr] \;\ge\; q .
+\end{equation}
+In particular, when $q$ is bounded below by a positive constant, increasing $n$ cannot push
+the probability that the majority errs below $q$.
+\end{proposition}
+
+\begin{proof}
+When $C = 1$ all $n$ verifiers err, so the majority necessarily errs. Hence
+$\Pr[\text{majority errs}] \ge \Pr[C = 1] = q$. Taking the limit in $n$ does not change
+this lower bound.
+\end{proof}
+
+\begin{corollary}[Diversity, not number]\label{cor:diversity}
+By Proposition \ref{th:correlated}, the governing variable of consensus reliability is
+\emph{the independence of errors} (that is, the size of $q$), not the number of verifiers.
+The central goal of consensus design is therefore to reduce $q$: admit participants with
+different backgrounds, models with different training provenance, reviewers with different
+interests, and explicitly designed \emph{adversarial} roles.
+\end{corollary}
+
+\begin{remark}[Use of this result]\label{rmk:diversity-use}
+Corollary \ref{cor:diversity} yields a criterion directly usable in engineering judgement:
+when someone proposes ``adding a few more agents to review this'', the right question is
+``are the new reviewers independent of the existing ones in their error modes''. If they are
+not, increasing the number increases cost without increasing reliability. This also explains
+why ``reviewing with another model from the same source'' does not constitute a guarantee
+structurally.
+\end{remark}
+
+\section{The Incentive Structure of the Intent Layer}\label{sec:mechanism}
+
+Proposition \ref{th:correlated} attributes consensus reliability to the parameter $q$ but
+gives no method of estimating $q$. This section identifies the nature of that omission: the
+principal sources of $q$ are \emph{collusion} and \emph{shared interest}, so it is not a
+statistical parameter but a problem of \emph{incentive design}.
+
+\begin{principle}[The composition of $q$]\label{pr:q-decomposition}
+The common error mode decomposes into three sources:
+\begin{enumerate}[label=(\alph*)]
+\item \term{Cognitive isomorphism}: the verifiers share training provenance, domain
+      assumptions or habits of thought;
+\item \term{Interest isomorphism}: the verifiers' payoff is tied to ``passing'' rather than
+      to ``being right'';
+\item \term{Information isomorphism}: the verifiers read the same material under review, so
+      their errors are determined by the same defect.
+\end{enumerate}
+The three sources correspond to three different interventions: admitting heterogeneous
+participants (for (a)), changing the payoff structure (for (b)), and introducing independent
+information channels (for (c)). Acting on the first alone is the common practice and the
+least effective.
+\end{principle}
+
+\begin{principle}[Proper scoring rules]\label{pr:scoring}
+For the second source, the correct remedy is to tie a verifier's reward to the
+\emph{accuracy} of the judgement rather than to its \emph{lean}. A proper scoring rule
+\cite{brier1950} supplies a ready-made instrument: the reward function attains its unique
+maximum at the true belief, thereby removing the incentive for both ``going along with the
+majority'' and ``pleasing the submitter''. A concrete form is a prediction market on the
+proposition ``does this specification faithfully express the intent'', settled on the
+defects and rework data observed subsequently. The mechanism has two by-products:
+\begin{enumerate}[label=(\alph*)]
+\item It provides a means of reducing $q$ other than replacing people;
+\item It yields a posterior estimate of $q$: it suffices to measure the historical
+      correlation of verifier errors.
+\end{enumerate}
+\end{principle}
+
+This section closes the gap left by \S\ref{sec:consensus}. The bound there is conditional,
+and its condition (independence) is here reduced to a quantity that can be designed,
+measured and paid for. Chapter \ref{ch:program} writes it as hypothesis $H_{11}$.
+
+\section{The Consolidated Assurance Condition}\label{sec:assurance-final}
+
+Combining the parts of this chapter yields a complete, conditional statement of assurance.
+
+\begin{definition}[Two-layer trust structure]\label{def:two-layer}
+The chain from intent to execution is a composite of a two-layer trust structure:
+\begin{equation}\label{eq:twolayer}
+\underbrace{I \xrightarrow{\;\text{consensus}\;} \Phi}_{\text{non-formalisable layer}}
+\;\longrightarrow\;
+\underbrace{\Phi \xrightarrow{\;\text{mechanical}\;} P \xrightarrow{\;\text{mechanical}\;} B
+\xrightarrow{\;\text{mechanical}+\text{monitoring}\;} E}_{\text{formalisable layer}}
+\end{equation}
+In the formalisable layer, trust is guaranteed by mechanical verifiers; in the
+non-formalisable layer, trust is guaranteed by adversarial consensus; and the boundary
+between the two layers, the record of the consensus, and the traceability of the whole chain
+are guaranteed mechanically by cryptographically anchored infrastructure.
+\end{definition}
+
+\begin{theorem}[Consolidated assurance condition]\label{th:assurance}
+Let $I$ be an intent, $\Phi$ an attested specification, $B$ a candidate implementation
+(binary) and $E$ a runtime environment, with $A$ the declared environmental assumptions.
+Then ``property $\varphi$ holds within the declared scope $\Sigma$'' holds if and only if
+the following conditions hold simultaneously:
+\begin{align}
+&\text{(i)}\quad \Pr\bigl[\Phi \text{ is faithful to } I\bigr] \;\ge\; 1 - \varepsilon_{\text{cons}},
+\qquad \varepsilon_{\text{cons}} \text{ determined by \eqref{eq:chernoff} and } q;\\
+&\text{(ii)}\quad \Tr(B, E) \;\subseteq\; \Allow(\Phi);\\
+&\text{(iii)}\quad E \models A;\\
+&\text{(iv)}\quad \mathrm{digest}(B_{\text{deployed}}) = \mathrm{digest}(B_{\text{verified}});\\
+&\text{(v)}\quad \varphi \text{ is preserved under the interpretation relation } R \text{ in use}.
+\end{align}
+\end{theorem}
+
+Condition (i) is probabilistic, and its reliability is governed by $q$; conditions (ii)--(v)
+are mechanical, and their strength is limited by $\TCB$ and by the semantic model.
+Equation \eqref{eq:twolayer} and Theorem \ref{th:assurance} together give the complete
+answer to Problem \ref{prob:trust}:
+
+\begin{principle}[Answer to Problem \ref{prob:trust}]\label{pr:answer}
+``Humans no longer read the code'' is attainable; ``humans need no longer answer for the
+expression of the goal'' is not. The workable division of labour is: humans establish and
+bear responsibility for the goal and the constraints; generators perform large-scale
+generation, search and optimisation; mechanised verification and the execution boundary
+judge and constrain implementations; and the system always carries traceable assurance
+evidence.
+\end{principle}
+
+\begin{remark}[Summary of conclusions on the central questions Q1--Q8]\label{rmk:q1q8}
+\begin{longtable}{L{5.4cm}L{9.0cm}}
+\toprule
+\textbf{Question} & \textbf{This paper's judgement} \\
+\midrule
+\endhead
+Q1 Can it be proved that the intent and the specification agree? &
+  Not by general automatic methods. Controlled languages, domain ontologies, examples and
+  human attestation can narrow the problem, but cannot cover implicit requirements that were
+  never expressed (Proposition \ref{prop:three-grounds}) \\
+Q2 How can a specification be proved sufficient? &
+  Consistency, satisfiability, realisability, vacuity and formal coverage metrics can all be
+  checked; none of them proves that the specification contains every undeclared prohibition \\
+Q3 How do local guarantees yield an end-to-end guarantee? &
+  It requires that relations compose, that environmental assumptions close and that
+  observation maps are compatible (Proposition \ref{prop:soundness}); liveness and real-time
+  properties usually require additional conditions \\
+Q4 Can functional and resource guarantees be unified? &
+  Several constraints can be expressed in a joint behaviour--cost semantics, but time,
+  memory, energy and information flow need different analysis models; joint expression is
+  not unified solving \\
+Q5 How can trust in the generative model be reduced? &
+  The generator proposes candidates and an independent checker verifies them. This reduces
+  dependence on the generator's correctness but does not remove the requirement to trust the
+  logical kernel, the theorem statements, the external assumptions and the correspondence of
+  artefacts \\
+Q6 Can a given specification always be synthesised effectively? &
+  No. Finite grammars, restricted logics and specific templates make some problems solvable;
+  for arbitrary program semantic properties there are boundaries of undecidability and
+  search-space explosion \\
+Q7 Can actual latency be strictly guaranteed? &
+  A usable worst-case execution time bound is obtainable under specific assumptions about
+  hardware, inputs, scheduling and the cost model; benchmarks and asymptotic complexity are
+  not by themselves sufficient to prove a bound at the nanosecond scale \\
+Q8 Is a unified theory needed? &
+  The better-founded choice is to establish shared proof interfaces and evidence formats
+  while retaining the different semantics, assumptions and analysis tools of each domain. A
+  unified formalism may be one goal, but it is not a necessary precondition \\
+\bottomrule
+\end{longtable}
+\end{remark}
+
+The empirical content of this chapter is directions 1--3 (Chapter \ref{ch:program}) and
+hypotheses $H_7$, $H_8$ and $H_{11}$. Propositions \ref{prop:no-godel} and
+\ref{prop:three-grounds} are arguments rather than theorems, and what can be challenged in
+them is whether the three grounds are exhaustive. Theorem \ref{th:condorcet} and
+Proposition \ref{th:correlated} are applications of standard probability theory, and their
+conclusions depend on the independence assumption.

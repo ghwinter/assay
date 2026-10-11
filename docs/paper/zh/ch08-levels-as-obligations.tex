@@ -1,0 +1,213 @@
+% =====================================================================
+\chapter[层级与验证义务]{层级即验证义务的分解单元}\label{ch:levels}
+% =====================================================================
+
+前七章把层级分别用作理解工具（第 \ref{ch:comprehension} 章）、设计工具
+（第 \ref{ch:design} 章）与保证工具（第 \ref{ch:intent} 章）。本章说明这三者是同一个
+对象的三种用法，并论证其中最值得继续推进的方向：把层级从"理解的辅助"升级为
+\emph{验证义务的分解单元}。
+
+\section{认知尺度}\label{sec:levels-def}
+
+\begin{definition}[认知尺度]\label{def:cognitive-scale}
+给定研究对象 $S$ 与任务 $T$，$S$ 的\term{认知尺度} $\Lk{0}, \Lk{1}, \Lk{2}, \dots$
+按"该层回答什么类型的问题"划分，而不是按代码的物理位置划分：
+\begin{description}
+\item[$\Lk{0}$ 计算原理] 什么在计算？什么约束了它？：内存、指令执行、函数调用、
+      并发、同步、虚拟内存、I/O、缓存、网络、持久化、类型与内存模型。
+\item[$\Lk{1}$ 基础设施与运行时] 系统提供哪些公共能力？如何保证它们正确协作？
+      ：分配器、任务调度器、事件循环、对象系统、执行器、存储引擎接口、资源管理器、
+      生命周期机制。即第 \ref{ch:infrastructure} 章的六职能所在层。
+\item[$\Lk{2}$ 组件与子系统] 有哪些职责？边界在哪里？它们如何协作？：事务子系统、
+      渲染引擎、实体-组件系统、网络协议栈、复制模块、查询执行器。
+\item[$\Lk{3}$ 领域功能与业务语义] 系统对外承诺什么？什么行为才是正确的？：查询
+      语义、游戏规则、布局规则、事务隔离语义、权限与业务不变量。
+\item[$\Lk{4}$ 及以上：场景与系统级行为] 整个系统在真实场景中如何表现？：端到端
+      工作流、故障恢复、系统级性能、部署拓扑、业务目标。
+\item[$\Lk{\infty}$ 目的与责任] 应当要什么？哪些取舍可接受？；这一层属于人，
+      理由见第 \ref{sec:linf} 节。
+\end{description}
+\end{definition}
+
+\begin{principle}[认知尺度不是物理层级]\label{pr:not-physical}
+定义 \ref{def:cognitive-scale} 的层级代表\emph{认知尺度}，而不一定是代码的物理层级。
+游戏引擎的 $\Lk{3}$ 领域功能可能直接调用 $\Lk{1}$ 的运行时接口；数据库的事务语义
+也可能对存储层提出约束。
+\end{principle}
+
+\begin{principle}[层级的相对性与递归性]\label{pr:relative}
+同一个组件在不同研究任务中可以处于不同层级。一个异步运行时对普通应用开发者是基础
+设施（$\Lk{1}$），对其自身开发者则是需要深入修改的复杂系统（即它自己有一套完整的
+$\Lk{0} \dots \Lk{4}$）。因此层级是相对于研究对象与当前任务定义的。
+\end{principle}
+
+原则 \ref{pr:relative} 有一个重要推论：\emph{每个大型系统内部都有一份完整的层级阶梯}，
+这份内嵌阶梯与外部的技术栈阶梯是两回事。这直接解释了第 \ref{ch:infrastructure} 章的
+结论：每个大系统都在自己的域内长出一个"小操作系统"，而这正是它的内嵌 $\Lk{1}$。
+
+\begin{remark}[与因果层级的区别]\label{rmk:pearl}
+本文的层级与因果层级\cite{pearl2009}有形式相似之处：对低层的干预不自动传递为高层的
+干预，正如对实现层的修改不自动成为对契约层的修改。但二者不同：因果层级区分的是
+\emph{查询类型}（观测、干预、反事实），本文的层级区分的是\emph{可观察域与保证义务}
+（定义 \ref{def:level}）。混同二者会导致一个具体错误：以为"能在高层提问"就等于
+"能在高层干预"，而后者需要前者并不提供的接口。
+\end{remark}
+
+\section{层契约}\label{sec:four-tuple}
+
+\begin{definition}[层契约四元组]\label{def:level-contract}
+一个层级要被承认，必须能写出四元组
+\begin{equation}\label{eq:level-contract}
+\mathrm{LC}(\Lambda) \;=\;
+\bigl(\text{参与者},\; \text{保证的不变量},\; \text{契约形式},\;
+\text{验证方式}\bigr),
+\end{equation}
+以及本文额外要求的第五项，即\term{无视集} $\Obl(\Lambda)$（定义
+\ref{def:oblivious}），即该层被允许永远不关心的内容。
+\end{definition}
+
+\begin{principle}[层级的真实性判据]\label{pr:level-real}
+一个层级是真的，当且仅当它能写出定义 \ref{def:level-contract} 的五项。写不出第五项
+（无视集）的"层级"不是层级，只是一个目录或一个命名空间。
+\end{principle}
+
+把定义 \ref{def:level-contract} 应用到表 \ref{tab:level-instances} 给出的实例，
+可以看到同一组问题在不同层级上的具体形态。
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{层契约四元组在一个关系数据库引擎上的实例化}\label{tab:level-instances}
+\begin{tabular}{L{1.2cm}L{2.4cm}L{3.6cm}L{3.4cm}L{3.6cm}}
+\toprule
+\textbf{层} & \textbf{参与者} & \textbf{保证的不变量} & \textbf{契约形式} & \textbf{可无视} \\
+\midrule
+$\Lk{0}$ & 页、缓存行、指令 & 局部性原理；缓存行的原子性 &
+  硬件时序与内存模型 & 上层语义；事务概念不存在 \\
+$\Lk{1}$ & 缓冲页、日志记录、锁、内存上下文 &
+  脏页在刷盘前不被复用；日志先于数据落盘 &
+  palloc 契约、缓冲区固定/释放协议 & SQL 语义；查询计划形状 \\
+$\Lk{2}$ & 解析器、规划器、执行器、访问方法 &
+  执行器消费的元组满足当前快照的可见性 &
+  执行器接口（打开/取下一个/关闭） & 存储的物理布局；日志格式 \\
+$\Lk{3}$ & 事务、语句、会话 &
+  隔离级别所声明的可见性与原子性 &
+  SQL 语义与隔离级别定义 & 缓冲区管理策略；索引结构 \\
+$\Lk{4}$ & 应用、运维、客户端 &
+  端到端工作流在故障下仍然可恢复 &
+  服务等级目标与恢复点目标 & 内部执行计划的形状 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表 \ref{tab:level-instances} 最有信息量的一列是最后一列。它把"这个层级负责什么"
+之外的另一半，即"这个层级被允许不知道什么"，显式化了。这一列是大型系统
+设计文档中最常缺失、也最有价值的一列。
+
+\section{验证义务的分解}\label{sec:obligation-unit}
+
+这是本章的核心主张。
+
+\begin{principle}[层级的三重身份]\label{pr:three-identities}
+同一套层级结构同时承担三种功能：
+\begin{enumerate}[label=(\roman*)]
+\item \term{理解单元}：它规定了"理解一个系统需要多少信息"的下界，即
+      各层商的复合（命题 \ref{prop:oblivious}）；
+\item \term{设计单元}：它规定了"一次典型变更的读集"的结构（定理
+      \ref{th:centralise}）；
+\item \term{验证义务单元}：它规定了\emph{哪些性质可以被机械保证、哪些必须由运行时
+      监控、哪些必须留给人的责任划分}。
+\end{enumerate}
+(iii) 是既有讨论触及而恰好未展开的部分。
+\end{principle}
+
+为什么层级天然是验证义务的分解单元？因为它同时提供了两样东西：一个\emph{可观察域}
+（$\Obs_i$，即该层能看到什么）与一个\emph{不变量集合}（$\Inv_i$，即该层必须保证
+什么）。而验证义务的形式恰好是"在某个观察域上判定某个性质"，因此每一条验证义务都
+自然地归属于某个层级。
+
+\begin{definition}[验证义务的层级归属]\label{def:obligation-assign}
+给定性质 $\varphi$ 与层级 $\Lambda$，称 $\varphi$ \term{归属于} $\Lambda$，若
+$\varphi$ 可以完全由 $\Lambda$ 的观察域 $\Obs_\Lambda$ 表达。对 $\varphi$，
+其归属层为能表达它的\emph{最低}层级。
+\end{definition}
+
+由此得到三类义务的分派：
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{可在本层机械判定的}：$\varphi$ 在 $\Lambda$ 的观察域内可表达，且存在
+      可穷尽的判定程序。归入机械保证。
+\item \term{可在本层监控但不可判定的}：$\varphi$ 在观察域内可表达，但只能在执行时
+      对已观测轨迹判定。归入运行时保证，并按原则 \ref{pr:three-states} 区分三个状态。
+\item \term{在本层不可表达的}：$\varphi$ 需要跨层信息或涉及目的本身。归入人的审定
+      或共识保证。
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{保证类型在各层级上的分布（示例）}\label{tab:assurance-matrix}
+\begin{tabular}{L{4.2cm}L{3.2cm}L{3.2cm}L{3.6cm}}
+\toprule
+\textbf{性质} & \textbf{归属层} & \textbf{保证方式} & \textbf{证据类型} \\
+\midrule
+内存安全 & $\Lk{0}$--$\Lk{1}$ & 机械（类型系统 / 所有权 / 沙箱） & 编译期检查、验证器 \\
+无越界与循环有界 & $\Lk{0}$--$\Lk{1}$ & 机械（字节码验证器） & 准入时静态证明 \\
+无未授权 I/O & $\Lk{1}$--$\Lk{2}$ & 机械（能力模型 / 效果类型） & 编译期 $+$ 运行时边界 \\
+功能后置条件 & $\Lk{2}$--$\Lk{3}$ & 机械（Hoare / 精化类型 / 契约） & 证明项、SMT 判定 \\
+资源上界 & $\Lk{1}$--$\Lk{2}$ & 机械（资源分析）$+$ 环境假设 & 符号界、最坏执行时间分析 \\
+实时截止期 & $\Lk{2}$--$\Lk{4}$ & 机械（在硬件模型内）$+$ 运行时 & 时序分析、监控 \\
+隔离级别语义 & $\Lk{3}$ & 机械（模型检查 / 契约） & 模型检查结果 \\
+端到端可用性 & $\Lk{4}$ & 监控 $+$ 共识 & 运行指标、服务等级目标 \\
+规格忠实于意图 & $\Lk{\infty}$ & 共识 & 对抗性审查、审定记录 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表 \ref{tab:assurance-matrix} 是本章主张的具体化。它的实践含义是：对一个性质，先问
+"它归属于哪一层"，再问"该层能提供哪种保证"，最后问"该保证的假设是什么"。这三个
+问题替代了"我们是否需要形式化验证"这类无法回答的问题。
+
+\section{责任主体}\label{sec:linf}
+
+\begin{principle}[责任不可转移]\label{pr:responsibility}
+决定"要什么"与承担该决定的后果，是同一个主体性行为的两个侧面。因此 $\Lk{\infty}$
+不属于机器，不是因为机器不够聪明，而是因为责任必须由一个能够承担后果的主体来承担。
+\end{principle}
+
+但这一原则需要按第 \ref{sec:consensus} 节的结果精确化。人的残余职责\emph{不是个人的，
+而是集体的}：不是"一个人审阅规格"，而是"一个认知网络通过对抗性辩论达到对规格的
+共识"。这个网络可以包括多个不同背景的人类专家、不同训练来源的模型，以及显式设计的
+对抗性角色。
+
+\begin{principle}[多样性不可替代]\label{pr:human-diversity}
+AI 时代人的不可替代性，不在于人的个体判断比 AI 更好，而在于人是认知网络中不可还原的
+\emph{多样性来源}。由推论 \ref{cor:diversity}，共识可靠性由错误模式的独立性支配；
+而独立性的最终来源是\emph{不同的问题形成历史}。因此人的价值在于其视角的多样性，
+而不在于其计算的精确性。
+\end{principle}
+
+\section{层级语言的错配}\label{sec:antipattern}
+
+\begin{principle}[层级语言一致性]\label{pr:level-language}
+读代码时最大的错误，是用错层级的语言理解当前层级。
+\end{principle}
+
+\begin{example}[具体形态]\label{ex:wrong-language}
+\begin{enumerate}[label=(\alph*)]
+\item 用指针分析的方式理解业务校验逻辑，把"这笔交易是否允许"的问题当成内存别名问题。
+\item 用业务语义理解缓冲区管理，试图在页面替换策略中寻找商业规则。
+\item 用调度器的公平性语言理解数据库隔离级别：二者都是并发问题，但前者的正确性
+      判据是吞吐与延迟分布，后者是可见性与原子性。
+\item 用类型系统解决多租户隔离，因为隔离是横切关注点（原则 \ref{pr:crosscutting}），
+      类型系统只能表达其中的一部分。
+\end{enumerate}
+\end{example}
+
+反模式例 \ref{ex:wrong-language}(d) 的形态更严重：它不只是"用错语言"，而是试图把
+横切关注点压入层级结构。由原则 \ref{pr:crosscutting}，这种尝试在结构上注定失败，
+而其失败常被误诊为"分层不够彻底"。
+
+本章的经验内容是定义 \ref{def:obligation-assign} 的可复现性：不同分析者是否对同一
+性质给出相同的层级归属，以及表 \ref{tab:assurance-matrix} 的分派是否减少"应当机械
+保证的性质却只靠人工审查"的漏项。以下降的漏项率作为指标，该主张可被检验。

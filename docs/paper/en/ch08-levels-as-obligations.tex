@@ -1,0 +1,274 @@
+% =====================================================================
+\chapter{Levels as Units of Verification-Obligation Decomposition}\label{ch:levels}
+% =====================================================================
+
+The first seven chapters use levels as a tool for comprehension
+(Chapter \ref{ch:comprehension}), for design (Chapter \ref{ch:design}) and for assurance
+(Chapter \ref{ch:intent}). This chapter shows that the three are three uses of one object,
+and argues for the direction among them most worth pursuing: promoting levels from an aid to
+comprehension to the \emph{unit into which verification obligations decompose}.
+
+\section{The Cognitive Scale}\label{sec:levels-def}
+
+\begin{definition}[Cognitive scale]\label{def:cognitive-scale}
+Given a study object $S$ and a task $T$, the \term{cognitive scale} of $S$,
+$\Lk{0}, \Lk{1}, \Lk{2}, \dots$, is divided by the type of question a level answers rather
+than by the physical location of the code:
+\begin{description}
+\item[$\Lk{0}$ Computational principles] What performs the computation? What constrains it?
+      Memory, instruction execution, function calls, concurrency, synchronisation, virtual
+      memory, I/O, caching, networking, persistence, types and the memory model.
+\item[$\Lk{1}$ Infrastructure and runtime] Which shared capabilities does the system
+      provide, and how is their correct cooperation guaranteed? Allocators, task schedulers,
+      event loops, object systems, executors, storage-engine interfaces, resource managers,
+      lifecycle mechanisms. This is the level at which the six functions of
+      Chapter \ref{ch:infrastructure} reside.
+\item[$\Lk{2}$ Components and subsystems] Which duties exist? Where are the boundaries? How
+      do they cooperate? The transaction subsystem, the rendering engine, the
+      entity--component system, the network protocol stack, the replication module, the query
+      executor.
+\item[$\Lk{3}$ Domain function and business semantics] What does the system promise
+      externally? Which behaviour is correct? Query semantics, game rules, layout rules,
+      transaction isolation semantics, permissions and business invariants.
+\item[$\Lk{4}$ and above: scenario and system-level behaviour] How does the whole system
+      behave in real scenarios? End-to-end workflows, failure recovery, system-level
+      performance, deployment topology, business objectives.
+\item[$\Lk{\infty}$ Purpose and responsibility] What should be wanted? Which trade-offs are
+      acceptable? This level belongs to humans; the reason is given in \S\ref{sec:linf}.
+\end{description}
+\end{definition}
+
+\begin{principle}[The cognitive scale is not a physical hierarchy]\label{pr:not-physical}
+The levels of Definition \ref{def:cognitive-scale} denote \emph{cognitive scales}, not
+necessarily the physical layers of the code. The $\Lk{3}$ domain function of a game engine
+may call the $\Lk{1}$ runtime interface directly; the transaction semantics of a database may
+equally impose constraints on the storage layer.
+\end{principle}
+
+\begin{principle}[Relativity and recursiveness of levels]\label{pr:relative}
+The same component may occupy different levels under different study tasks. An asynchronous
+runtime is infrastructure ($\Lk{1}$) to an ordinary application developer, and to its own
+developers a complex system requiring deep modification (it has a complete
+$\Lk{0} \dots \Lk{4}$ of its own). Levels are therefore defined relative to the study object
+and the current task.
+\end{principle}
+
+Principle \ref{pr:relative} has an important corollary: \emph{every large system contains a
+complete level ladder internally}, and this embedded ladder is a distinct thing from the
+external technology-stack ladder. This explains directly the conclusion of
+Chapter \ref{ch:infrastructure}: every large system grows a ``small operating system'' inside
+its own domain, and that is precisely its embedded $\Lk{1}$.
+
+\begin{remark}[Difference from the causal hierarchy]\label{rmk:pearl}
+The levels of this paper resemble the causal hierarchy \cite{pearl2009} in form: an
+intervention at a lower level does not automatically transmit to a higher level, just as a
+modification of the implementation layer does not automatically become a modification of the
+contract layer. The two differ, however. The causal hierarchy distinguishes \emph{types of
+query} (observation, intervention, counterfactual); the levels of this paper distinguish
+\emph{observable domain and guarantee obligation} (Definition \ref{def:level}). Conflating
+them yields a concrete error: the belief that being able to ask a question at a higher level
+amounts to being able to intervene at that level, when the latter requires an interface the
+former does not provide.
+\end{remark}
+
+\section{The Level Contract}\label{sec:four-tuple}
+
+\begin{definition}[The level-contract quadruple]\label{def:level-contract}
+A level is recognised only if one can write down the quadruple
+\begin{equation}\label{eq:level-contract}
+\mathrm{LC}(\Lambda) \;=\;
+\bigl(\text{participants},\; \text{guaranteed invariants},\; \text{contract form},\;
+\text{verification method}\bigr),
+\end{equation}
+together with the fifth item this paper additionally requires, the \term{oblivious set}
+$\Obl(\Lambda)$ (Definition \ref{def:oblivious}), that is, what the level is permitted never
+to care about.
+\end{definition}
+
+\begin{principle}[Criterion of level reality]\label{pr:level-real}
+A level is real if and only if the five items of Definition \ref{def:level-contract} can be
+written down. A ``level'' whose fifth item (the oblivious set) cannot be written down is not
+a level but a directory or a namespace.
+\end{principle}
+
+Applying Definition \ref{def:level-contract} to the instances of
+Table \ref{tab:level-instances} shows the concrete form taken by one and the same set of
+questions at different levels.
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Instantiation of the level-contract quadruple on a relational database
+engine}\label{tab:level-instances}
+\begin{tabular}{L{1.2cm}L{2.4cm}L{3.6cm}L{3.4cm}L{3.6cm}}
+\toprule
+\textbf{Level} & \textbf{Participants} & \textbf{Guaranteed invariants} &
+  \textbf{Contract form} & \textbf{May ignore} \\
+\midrule
+$\Lk{0}$ & pages, cache lines, instructions &
+  the locality principle; atomicity of a cache line &
+  hardware timing and the memory model &
+  upper-level semantics; the notion of a transaction does not exist \\
+$\Lk{1}$ & buffer pages, log records, locks, memory contexts &
+  a dirty page is not reused before it is flushed; the log reaches disk before the data &
+  the \code{palloc} contract, the buffer pin/release protocol &
+  SQL semantics; query-plan shape \\
+$\Lk{2}$ & parser, planner, executor, access methods &
+  the tuples consumed by the executor satisfy the visibility of the current snapshot &
+  the executor interface (open/next/close) &
+  the physical layout of storage; the log format \\
+$\Lk{3}$ & transactions, statements, sessions &
+  the visibility and atomicity declared by the isolation level &
+  SQL semantics and the definition of isolation levels &
+  buffer-management policy; index structures \\
+$\Lk{4}$ & applications, operations, clients &
+  an end-to-end workflow remains recoverable under failure &
+  service-level objectives and recovery-point objectives &
+  the shape of the internal execution plan \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The most informative column of Table \ref{tab:level-instances} is the last. It makes explicit
+the other half of ``what this level is responsible for'', namely ``what this level is
+permitted not to know''. That column is the one most often missing from the design documents
+of large systems, and the most valuable.
+
+\section{Decomposition of Verification Obligations}\label{sec:obligation-unit}
+
+This is the central claim of the chapter.
+
+\begin{principle}[The three identities of a level]\label{pr:three-identities}
+One and the same level structure carries three functions at once:
+\begin{enumerate}[label=(\roman*)]
+\item \term{unit of comprehension}: it fixes the lower bound on ``how much information is
+      needed to understand a system'', namely the composite of the level quotients
+      (Proposition \ref{prop:oblivious});
+\item \term{unit of design}: it fixes the structure of ``the read-set of a typical change''
+      (Theorem \ref{th:centralise});
+\item \term{unit of verification obligation}: it fixes \emph{which properties can be assured
+      mechanically, which must be monitored at runtime, and which must be left to the human
+      division of responsibility}.
+\end{enumerate}
+Item (iii) is the part that existing discussions touch on but do not develop.
+\end{principle}
+
+A level is naturally a unit of verification-obligation decomposition because it supplies two
+things at once: an \emph{observable domain} ($\Obs_i$, what the level can see) and an
+\emph{invariant set} ($\Inv_i$, what the level must guarantee). The form of a verification
+obligation is precisely to decide a property over some observation domain, so every
+verification obligation attaches naturally to some level.
+
+\begin{definition}[Level attribution of a verification obligation]\label{def:obligation-assign}
+Given a property $\varphi$ and a level $\Lambda$, $\varphi$ is \term{attributed to} $\Lambda$
+if $\varphi$ can be expressed entirely within the observable domain $\Obs_\Lambda$ of
+$\Lambda$. The level of attribution of $\varphi$ is the \emph{lowest} level that can express
+it.
+\end{definition}
+
+Three classes of obligation follow:
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Mechanically decidable at the level}: $\varphi$ is expressible within the
+      observable domain of $\Lambda$ and admits an exhaustible decision procedure. Assigned
+      to mechanical assurance.
+\item \term{Monitorable at the level but undecidable}: $\varphi$ is expressible within the
+      observable domain but can be decided only at execution time, over traces already
+      observed. Assigned to runtime assurance, with the three states distinguished by
+      Principle \ref{pr:three-states}.
+\item \term{Not expressible at the level}: $\varphi$ requires cross-level information or
+      concerns purpose itself. Assigned to human attestation or consensus assurance.
+\end{enumerate}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Distribution of assurance types across levels (example)}\label{tab:assurance-matrix}
+\begin{tabular}{L{4.2cm}L{3.2cm}L{3.2cm}L{3.6cm}}
+\toprule
+\textbf{Property} & \textbf{Level of attribution} & \textbf{Assurance mode} &
+  \textbf{Evidence type} \\
+\midrule
+memory safety & $\Lk{0}$--$\Lk{1}$ & mechanical (type system / ownership / sandboxing) &
+  compile-time checking, verifier \\
+no out-of-bounds access and bounded loops & $\Lk{0}$--$\Lk{1}$ &
+  mechanical (bytecode verifier) & static proof at admission \\
+no unauthorised I/O & $\Lk{1}$--$\Lk{2}$ & mechanical (capability model / effect types) &
+  compile-time $+$ runtime boundary \\
+functional postconditions & $\Lk{2}$--$\Lk{3}$ &
+  mechanical (Hoare / refinement types / contracts) & proof terms, SMT decision \\
+resource bounds & $\Lk{1}$--$\Lk{2}$ & mechanical (resource analysis) $+$
+  environmental assumptions & symbolic bounds, worst-case execution time analysis \\
+real-time deadlines & $\Lk{2}$--$\Lk{4}$ & mechanical (within the hardware model) $+$
+  runtime & timing analysis, monitoring \\
+isolation-level semantics & $\Lk{3}$ & mechanical (model checking / contracts) &
+  model-checking results \\
+end-to-end availability & $\Lk{4}$ & monitoring $+$ consensus &
+  operational metrics, service-level objectives \\
+the specification is faithful to the intent & $\Lk{\infty}$ & consensus &
+  adversarial review, attestation records \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table \ref{tab:assurance-matrix} concretises the claim of this chapter. For a property, three
+questions are asked in order: to which level does it belong; which assurance can that level
+provide; and what are the assumptions of that assurance. These three questions replace
+questions that admit no answer, such as ``do we need formal verification''.
+
+\section{The Bearer of Responsibility}\label{sec:linf}
+
+\begin{principle}[Responsibility cannot be transferred]\label{pr:responsibility}
+Deciding what is wanted and bearing the consequences of that decision are two facets of one
+act of agency. Hence $\Lk{\infty}$ does not belong to machines, not because machines are not
+intelligent enough, but because responsibility must be borne by a subject capable of bearing
+consequences.
+\end{principle}
+
+This principle must be made precise by the results of \S\ref{sec:consensus}. The residual
+responsibility of humans is \emph{not individual but collective}: not ``one person reviews
+the specification'' but ``a cognitive network reaches consensus on the specification through
+adversarial debate''. That network may include human experts of different backgrounds, models
+of different training provenance, and explicitly designed adversarial roles.
+
+\begin{principle}[Diversity is irreplaceable]\label{pr:human-diversity}
+What makes humans irreplaceable in the age of AI is not that individual human judgement is
+better than that of an AI, but that humans are an irreducible \emph{source of diversity} in
+the cognitive network. By Corollary \ref{cor:diversity}, the reliability of consensus is
+governed by the independence of error modes, and the ultimate source of independence is
+\emph{different histories of problem formation}. The value of humans therefore lies in the
+diversity of their perspectives, not in the precision of their computation.
+\end{principle}
+
+\section{Level-Language Mismatch}\label{sec:antipattern}
+
+\begin{principle}[Consistency of level language]\label{pr:level-language}
+The gravest error in reading code is to understand the current level in the language of the
+wrong level.
+\end{principle}
+
+\begin{example}[Concrete forms]\label{ex:wrong-language}
+\begin{enumerate}[label=(\alph*)]
+\item Understanding business validation logic by pointer analysis, treating ``is this
+      transaction permitted'' as a question of memory aliasing.
+\item Understanding buffer management in business semantics, looking for commercial rules in
+      a page-replacement policy.
+\item Understanding database isolation levels in the language of scheduler fairness: both are
+      concurrency problems, but the correctness criterion of the former is a throughput and
+      latency distribution, and that of the latter is visibility and atomicity.
+\item Solving multi-tenant isolation with a type system, because isolation is a cross-cutting
+      concern (Principle \ref{pr:crosscutting}) and a type system can express only part of it.
+\end{enumerate}
+\end{example}
+
+The antipattern of Example \ref{ex:wrong-language}(d) has a more serious form: it is not
+merely a wrong language but an attempt to press a cross-cutting concern into the level
+structure. By Principle \ref{pr:crosscutting}, such an attempt is structurally doomed to fail,
+and its failure is often misdiagnosed as ``layering that is not thorough enough''.
+
+The empirical content of this chapter is the reproducibility of
+Definition \ref{def:obligation-assign}: whether different analysts give the same level
+attribution to the same property, and whether the assignment of
+Table \ref{tab:assurance-matrix} reduces the omission of properties that should be assured
+mechanically but are left to manual review. With a falling omission rate as the metric,
+the claim is testable.

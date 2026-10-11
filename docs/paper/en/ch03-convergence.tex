@@ -1,0 +1,342 @@
+% =====================================================================
+\chapter[Structural Convergence]{Structural Convergence: Over-Constrained Solution Sets and Engineering Attractors}\label{ch:convergence}
+% =====================================================================
+
+This chapter addresses Problem \ref{prob:low}. High-level structure does converge, but by a
+different mechanism from the low level, and claims of different strength must be stated
+separately; the strength of convergence depends on domain binding, and its carrier is
+relations rather than components. The chapter closes with a falsifiable verification design.
+
+\section{Three Convergence Claims of Different Strength}\label{sec:three-claims}
+
+\begin{hypothesis}[The weak claim: recurrence of local patterns]\label{hyp:weak}
+Software in different domains repeatedly adopts the same set of local structural solutions:
+layering and staging, separation of mechanism from policy, separation of control from data,
+events and state machines, separation of declarative description from execution engine,
+separation of front end from back end, and resource ownership and lifecycle management.
+What matters about these structures is not that they share a name, but that they share a
+\emph{structural motivation}.
+\end{hypothesis}
+
+The weak claim has substantial engineering experience behind it, and it is also the weakest:
+it is almost impossible to falsify, and therefore has limited explanatory power.
+
+\begin{hypothesis}[The medium claim: structural similarity after abstraction]\label{hyp:medium}
+For large software systems that come from different domains, are developed by different
+teams and carry different implementation details, once differences of implementation
+language, component naming and domain semantics have been eliminated, their high-level
+architectures exhibit a structural similarity \emph{significantly above a random baseline}
+in some definable abstract space.
+\end{hypothesis}
+
+The medium claim is the core claim, and the operationalisable one. It can be operationalised
+(\S\ref{sec:baseline}), and whether it holds depends on no metaphysical assumption.
+
+\begin{hypothesis}[The strong claim: single-point convergence]\label{hyp:strong}
+Almost all large software that is normally biased eventually converges on one and the same
+high-level architecture.
+\end{hypothesis}
+
+The strong claim is unsupported by the evidence and is probably too strong. Its principal
+defect is that it conflates ``there exists an attractor'' with ``there is only one
+attractor''.
+
+This paper takes Hypothesis \ref{hyp:medium} (the medium claim) as its core claim, treats
+Hypothesis \ref{hyp:weak} (the weak claim) as its degenerate form, and rejects
+Hypothesis \ref{hyp:strong} (the strong claim) as an overstatement.
+
+\section{Constraint Systems and Solution-Set Geometry}\label{sec:overconstrain}
+
+\begin{definition}[Constraint system and solution set]\label{def:constraint}
+Let the design space be a $d$-dimensional manifold $\mathcal{D}$. A design problem is
+defined by $c$ independent constraints
+$g_1, \dots, g_c : \mathcal{D} \to \mathbb{R}$, and its \term{solution set} is
+$\mathcal{S} = \{x \in \mathcal{D} : g_j(x) = 0,\; j = 1..c\}$.
+\end{definition}
+
+\begin{proposition}[Over- and under-constraint]\label{prop:overconstrain}
+Under the notation of Definition \ref{def:constraint}, if the constraints are mutually
+independent and transversal, then
+\begin{enumerate}[label=(\alph*)]
+\item when $c \ge d$, $\mathcal{S}$ is generically a finite set (or empty);
+\item when $c < d$, $\mathcal{S}$ is generically a submanifold of dimension
+      $\ge d - c$;
+\item when $c \ll d$, the dimension of $\mathcal{S}$ tends to $d$, that is, the solution
+      set is almost unconstrained.
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+Under transversality, each independent constraint lowers the codimension by $1$. By the
+transversality theorem (Thom), codimension is additive:
+$\mathrm{codim}\,\mathcal{S} = c$, hence $\dim \mathcal{S} = d - c$ (when $d-c \ge 0$);
+when $c \ge d$ the dimension is $0$, that is, a discrete point set; when $c < d$ the
+dimension is positive, that is, a submanifold.
+\end{proof}
+
+Proposition \ref{prop:overconstrain} gives a clean explanation of ``unique below, manifold
+above'', but the wording must be handled with care. It does \emph{not} say that the low
+level really is formalised as a constraint system; it says that the effective dimension of
+the low-level design space is small and its effective constraints numerous, so that the
+solution set is degenerate in the geometric sense.
+
+\begin{example}[The low level]\label{ex:abi}
+Consider defining a function calling convention for a fixed instruction-set architecture.
+The design freedoms include where arguments are passed (registers or stack), who is
+responsible for saving registers, stack frame layout, where the return address is stored,
+how variadic arguments are passed, alignment requirements, and compatibility with existing
+binaries, debuggers, exception unwind tables, the system-call interface and the dynamic
+linker. The great majority of these constraints are not negotiable preferences but are
+fixed by \emph{objects that already exist}: existing binaries must keep working, the
+debugger must be able to walk the stack, exceptions must unwind, and the kernel must be
+able to receive system calls. Hence $c \ge d$, and the solution set degenerates to very few
+feasible points, in practice often to a single point.
+\end{example}
+
+\begin{example}[The high level]\label{ex:arch}
+Consider choosing an architecture for a task-processing system. The design freedoms
+include: function calls within a monolith, multi-process message passing, microservice RPC,
+event-driven asynchronous processing, the actor model, distributed workflow engines, and
+their continuous parameters along the following dimensions: deployment granularity, state
+ownership, consistency model, synchronous or asynchronous, failure boundaries, and data
+partitioning. Here the problem-level constraints are markedly fewer than the degrees of
+freedom, and $\mathcal{S}$ is a high-dimensional manifold.
+\end{example}
+
+Why, then, does the high level still converge? Because there is a \emph{second set of
+constraints}, which come not from the problem but from the human organisations that build
+and maintain the system:
+
+\begin{principle}[Compression of the solution set by organisational constraints]\label{pr:org}
+The under-constrained high-dimensional solution manifold at the problem level is compressed
+by organisational constraints into a few sharp peaks. These constraints include: the cost of
+communication between teams, the ceiling on cognitive load, the limits of deployment and
+operations capacity, the market for technical talent, the sunk cost of an existing
+technology stack, and regulatory and compliance requirements.
+\end{principle}
+
+One corollary follows: \emph{high-level convergence is not towards engineering optimality
+but towards structures navigable by a bounded organisation}. The strength law below makes
+this precise.
+
+\section{Mechanisms of Convergence}\label{sec:mechanisms}
+
+\begin{enumerate}[label=(M\arabic*)]
+\item \term{Complexity constraint}. Let a system have $N$ components. If dependencies are
+      left unorganised, the number of potential directed dependencies reaches $N(N-1)$, and
+      the undirected count $N(N-1)/2$. Maintainability therefore requires structure to be
+      imposed on dependencies: modularisation, layering, explicit interfaces, constraints on
+      dependency direction, subsystem boundaries. These techniques are not identical, but
+      all of them solve one and the same problem: \emph{limiting the propagation of
+      complexity}. The classical argument for modularisation and information hiding is
+      \cite{parnas1972}.
+\item \term{Information-flow constraint}. A large class of software can be abstracted as
+      ``input $\to$ processing $\to$ state change $\to$ output'' (with feedback, concurrent
+      events, external side effects and continuously running state machines superimposed).
+      Where different duties have different rates of change, error modes and resource
+      requirements, separating them yields a concrete benefit: parsing from execution,
+      business rules from data access, pure computation from side effects, and the control
+      plane from the data plane.
+\item \term{State-management constraint}. A system must answer: who owns a given state? who
+      may modify it? when is it created and destroyed? how do several components observe its
+      changes? how is concurrent access coordinated? how is consistency restored on failure?
+      These questions are highly general, and therefore repeatedly produce similar
+      structures: transaction and lock management, process and handle management, the state
+      owner and event loop of a GUI, replicated state machines, entity lifecycle and system
+      update.
+\item \term{Cognitive constraint}. Large software is constrained not only by machines but by
+      the limits of developer comprehension. If implicit relations hold between all
+      components, then even a system that runs in the computational sense leaves its
+      developers unable to predict the effect of a change. Humans therefore tend to build
+      hierarchies, namespaces, modules, explicit interfaces, composable abstractions and
+      locally comprehensible state. \emph{Software architecture organises not only
+      computation but comprehensibility under bounded cognition.}
+\item \term{Evolutionary constraint}. Large software is not designed in one pass; it passes
+      through initial implementation, feature growth, performance optimisation, fault repair,
+      team handover, module refactoring and compatibility maintenance. Some decisions reveal
+      their cost only as evolution proceeds, which produces a selection effect. Evolution in
+      practice does not guarantee optimality: legacy baggage, compatibility requirements,
+      organisational structure and sunk cost can all keep an undesirable architecture alive
+      for a long time.
+\end{enumerate}
+
+Mechanisms (M1)--(M3) come from the objective structure of the problem; mechanisms (M4)--(M5)
+come from humans and history. This distinction corresponds to the strength law of
+\S\ref{sec:strength}: the first three mechanisms produce cross-domain similarity, the last
+two produce within-domain similarity and path dependence.
+
+The classical statements of mechanisms (M4) and (M5) are decomposition into levels under
+cognitive load \cite{simon1962} and the determination of system structure by communication
+structure \cite{conway1968}. The oscillation between a ``no final state'' view of
+architecture and multiple stable forms is treated in \cite{nygard2018}; the practice by
+which organisational shape drives architecture back through team topologies appears in
+bounded contexts and domain-driven design \cite{evans2003}.
+
+\section{Convergence Strength and Domain Binding}\label{sec:strength}
+
+\begin{definition}[Domain binding]\label{def:dom}
+Let the semantics of level $\Lambda$ depend on a set of domain axioms
+$\mathrm{Ax}(\Lambda)$ (for example, ``an account balance may be negative'' or ``a frame
+must be presented within 16.6\,ms''). Define the \term{domain binding} of $\Lambda$ as
+\begin{equation}\label{eq:dom}
+\mathrm{Dom}(\Lambda) \;=\; \frac{\bigl|\mathrm{Ax}(\Lambda)\bigr|}
+{\bigl|\mathrm{Ax}(\Lambda)\bigr| + \bigl|\mathrm{Ax}_{\text{general}}(\Lambda)\bigr|} ,
+\end{equation}
+that is, the fraction of the level's axioms that are domain-specific. $\mathrm{Dom} = 0$
+means that the level is determined entirely by general axioms (such as memory locality or
+the cost of concurrency coordination); $\mathrm{Dom} = 1$ means that the level is entirely
+domain convention.
+\end{definition}
+
+\begin{conjecture}[The strength law of convergence]\label{conj:strength}
+Let $\mathrm{Conv}(\Lambda)$ be the structural similarity of level $\Lambda$ under
+cross-system comparison (\S\ref{sec:baseline} gives the operationalisation). Then
+$\mathrm{Conv}$ is monotonically decreasing in $\mathrm{Dom}$:
+\begin{equation}\label{eq:convlaw}
+\Lambda_1 \preceq \Lambda_2 \;\Longrightarrow\;
+\mathrm{Conv}(\Lambda_1) \;\ge\; \mathrm{Conv}(\Lambda_2)
+\qquad \text{whenever} \qquad
+\mathrm{Dom}(\Lambda_1) \le \mathrm{Dom}(\Lambda_2).
+\end{equation}
+\end{conjecture}
+
+Conjecture \ref{conj:strength} has observable qualitative support: the closer to the
+physical and network layers, the stronger the convergence (the eight fallacies of
+distributed computing are hard constraints with no room for negotiation); the closer to the
+business domain, the weaker the convergence (an insurance core system and a recommender
+system are almost never isomorphic in their domain models); the closer to organisational
+structure, the more it is governed by communication structure; the closer to the maturity
+phase of a technology, the more its form converges; and the closer to core and high-risk
+modules, the more conservatively it converges.
+
+This paper does not call Equation \eqref{eq:convlaw} a law, because it depends on the
+definability of $\mathrm{Dom}$ and the measurability of $\mathrm{Conv}$, both of which must
+be established experimentally. Its value is to convert a vague directional judgement into a
+falsifiable monotonicity hypothesis.
+
+\section{Relations Rather Than Components}\label{sec:relations-converge}
+
+\begin{principle}[Relations first]\label{pr:relations}
+Cross-system structural commonality resides mainly in \emph{relations} rather than in
+\emph{components}. Different systems need not have the same modules, but they may have
+similar relational graphs:
+\begin{itemize}
+\item which parts decide and which parts execute;
+\item which parts own state and which parts may only read it;
+\item which parts define stable contracts and which parts are allowed to change;
+\item which parts coordinate globally and which parts work independently;
+\item which dependencies may cross a boundary and which must be forbidden.
+\end{itemize}
+\end{principle}
+
+In the language of Definitions \ref{def:relgraph} and \ref{def:skeleton}: what must be
+sought is not a universal architectural template but a set of structural relations that
+recur across different systems, together with the \emph{conditions under which they hold}.
+This is the same line of thought as the six functions of Chapter \ref{ch:infrastructure},
+viewed from two sides: the six functions supply coordinates for \emph{management duties},
+the relational graph supplies coordinates \emph{between duties}.
+
+\begin{example}[Abstract skeletons of a database and a browser]\label{ex:db-browser}
+A database engine comprises an SQL parser, a query optimiser, an execution engine, a buffer
+pool, a transaction manager and a storage engine; a browser comprises HTML/CSS/JavaScript
+parsers, a style and layout engine, a script execution engine, a rendering engine, a network
+subsystem and a cache persistence mechanism. Their module names, internal algorithms and
+concrete duties all differ. Yet under a suitable skeleton map $\phi$, both present as: an
+\emph{input and interface layer} (receiving requests, parsing input, establishing an
+execution context); an \emph{interpretation and planning layer} (converting external intent
+into an internally executable representation); an \emph{execution and coordination layer}
+(scheduling work, coordinating subsystems, managing the execution process); and a
+\emph{state and resource layer} (managing data, caches, lifecycle and persistence).
+\end{example}
+
+The value of Example \ref{ex:db-browser} is limited: this skeleton is already broad enough
+to describe almost any system. An additional requirement on the abstraction level is
+therefore needed:
+
+\begin{principle}[Two-way constraint on the abstraction level]\label{pr:abstraction-level}
+An abstraction level worth studying must satisfy two directions at once: \emph{upwards}, it
+must be able to identify structure common across systems; \emph{downwards}, it must retain
+enough discriminating power that different systems remain distinguishable at that level.
+The more abstract the level, the more implementation differences are eliminated, but the
+more easily the description loses discriminating power; there is a proper middle level.
+\end{principle}
+
+The coordinates of the six functions in Chapter \ref{ch:infrastructure} are designed
+precisely to satisfy this two-way requirement: they are narrower than
+``input--processing--output'' (and therefore discriminating) and broader than any concrete
+module list (and therefore comparable across domains).
+
+\section{Verification Design}\label{sec:baseline}
+
+For the medium claim (Hypothesis \ref{hyp:medium}) to be a scientific claim, it must be able
+to answer ``compared with what''. A complete test design has five steps.
+
+\paragraph{Step 1: Build the architecture graph.}
+For each system, build a graph $\mathcal{G} = (V, E)$ whose nodes are components or duties
+and whose edges are calls, dependencies, control flow or data flow. By
+Definition \ref{def:relgraph}, \emph{relations of different types must be recorded
+separately}, so that entirely different relations are not conflated.
+
+\paragraph{Step 2: Define the abstraction map.}
+Map concrete components to more general categories, for example: input and parsing, planning
+and decision, execution and coordination, state and persistence, communication and
+boundary, resource and lifecycle management. These categories must not be defined so broadly
+in advance that any system will appear similar.
+
+\paragraph{Step 3: Choose discriminating structural metrics.}
+Candidate metrics include: the degree of modularity of the dependency graph; the depth of
+the hierarchy; the proportion of cross-module dependencies; the concentration of state
+ownership; the degree of coupling between control flow and data flow; the network centrality
+of core components; and the direction of dependencies between duties.
+
+\paragraph{Step 4: Construct a sound control group.}
+It is not enough to compare a few well-known systems and find that all of them are modular.
+The observed similarity must be compared against an appropriate random baseline, controlling
+for system size, domain, platform, architectural style and historical technology stack.
+
+\paragraph{Step 5: Distinguish genuine convergence from common origin.}
+Two systems may adopt the same architectural pattern because they independently solved
+similar problems; because they used the same framework; because they were shaped by the same
+standard; because they drew on the same design literature; or because they inherited the
+same historical architecture. \emph{Only after these factors are controlled is there better
+reason to speak of independent structural convergence.}
+
+Chapter \ref{ch:program} writes this design out as Hypotheses $H_1$ and $H_2$.
+
+\section{Counterexamples and Limits}\label{sec:limits}
+
+The cases that invalidate or degrade the convergence claim must be listed explicitly:
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Path dependence}. Once a structure is locked in by an ecosystem, a toolchain or
+      a standard, it may persist for a long time even if suboptimal. The strength of the
+      lock-in is proportional to the cost of migration and independent of the quality of the
+      structure locked in.
+\item \term{Phase transition in size}. At the two sizes of $10^{2}$ and $10^{9}$ entities,
+      the optimal structure is qualitatively different: the consistency model, the sharding
+      strategy and the failure model all change. There is therefore no such thing as ``the
+      architecture of a large system'', only ``an architecture within some range of sizes''.
+      This directly limits any statement that ``all large systems converge''.
+\item \term{Organisational politics}. The determination of system structure by communication
+      structure (Conway's law) means that even when the technical problem is identical,
+      different organisations will produce different system boundaries. This is both part of
+      the reason for convergence (when organisational shapes converge) and part of the reason
+      for divergence (when organisational shapes differ).
+\item \term{Strongly coupled systems}. When the internal coupling of a system cannot be
+      localised (for example, a tightly coupled real-time control system or a monolithic
+      kernel), module boundaries may be forced rather than chosen, and comparing
+      ``architecture'' itself becomes less meaningful.
+\item \term{Arbitrariness in the choice of abstraction level}. The choice of metrics in
+      Steps 3 and 4 itself contains researcher degrees of freedom. Different duty
+      classification systems yield different similarity conclusions. This is the most fragile
+      methodological link in this line of work and must be mitigated by pre-registering the
+      metrics and by robustness tests across several classification systems.
+\end{enumerate}
+
+The falsifiable part of this chapter is Hypothesis \ref{hyp:medium} and
+Conjecture \ref{conj:strength}: if, after controlling for size, domain, platform and
+framework, cross-system structural similarity is not significantly above a random baseline,
+or if similarity is not monotone in $\mathrm{Dom}$, then the central claim of this chapter is
+weakened (Hypotheses $H_1$ and $H_2$, Chapter \ref{ch:program}). The weak claim
+\ref{hyp:weak} and Principle \ref{pr:relations} are unaffected by this, because they are
+interpretive frameworks rather than empirical assertions.

@@ -1,0 +1,444 @@
+% =====================================================================
+\chapter{The Falsifiable Research Programme}\label{ch:program}
+% =====================================================================
+
+Every claim in this paper is no more than an interpretive framework unless it is converted
+into testable form. This chapter performs that conversion, following the distinction
+between hard core and protective belt in the methodology of research programmes
+\cite{lakatos1970}: claims that are not load-bearing belong in the protective belt, not
+reinforced into the hard core.
+
+\section{Methodology: From Interpretive Framework to Testable Hypotheses}
+
+\begin{principle}[Demotion procedure]\label{pr:demote}
+For every claim, carry out the following operations: write down its \emph{observable
+consequences}; write down what observation would \emph{refute} it; write down the
+\emph{minimal experiment} that would yield that observation; and write down the
+\emph{control condition} of that experiment. Any claim for which these four steps cannot be
+completed is to be marked explicitly as an interpretive framework rather than an empirical
+assertion.
+\end{principle}
+
+By Principle \ref{pr:demote}, the claims of this paper fall into three classes:
+
+\begin{itemize}
+\item \term{Proved}: propositions \ref{prop:oblivious}, \ref{prop:overconstrain},
+      \ref{prop:stopping}, \ref{prop:leakpair}, \ref{prop:soundness},
+      \ref{prop:active}, \ref{prop:asym-struct}, \ref{prop:operad-compose},
+      \ref{prop:transport}, \ref{prop:observability}, \ref{prop:exponent}; theorems
+      \ref{th:integration}, \ref{th:six}, \ref{th:centralise},
+      \ref{th:condorcet}; proposition \ref{th:correlated}; corollaries
+      \ref{cor:threshold}, \ref{cor:buildadopt}, \ref{cor:diversity},
+      \ref{cor:three-failures}.
+\item \term{Argued under explicit assumptions}: principles \ref{th:compression},
+      \ref{th:necessity}, \ref{th:separation}, \ref{th:design}; propositions
+      \ref{prop:no-godel}, \ref{prop:three-grounds}.
+\item \term{Advanced as falsifiable hypotheses}: the hypotheses $H_1$--$H_{12}$ below. In
+      addition, the structural proposal of Remark \ref{rmk:fibration-status} (promoting the
+      level family to a strict fibration) and the renormalisation analogy of Remark
+      \ref{rmk:rg} are not counted among the theorems; their status is that of a proposal
+      and a heuristic.
+\end{itemize}
+
+\section{Twelve Falsifiable Hypotheses}
+
+\begin{hypothesis}[Structural convergence above a random baseline]\label{hyp:h1}
+After controlling for system size, domain, platform, programming language and framework,
+large software systems from different domains exhibit structural similarity on their
+abstract skeleton (Definition \ref{def:skeleton}) significantly above a random baseline.
+\emph{Operationalisation}: construct a collection of architecture graphs and skeleton maps
+by the five-step design of \S\ref{sec:baseline}, take the structural metrics of the third
+step as the feature vector, and test whether the similarity distribution of cross-domain
+pairs stochastically exceeds a null model, such as degree-sequence-preserving graph
+rewiring.
+\emph{Falsification condition}: the similarity distribution does not differ significantly
+from the null model.
+\emph{Risk}: freedom in the choice of skeleton map; the map and the metrics must be
+pre-registered.
+\end{hypothesis}
+
+\begin{hypothesis}[Convergence strength monotone in domain binding]\label{hyp:h2}
+Conjecture \ref{conj:strength} holds: structural similarity decreases monotonically in the
+domain binding $\mathrm{Dom}$ (Definition \ref{def:dom}).
+\emph{Operationalisation}: annotate $\mathrm{Dom}$ at each level (estimated from the
+fraction of domain axioms on which that level's semantics depends) and regress similarity
+on $\mathrm{Dom}$.
+\emph{Falsification condition}: the monotonicity fails, or the coefficient is not
+significant.
+\end{hypothesis}
+
+\begin{hypothesis}[Phase-transition threshold determined by $n \times m$]\label{hyp:h3}
+Whether a system builds a unified substrate is predicted better by the product of the
+number of live entities and the number of shared resources (together with the frequency of
+recurrent problems and the frequency of evolution) than by lines of code.
+\emph{Operationalisation}: for a set of open-source projects, annotate manually or
+semi-automatically whether a self-built implementation of any of the six functions appears;
+fit separate logistic regressions on a proxy for $n \times m$ (order of magnitude of
+concurrent entities, number of kinds of shared resource) and on lines of code; compare
+their explanatory power.
+\emph{Falsification condition}: lines of code explain the outcome no worse than
+$n \times m$.
+\emph{Risk}: automatic estimation of $n$ and $m$ is difficult; the number of concurrent
+entities and of mutexes, connection pools, caches and the like can serve as a first proxy.
+\end{hypothesis}
+
+\begin{hypothesis}[Read-set scaling outperforms traditional size metrics]\label{hyp:h4}
+The change read-set $\mathbb{E}[\rho]$ (Definition \ref{def:readset}) and its \emph{scaling
+exponent} $\alpha$ with respect to system size (Proposition \ref{prop:exponent}) correlate
+with defect rate and change failure rate better than traditional size metrics such as
+module count, lines of code and cyclomatic complexity, and better than the current magnitude
+of the read-set $\mathbb{E}[\rho]$ itself.
+\emph{Operationalisation}: on several open-source projects with a complete commit history
+and defect tracking, estimate the magnitude and the scaling of the read-set over the same
+time windows, regress each in turn on defect density in a panel design, and compare their
+explanatory power.
+\emph{Falsification condition}: the scaling provides no predictive power beyond the
+magnitude and the existing metrics.
+\end{hypothesis}
+
+\begin{hypothesis}[Layered model plus active probing outperforms exhaustive reading]\label{hyp:h5}
+Under a constraint on unit cost (token budget or person-hours), a comprehension process
+that uses a layered cognitive model plus active probing attains a higher task success rate
+(scored against (U1)--(U5) of Definition \ref{def:understand}) than exhaustive reading.
+\emph{Operationalisation}: given the same unfamiliar code base and the same set of tasks
+(predict the impact surface, locate a defect, add a feature), compare three strategies:
+sequential reading, layered summaries only, and layered summaries plus a probing loop.
+Measure task success rate and success rate per unit cost.
+\emph{Falsification condition}: the active-probing strategy is not significantly better, or
+its advantage comes entirely from the number of probes rather than from the structure of the
+strategy.
+\end{hypothesis}
+
+\begin{hypothesis}[Leak pairs are automatically discoverable]\label{hyp:h6}
+The leak pairs of Proposition \ref{prop:leakpair} can be found by automated differential
+testing, and the discovery rate is negatively correlated with module boundary quality.
+\emph{Operationalisation}: for several libraries, generate execution pairs that are
+``identical at the interface and different in internal state'', detect divergence in
+external behaviour, and compare against human-annotated boundary quality scores.
+\emph{Falsification condition}: automatically generated execution pairs fail to trigger
+leaks effectively, or the discovery rate is unrelated to boundary quality.
+\end{hypothesis}
+
+\begin{hypothesis}[Specification quality is the present bottleneck]\label{hyp:h7}
+At the present state of the art, the principal bottleneck on the path from intent to
+verifiable execution is specification quality, not code generation capability or proof
+search capability.
+\emph{Operationalisation}: take existing benchmark evidence (specification generation
+tasks, evaluations that separate code correctness from specification quality, proof success
+rates) as initial evidence, and on a new controlled benchmark compare the marginal
+contribution of each of the three links to end-to-end success rate.
+\emph{Initial evidence}: a component-wise evaluation on 189 Lean tasks reports, for the
+best model, code correctness 72.6\%, specification soundness and completeness 52.3\%, and
+proof success rate 4.9\% (single trial) \cite{verina2026}; an evaluation of 245
+operating-system kernel specification generation tasks shows that models remain deficient
+in long context and specification completeness \cite{osvbench2026}; an evaluation that
+instantiates specifications as trusted tests points out that proof difficulty interferes
+with the assessment of specification quality \cite{coins2026}; a traceable refinement
+method reports accuracy gains on the specification-generation subtask
+\cite{verispecgen2026}; a mutation-driven method reports precision and recall
+\cite{specsyn2026}.
+These are empirical results on specific benchmarks, not general reliability theorems, but
+they support the judgement that the three dimensions should be evaluated separately.
+\emph{Falsification condition}: with the capability of the other links controlled, the
+marginal contribution of specification quality is not significantly greater than that of
+the other links.
+\end{hypothesis}
+
+\begin{hypothesis}[Consensus reliability is dominated by correlated error modes]\label{hyp:h8}
+On intent-attestation tasks, the reliability gain from adding verifiers is bounded above by
+the correlated error mode $q$ (Proposition \ref{th:correlated}); introducing heterogeneous
+verifiers (people of different backgrounds, models from different sources, adversarial
+roles) improves reliability more than merely adding homogeneous verifiers.
+\emph{Operationalisation}: construct intent-attestation tasks, configure several verifier
+groups (homogeneous or heterogeneous), measure how the error rate of the majority judgement
+varies with group size and heterogeneity, and compare with the predictions of Equations
+\eqref{eq:chernoff} and \eqref{eq:correlated}.
+\emph{Falsification condition}: the rate at which the error rate of homogeneous verifiers
+decreases with $n$ does not differ significantly from that of heterogeneous verifiers (that
+is, $q$ is in fact small).
+\end{hypothesis}
+
+\begin{hypothesis}[The artefact binding gap is a measurable risk]\label{hyp:h9}
+The binding gap (Equation \eqref{eq:binding}) between the verified artefact and the
+artefact actually executed is a measurable risk in real deployments and can be
+significantly reduced, and reducing it yields an observable reliability benefit.
+\emph{Operationalisation}: introduce content addressing, reproducible builds and
+deploy-time verification into several deployment pipelines, and measure the change in the
+proportion of build nondeterminism, the rate of deployment drift events and the rate of
+related incidents.
+\emph{Falsification condition}: the gap is not measurable in practice, or the cost of
+closing it far exceeds the benefit.
+\end{hypothesis}
+
+\begin{hypothesis}[The six functions are the surviving set under coarse-graining]\label{hyp:h10}
+Under the coarse-graining sequence of Definition \ref{def:coarsegrain}, the structures that
+survive are exactly the slots of $\mathcal{K}_6$ and their relational graph (Conjecture
+\ref{conj:relevant}).
+\emph{Operationalisation}: apply mechanical coarse-graining to several repositories
+following Principle \ref{pr:coarsegrain-impl}, and record how the surviving set changes
+with granularity.
+\emph{Falsification condition}: the surviving set contains structures outside the six
+functions, or some of the six functions are washed out already at intermediate granularity.
+\emph{Risk}: the choice of coarse-graining threshold introduces an arbitrary parameter; the
+threshold should be subjected to a sensitivity analysis.
+\end{hypothesis}
+
+\begin{hypothesis}[Incentive structure reduces correlated error]\label{hyp:h11}
+On intent-attestation tasks, adopting an appropriate scoring rule (Principle
+\ref{pr:scoring}) reduces the error rate of the majority judgement more than merely
+increasing the number of verifiers, and a measurable fall in error correlation accompanies
+it.
+\emph{Operationalisation}: on the same set of specification-attestation tasks, compare
+three configurations: few unincentivised verifiers, many unincentivised verifiers, and few
+verifiers under a scoring rule; measure the error rate and the correlation coefficient of
+errors between verifiers.
+\emph{Falsification condition}: neither the error rate nor the error correlation
+coefficient of the scoring-rule configuration is better than that of the
+many-unincentivised configuration.
+\end{hypothesis}
+
+\begin{hypothesis}[Rate--distortion slope predicts refactoring benefit]\label{hyp:h12}
+The slope $\partial L_T / \partial \DL$ of the rate--distortion curve (Remark
+\ref{rmk:rd-refactor}) predicts which refactorings reduce defect rate or rework rate in
+practice.
+\emph{Operationalisation}: for a set of completed refactorings, estimate ex ante the
+direction of displacement along the curve and the slope, and ex post regress the changes in
+defect rate and change failure rate on them.
+\emph{Falsification condition}: the slope provides no predictive power beyond naive
+variables such as the size of the change.
+\end{hypothesis}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption{Summary of hypotheses and experimental designs}\label{tab:hypotheses}
+\begin{tabular}{L{0.9cm}L{4.0cm}L{4.6cm}L{4.6cm}}
+\toprule
+\textbf{ID} & \textbf{Hypothesis} & \textbf{Principal measurement} & \textbf{Principal risk} \\
+\midrule
+$H_1$ & Structural convergence above a random baseline & Skeleton similarity vs.\ null
+  model & Excessive freedom in the choice of skeleton map \\
+$H_2$ & Convergence strength monotone in domain binding &
+  Regression of similarity on $\mathrm{Dom}$ &
+  $\mathrm{Dom}$ is hard to annotate independently \\
+$H_3$ & Threshold determined by $n\times m$ & Comparison of logistic-regression explanatory
+  power & Automatic estimation of $n$ and $m$ \\
+$H_4$ & Read-set scaling outperforms traditional size metrics &
+  Panel regression of read-set scaling on defect density & Accuracy of the read-set proxy \\
+$H_5$ & Layered model plus active probing outperforms exhaustive reading &
+  Task success rate per unit cost & Subjectivity of tasks and scoring \\
+$H_6$ & Leak pairs are automatically discoverable & Differential-testing discovery rate &
+  Difficulty of triggering valid execution pairs \\
+$H_7$ & Specification quality is the bottleneck & Marginal contribution of the three links &
+  Ground truth and coverage of the benchmark \\
+$H_8$ & Consensus dominated by $q$ & Error rates of homogeneous and heterogeneous verifiers &
+  Construction and measurement of heterogeneity \\
+$H_9$ & Artefact binding gap is measurable & Build nondeterminism and drift event rate &
+  Availability of real deployments \\
+$H_{10}$ & The six functions are the coarse-graining surviving set &
+  Surviving set under the coarse-graining sequence &
+  Arbitrariness of the coarse-graining threshold \\
+$H_{11}$ & Incentive structure reduces correlated error &
+  Error rate and error correlation coefficient &
+  Experimental ethics and cost of incentive schemes \\
+$H_{12}$ & Rate--distortion slope predicts refactoring benefit &
+  Regression of defect rate before and after refactoring & Estimability of the slope \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Three Priority Research Directions}
+
+The three directions below connect requirements engineering with formal methods,
+compilation correctness with resource analysis, and program contracts with runtime
+security. They share one characteristic: each has a precisely stated question, a
+falsifiable hypothesis, a method of testing and a principal risk.
+
+\subsection*{Direction One: Specification-Quality Evidence Chain for Real Intent}
+
+\paragraph{The precise question.}
+Given a set $R$ of natural-language requirements, a domain model $D$ and a generated
+specification $S$, how is an independent evaluation process to be built that checks
+separately: requirement coverage; exclusion of forbidden behaviour; retention of permitted
+behaviour; explicitness of environmental assumptions; and the satisfiability and
+implementability of the specification?
+
+\paragraph{Existing foundations.}
+Requirements traceability research, requirement formalisation and verification, vacuity
+detection, and recent specification-generation and joint-evaluation benchmarks. The key
+connection is \emph{semantic traceability} in requirements engineering and
+\emph{specification-versus-program counterexamples} in formal methods.
+
+\paragraph{Falsifiable hypothesis.}
+Compared with a single ``proof passed'' signal or a single ``similarity to a reference
+specification'' score, atomic requirement traceability plus positive and negative testing
+plus specification-strength and mutation checks plus independent domain review identifies
+the \emph{under-constraint}, \emph{over-constraint} and \emph{intent omission} of a
+specification earlier, that is, it is the concretisation of Hypothesis $H_7$.
+
+\paragraph{Method of testing.}
+On small benchmarks such as payments, permission control and idempotent interfaces,
+establish requirement atoms annotated by multiple stakeholders, permitted and forbidden
+trace sets, and environmental preconditions; compare four approaches: pure generation,
+requirement decomposition, traceability testing, and mutation refinement with expert
+assistance. Measure precision and recall, error categories, the rate of missed
+prohibitions, the over-constraint rate, expert agreement and cost.
+
+\paragraph{Falsification condition.}
+If adding the traceability and mutation layers does not significantly reduce the rate at
+which hidden negative requirements are missed, or if the gain comes only from leaked
+reference test answers, the hypothesis fails.
+
+\paragraph{Principal risk.}
+The ``gold standard'' for real intent may itself be contested.
+
+\subsection*{Direction Two: Joint Functional--Resource Translation Certificates for Actual Artefacts}
+
+\paragraph{The precise question.}
+Given a source program $P$, a functional contract $\varphi$, a resource budget $B$ and a
+fixed target platform model $H$, can a certificate $C$ be generated for \emph{each
+compilation} such that an independent verifier checks semantic preservation and analysable
+resource constraints at the same time?
+
+\paragraph{Existing foundations.}
+Semantic-preservation proofs for verified compilers, per-translation validation,
+translation certification, proof-carrying code, automatic amortised resource analysis and
+worst-case execution time analysis. The substantive connection is to place the
+``behaviour relation'' and the ``cost relation'', currently verified \emph{separately},
+inside a \emph{cost-carrying behaviour semantics}.
+
+\paragraph{Working model.}
+The program semantics is extended to a pair $(\tau, c)$, where $\tau$ is an observable
+trace and $c$ a cost; the translation proof should guarantee that target traces are
+explicable by the source semantics, and should prove $c_{\text{target}} \le B$ under an
+explicit cost model, or else give a conservative relation relative to the source cost.
+
+\begin{remark}[An assumption that must be avoided]
+It must not be presupposed that optimised compilation always lowers cost monotonically.
+Optimisation may improve average performance while worsening the worst case; the cost
+relation must therefore be a conservative relation comparable in both directions, not an
+assumption of monotonicity.
+\end{remark}
+
+\paragraph{Method of testing.}
+Choose a reproducible sublanguage and target architecture, and compare three routes:
+verified compilation, translation validation, and ordinary compilation with post-hoc
+verification. Record certificate size, verification time, coverage of program categories,
+tightness of resource bounds, false-rejection rate, and robustness to changes in compiler
+optimisation.
+
+\paragraph{Falsification condition.}
+If the resource proofs do not remain sound once calibrated against a real platform, or if
+certificate generation and verification cost far more than the baseline with no safety
+benefit, the scope should be narrowed to specific safety-critical domains.
+
+\paragraph{Principal risk.}
+The target processor microarchitecture and scheduling model are not precise enough.
+
+\subsection*{Direction Three: Composition Contracts and Runtime Assurance for Untrusted Components}
+
+\paragraph{The precise question.}
+When a service is composed of verified components, generated components that are not fully
+verified, and external services, how are assumption--guarantee contracts, information-flow
+policies, resource budgets and runtime monitoring to be used to give an auditable overall
+safety proposition together with an upper bound on failure impact?
+
+\paragraph{Existing foundations.}
+Modular assumption--guarantee reasoning, contract composition for dynamical systems,
+information-flow non-interference, verified kernels, and studies of uncertainty in runtime
+verification. The substantive connection is to place the formal contracts of subcomponents
+and the runtime detection and enforcement of contract premises and guarantees within a
+single system argument.
+
+\paragraph{Falsifiable hypothesis.}
+When every component has explicit assumptions, entry and exit events are observable, and
+contract violations can trigger isolation or rollback from an independent monitor, a
+composable conditional guarantee can be given for a specified safety property without
+proving the internal implementation of each component correct.
+
+\paragraph{Method of testing.}
+Build a multi-component payment flow: an idempotent request service, an identity and
+permission service, a generative risk-decision component, an external database and a
+network simulator. Under fault injection, compare three groups (no contracts, static
+contracts, contracts plus monitoring and rollback) and measure duplicate charges,
+cross-user data leakage, detection latency, isolation success rate and performance cost.
+
+\paragraph{Falsification condition.}
+If the events observable by the monitor are insufficient to decide the critical properties,
+or if the rollback mechanism cannot itself remain safe, the architecture cannot provide the
+guarantee it claims.
+
+\paragraph{Principal risk.}
+For subtle semantic properties that go unobserved, runtime assurance can constrain only the
+detectable and enforceable part.
+
+\section{Six-Stage Implementation Roadmap}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Research implementation roadmap}\label{tab:roadmap}
+\begin{tabular}{L{1.0cm}L{6.3cm}L{7.0cm}}
+\toprule
+\textbf{Stage} & \textbf{Core tasks} & \textbf{Deliverables} \\
+\midrule
+1 & Define the benchmark and the threat model: choose a payment service and an idempotent
+  interface as the running case; fix the assets, roles, observable events, forbidden
+  behaviour, environmental assumptions and time limits &
+  Set of requirement atoms, positive and negative trace sets, list of environmental
+  assumptions (attested by stakeholders) \\
+2 & Specification quality assessment: compare pure generation, traceability refinement, and
+  mutation- and counterexample-driven approaches; check for under-constrained
+  specifications, over-constrained specifications, vacuous satisfaction, unsatisfiability
+  and unimplementability &
+  Specification quality assessor; for each requirement identifier, the corresponding
+  specification clause, test and attestation record \\
+3 & Program synthesis in a restricted language: choose an explicit sublanguage and a logic
+  of controlled decidability; separate candidate generation from proof checking &
+  Candidate programs, proof obligations, counterexample classification; distinguish
+  unsatisfiable, unknown, timeout and inexpressible \\
+4 & Artefact and resource proofs: choose a mature compilation or translation-validation
+  route; specify reproducible experimental hardware or a simulation model &
+  Compilation-chain metadata, semantic-preservation or translation certificates, resource
+  bounds and model boundaries \\
+5 & Composition and runtime assurance: write assumption--guarantee contracts for external
+  services and not-fully-verified modules; add independent monitoring, sandboxing, auditing
+  and safe rollback &
+  System-level contract composition results, fault-injection report, residual risk list \\
+6 & End-to-end evaluation: measure assurance coverage, false negatives, false positives,
+  development cost, proof cost, artefact verification cost, resource budgets and failure
+  recovery &
+  A public benchmark capable of falsifying the research hypotheses, a tool prototype and an
+  experimental report \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Success Criteria}
+
+The criteria below assess whether the roadmap succeeds. They are designed to be
+independently checkable:
+
+\begin{enumerate}[label=(S\arabic*)]
+\item \term{Explicit object}: the object of each guarantee (which artefact, which
+      semantics, which environment) can be uniquely identified.
+\item \term{Real assumptions}: the environmental assumptions relied upon can be tested, not
+      assumed by default.
+\item \term{Independent evidence}: the judgement of evidence does not depend on the
+      generator's self-assessment.
+\item \term{Distinguishable failure categories}: unsatisfiable, unknown, timeout,
+      inexpressible, and candidate refuted by counterexample must be reported separately and
+      not merged into a single ``failure''.
+\item \term{Measurable cost}: generation cost, proof cost, verification cost and runtime
+      cost can be measured separately.
+\item \term{Falsifiability}: the refutation of at least one $H_i$ would weaken the core
+      claims of the programme.
+\end{enumerate}
+
+\begin{remark}[Self-examination of the programme]
+One core claim of this paper is that ``generation is untrusted and verification must be
+independent''. The principle applies to the paper itself: its load-bearing propositions
+must be independently checkable and must not depend on any unproved conjecture. Remark
+\ref{rmk:q1q8} and the list of non-claims in Chapter \ref{ch:objections} are the concrete
+results of that self-examination.
+\end{remark}

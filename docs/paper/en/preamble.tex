@@ -1,0 +1,95 @@
+% =====================================================================
+%  preamble.tex (English build — authoritative text)
+%  Compression and Verification
+%  Compile with: xelatex main.tex  (three passes)
+% =====================================================================
+
+% ---------- Page ----------
+\usepackage{geometry}
+\geometry{a4paper,left=2.7cm,right=2.7cm,top=2.9cm,bottom=2.9cm}
+\setlength{\emergencystretch}{1.5em}
+\tolerance=2000
+\hbadness=10000
+
+% ---------- Mathematics ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% ---------- Tables and lists ----------
+\usepackage{array}
+\setlength{\tabcolsep}{4pt}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=2.2em}
+
+
+% ---------- Colour, captions ----------
+\usepackage{xcolor}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+% ---------- Theorem environments ----------
+% A run-in style is used for statements that are claims about practice rather
+% than pure mathematics, so that they read as labelled paragraphs rather than
+% as displayed blocks.
+\newtheoremstyle{runin}%
+  {0.7em}{0.2em}{\normalfont}{}{\bfseries}{.}{0.5em}{}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{conjecture}[theorem]{Conjecture}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{hypothesis}[theorem]{Hypothesis}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{problem}[theorem]{Problem}
+
+\theoremstyle{runin}
+\newtheorem{principle}[theorem]{Principle}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{observation}[theorem]{Observation}
+
+\renewcommand{\proofname}{Proof}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+% ---------- Macros ----------
+\newcommand{\Beh}{\mathcal{B}}
+\newcommand{\Obs}{\mathcal{O}}
+\newcommand{\Env}{\mathcal{A}}
+\newcommand{\Cost}{\mathcal{C}}
+\newcommand{\Inv}{\mathcal{I}}
+\newcommand{\Mod}{\mathcal{M}}
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\Allow}{\operatorname{Allowed}}
+\newcommand{\Observe}{\alpha}
+\newcommand{\Conc}{\gamma}
+\newcommand{\Obl}{\operatorname{Obl}}
+\newcommand{\Ker}{\operatorname{ker}}
+\newcommand{\TCB}{\ensuremath{\mathrm{TCB}}}
+\newcommand{\DL}{\ell}
+\newcommand{\Entropy}{H}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\Lk}[1]{\ensuremath{\mathrm{L}_{#1}}}
+\newcommand{\Dom}{\operatorname{Dom}}
+\newcommand{\Conv}{\operatorname{Conv}}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ---------- Hyperlinks (loaded last) ----------
+\usepackage[colorlinks=true,
+            linkcolor=blue!55!black,
+            citecolor=teal!70!black,
+            urlcolor=blue!65!black,
+            bookmarksnumbered=true,
+            unicode=true]{hyperref}

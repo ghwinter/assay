@@ -1,0 +1,451 @@
+% =====================================================================
+\chapter{Comprehension: Inverse Compression}\label{ch:comprehension}
+% =====================================================================
+
+This chapter addresses the first half of Problem \ref{prob:mind}: for a large system that
+cannot be read through from the micro level, at what level should it be understood, and how
+does comprehension lead into development. The central claim is that comprehension is inverse
+compression, whose optimal depth is given by the stationarity condition of a rate--distortion
+objective and whose feasibility is decided by observability rank.
+
+\section{Failure of Sequential Reading}\label{sec:why-sequential}
+
+A natural way to read is to follow the physical order and the control flow of the source code:
+
+\begin{quote}
+\code{main()} $\to$ \code{module\_a} $\to$ \code{module\_b} $\to$
+\code{function\_c} $\to$ \code{helper\_d} $\to$ \code{allocator} $\to$
+\code{operating\_system} $\to \cdots$
+\end{quote}
+
+One then keeps following downwards and ends in infinite recursion. The failure is not a lack
+of patience but structural:
+
+\begin{principle}[Calling relations are not cognitive dependencies]\label{pr:call-vs-cog}
+The function-call relation is the topology of \emph{implementation}; the cognitive-dependency
+relation is the topology of \emph{comprehension}. The two are not isomorphic. In studying
+transaction isolation one may need to know how the transaction manager uses locks and
+snapshots, but not necessarily understand the entire virtual-memory subsystem of the operating
+system; conversely, in investigating anomalous memory usage the high-level business semantics
+of the transaction manager may be temporarily irrelevant.
+\end{principle}
+
+The more fundamental reason concerns the relation between the direction of generation and the
+direction of comprehension. A system is designed \emph{top-down} (intent first, then
+architecture, and only then the unfolding of code); the inverse process should therefore take
+the same direction. Reading code bottom-up is like understanding a cat by counting all its
+molecules: feasible in principle, absurd in practice.
+
+The concession ``feasible in principle'' has a practical consequence: sequential reading is
+not \emph{impossible} but \emph{dominated}. Proposition \ref{prop:stopping} gives its precise
+form: beyond the stationary point, description length increases while task loss no longer
+falls.
+
+\section{Cognitive Maps}\label{sec:maps}
+
+Confronted with a large monolithic repository, one should build a conceptual map before a file
+map. The division of labour is:
+
+\begin{itemize}
+\item a file map answers ``where the code is'';
+\item a conceptual map answers ``what the system is made of, why these parts exist, who
+      depends on whom, and what rules allow them to collaborate''.
+\end{itemize}
+
+\begin{definition}[The four cognitive maps]\label{def:fourmaps}
+For a system $S$ and a task $T$, the four cognitive maps are:
+\begin{enumerate}[label=(\roman*)]
+\item \term{system panorama}: compresses $S$ into $5$--$15$ major responsibility domains and
+      answers: which responsibility domain is the most important? Why does each
+      responsibility domain exist? What are the most important dependency relations among
+      them? Which mechanisms are shared by several responsibility domains? Which states and
+      behaviours decide the correctness of the whole system?
+\item \term{key subsystem map}: for each key subsystem, answers eight questions:
+      responsibility; boundary (what it is responsible for and what it is not); state (what
+      state it owns and who may modify it); mechanism; interface; constraints; failure
+      behaviour; and implementation entry points (which source files and tests can verify the
+      above conclusions).
+\item \term{key execution path map}: converts the static architecture into a model of dynamic
+      behaviour. For example, the real questions behind a query path ``input $\to$ parsing
+      $\to$ planning $\to$ execution $\to$ storage access $\to$ return'': when is the query
+      plan created? Where is state kept during execution? Who manages the transaction
+      snapshot? How is an error propagated upwards when a storage access fails? Which steps
+      hold locks? Which operations may trigger disk I/O? Which resources must be released
+      when a query is cancelled?
+\item \term{contract map}: records the relations among components by each of the five edge
+      classes of Definition \ref{def:relgraph}, in particular the \emph{oblivious set} of each
+      layer, that is, what that layer is allowed never to care about.
+\end{enumerate}
+\end{definition}
+
+Map (iv) is this paper's addition to conventional architecture documentation. Its necessity
+follows directly from Proposition \ref{prop:oblivious}: a contract that has not declared its
+oblivious set has not declared its compression boundary, and hence one cannot judge how far
+the level above may rely on it.
+
+\section{Operational Criteria for Comprehension}\label{sec:five-capabilities}
+
+``Comprehension'' must be operationalised, or it cannot be decided whether comprehension has
+been achieved. This paper adopts a five-capability criterion.
+
+\begin{definition}[Criteria for comprehension]\label{def:understand}
+An agent (human or machine) is said to \term{understand} a subsystem $M$ to the degree
+required by a task $T$ if and only if it can do the following:
+\begin{enumerate}[label=(U\arabic*)]
+\item \term{Explain}: state why this subsystem exists;
+\item \term{Predict}: predict what behaviour a given input, state change or error will cause;
+\item \term{Locate}: decide which components to inspect when a fault occurs;
+\item \term{Modify}: find the correct extension points and the constraints that must be
+      respected when a feature is to be added;
+\item \term{Verify}: know which tests or implementation details can substantiate its own
+      judgement.
+\end{enumerate}
+This paper calls a state that attains (U1)--(U5) \term{operational abstract comprehension}.
+\end{definition}
+
+The relation between Definition \ref{def:understand} and Definition \ref{def:sufficient} is
+direct: (U2) is the behavioural statement of $T$-sufficiency; (U1), (U3) and (U4) are concrete
+query families in $T$; (U5) is the requirement that one can trace back to lower-level evidence,
+namely the two clauses ``sufficiently accurate'' and ``verifiable'' of Definition
+\ref{def:mdl}.
+
+One diagnostic corollary matters here: if one can only recite the architecture diagram but
+cannot predict what a change will affect, the current abstraction is not yet sufficient. This
+and the seam detectors of \S\ref{sec:seams} are one thing seen from two directions.
+
+\section{Reading Order}\label{sec:protocol}
+
+\begin{principle}[Descent protocol]\label{pr:protocol}
+Form the model top-down, descend to verify on demand, and never read sequentially.
+\end{principle}
+
+The steps are as follows.
+
+\paragraph{The Discipline Layer.}
+Read the README, architecture documents, architecture decision records, design papers and the
+kernel documentation tree. About $1\%$ of the time establishes about $80\%$ of the skeleton
+model. The output is a hand-drawn organ diagram: which large blocks the system has, what each
+is responsible for, and how data flows.
+
+\paragraph{Runtime Observation.}
+Run the system first, read it afterwards. Runtime behaviour exposes structure and is far more
+honest than static code: observe the process and thread model; set breakpoints or trace the
+whole journey of one typical request; read logs and metrics, \emph{the vocabulary of the logs
+is the system's self-description}. One end-to-end trace is worth ten thousand lines of static
+reading.
+
+\paragraph{Interface Boundaries.}
+Read the header files, public interfaces and exported symbols of modules in dependency order,
+not their implementations. An interface is a compression boundary (Proposition
+\ref{prop:oblivious}) and states what this layer promises; how it discharges that promise is
+not yet needed. What is wanted at this point is an organ atlas, not a tissue section.
+
+\paragraph{Data Shape.}
+The data model is the most stable abstraction and control flow the most volatile. Establish
+first: what the core entities are, who owns their lifecycle, which state machines exist, and
+what is writable and what is read-only. Once the shape of the data is in hand, control flow is
+only data rearranged over time.
+
+\paragraph{Descent on Demand.}
+Descend into code only with a concrete task in hand: fix this defect, add this feature.
+Reading is then directed retrieval rather than wandering. Descent follows the V-shape ``call
+site $\to$ implementation $\to$ underlying mechanism'': stop as soon as the current problem
+can be explained, then return to the upper layer and reassess the model.
+
+\paragraph{Prediction and Verification.}
+At each layer, write the mental model down first (``I guess the executor fetches the next
+tuple like this''), then verify it. \emph{Being able to predict behaviour is comprehension}.
+If the prediction is right, the compression model is effective; if it is wrong, that spot is
+exactly where the system is most counter-intuitive.
+
+\paragraph{Write-Back to the Contract Map.}
+Write the newly acquired knowledge back into the contract map of Definition \ref{def:fourmaps},
+filling in that layer's new guarantees, new assumptions and new oblivious set. This step is
+the only means of preventing cognitive drift: without write-back, the layered model gradually
+drifts away from the real system.
+
+\begin{remark}[An operational ratio]
+Understand about $10\%$ of the code in depth while knowing where the other $90\%$ is and who
+owns it. The ratio is not a precise target but a quantified reminder of the principle that
+comprehension is not exhaustion.
+\end{remark}
+
+\section{Detection Criteria for Module Boundaries}\label{sec:seams}
+
+Architecture is ``the places where a change is localised''. The key operation of comprehension
+is therefore \emph{finding seams}. The criteria below are ordered by reliability, and all can
+be executed mechanically or semi-mechanically.
+
+\begin{enumerate}[label=(S\arabic*)]
+\item \term{Where types stop crossing}. Where is data re-encoded, wrapped or degraded to a
+      generic type (byte arrays, strings, maps)? This is a strong signal of a module boundary:
+      where the type system stops providing guarantees is where a human must supply the
+      contract.
+\item \term{Units that can be tested in isolation}. Where does a test suite exist that can be
+      run without starting the whole system? This is the sharpest criterion: \emph{only a unit
+      that can be verified in isolation is a real module}. Its reliability comes from
+      Definition \ref{def:sufficient}: a unit test is essentially the assertion that ``the
+      interface observation is a sufficient statistic of behaviour''.
+\item \term{Serialisation, version fields and copy boundaries}. Where are there version
+      fields, serialisation, deep copies, cross-process or cross-network calls? Crossing such
+      a boundary makes a contract visible and falsifiable.
+\item \term{Centralised enforcement sites of invariants}. Where are there assertions, database
+      constraints, type-level constraints or contract checks? Where invariants are enforced
+      centrally is usually where a level boundary lies.
+\item \term{Independent targets of the build system}. Where does the build configuration
+      define an independent compilation target or package? This is a \emph{necessary} but not a
+      \emph{sufficient} condition for a boundary: an independent target is not necessarily a
+      real module, but a real module nearly always has one.
+\item \term{Co-change graphs and incident history}. This is the most underrated technique.
+      Examine the commit history: which files tend to be modified together in the same change?
+      \emph{A co-change graph gives semantic coupling, whereas an import graph gives syntactic
+      coupling}. Where the two disagree is exactly where the architecture documentation
+      disagrees with reality. Incident and defect histories then give the real invariant gaps.
+\end{enumerate}
+
+\begin{principle}[Summary of the seam criteria]\label{pr:seam-summary}
+A module is real if and only if its interface observation is a sufficient statistic of its
+external behaviour; a boundary is real if and only if, once it has been crossed, changes on
+the other side no longer need to be understood.
+\end{principle}
+
+Chapter \ref{ch:design} inverts Principle \ref{pr:seam-summary} and uses it as a design
+objective.
+
+\section{Active Identification and Passive Reading}\label{sec:active}
+
+\begin{principle}[Comprehension as system identification]\label{pr:sysid}
+Comprehending a complex system is essentially \emph{system identification}: constructing a
+model that predicts its behaviour and quantifying the uncertainty of that model. The most
+efficient form of system identification is the ``perturb--observe'' loop.
+\end{principle}
+
+Passive reading is an extremely poor way to sample, because it \emph{has no error signal}.
+Every judgement it produces is unfalsifiable, and therefore cannot be updated. Active probing
+is the opposite: form a falsifiable prediction first (``if I change this, only these two
+modules should be affected''), make a minimal change or run a test, then observe the
+prediction error. \emph{The error is the part of the structure you cannot see.}
+
+\begin{proposition}[The advantage of active probing]\label{prop:active}
+Let comprehension be an iterative update of a model $M$, in which each observation $o$
+supplies information $I(\text{structure}; o \mid M)$ about the true structure. The observation
+distribution of passive reading does not depend on $M$, so its expected information gain is
+constant in $M$; the observation distribution of active probing depends on the current
+prediction $\hat{y}(M)$, and its expected information gain is proportional to the prediction
+error $\mathbb{E}\,|y - \hat{y}(M)|$. Hence, wherever the prediction error is non-zero, active
+probing has strictly higher marginal information gain.
+\end{proposition}
+
+\begin{proof}[Argument]
+The samples drawn by passive reading are independent of $M$, hence $p(o \mid M) = p(o)$ and
+the information gain is constant. Active probing selects the observations that maximise
+predictive disagreement (D-optimal or uncertainty sampling in experimental design), so
+$p(o \mid M)$ concentrates on the region where the current predictions of $M$ are uncertain;
+by the definition of information gain $I = \mathbb{E}[\log p(o\mid M) - \log p(o)]$, that
+quantity is non-negative and vanishes when $p(o\mid M) = p(o)$, that is, when prediction and
+truth agree. Hence active probing is strictly better wherever the prediction error is non-zero.
+\end{proof}
+
+For AI the conclusion carries more weight: the advantage of AI is not that it can ``read'' more
+code but that it can \emph{probe} at high throughput, generating hypotheses, running tests,
+making minimal changes, inspecting co-changes, reading incident records, and then updating the
+model. That is a frequency humans cannot match.
+
+\section{The Observability Criterion}\label{sec:observability}
+
+\S\ref{sec:comprehension-formal} defines comprehension as task-constrained compression, and
+Proposition \ref{prop:stopping} gives the stopping point of descent. Both presuppose that
+continued observation can improve the model. This section identifies a stronger limitation:
+\emph{when observation is insufficient, increasing the number of observations changes
+nothing}.
+
+\begin{definition}[Observation operator and task subspace]\label{def:observability}
+Let $\Beh$ be the behaviour space of the system and $\mathcal{T} \subseteq \Beh$ the
+\emph{task-relevant difference subspace}, that is, the subspace spanned by the differences
+that the query family $Q$ of Definition \ref{def:task} can distinguish. Let
+$\mathcal{J} : \Beh \to \mathcal{Y}$ be the observation operator \emph{available} to the
+agent: it maps behaviour to what the agent can actually read (source code, logs, traces, test
+results, runtime metrics). Define the \term{observability rank} on $\mathcal{T}$ as
+\begin{equation}\label{eq:obsrank}
+\mathrm{rank}_{\mathcal{T}}\mathcal{J} \;=\;
+\dim \mathcal{J}\bigl(\mathcal{T}\bigr),
+\end{equation}
+the dimension of the task-relevant differences that remain distinguishable after
+$\mathcal{J}$. The construction is isomorphic to the observability criterion of linear system
+theory \cite{kalman1960}.
+\end{definition}
+
+\begin{proposition}[The observability criterion]\label{prop:observability}
+An agent can identify the system to $T$-sufficiency (Definition \ref{def:sufficient}) if and
+only if
+\begin{equation}\label{eq:obscond}
+\mathrm{rank}_{\mathcal{T}}\mathcal{J} \;=\; \dim \mathcal{T}.
+\end{equation}
+When \eqref{eq:obscond} fails, the kernel of $\mathcal{J}$ on $\mathcal{T}$ is non-trivial:
+there exist two executions $e_1, e_2$ whose available observations are all identical while
+their task-relevant behaviour differs. In that case \emph{no number of additional observations
+can reduce task loss}, because new observations still lie in the range of the same
+$\mathcal{J}$.
+\end{proposition}
+
+\begin{proof}
+If \eqref{eq:obscond} holds, then $\mathcal{J}$ is injective on $\mathcal{T}$, task-relevant
+differences are uniquely recoverable from observations, and $T$-sufficiency follows from
+Definition \ref{def:sufficient}. If it fails, then
+$\Ker \mathcal{J} \cap \mathcal{T} \ne \{0\}$; take a pair of executions $e_1 \ne e_2$
+corresponding to a non-zero element of that kernel (in the task-relevant sense). The two are
+indistinguishable under $\mathcal{J}$, so every $\mathcal{J}$-measurable decision rule gives
+the same answer and is wrong on at least one of them. Adding observations does not change
+$\mathcal{J}$, and therefore does not change that kernel.
+\end{proof}
+
+Proposition \ref{prop:observability} separates ``insufficient comprehension'' into two cases
+that are entirely different in engineering terms:
+
+\begin{principle}[Distinguishing two kinds of comprehension failure]\label{pr:two-failures}
+\begin{enumerate}[label=(\alph*)]
+\item \term{rank deficiency}: the observation operator itself cannot distinguish task-relevant
+      differences. The only remedy is to \emph{change the observation}: add invariant checks,
+      add trace points, add assertions, expose internal state. This is a design action, not a
+      reading action.
+\item \term{full rank but insufficient samples}: observation suffices to distinguish, but has
+      not yet been collected. The remedy is to \emph{probe more}, with its efficiency governed
+      by Proposition \ref{prop:active}.
+\end{enumerate}
+Confusing the two is the main reason advice such as ``read more code'' fails: when the problem
+belongs to (a), additional reading is information-theoretically ineffective.
+\end{principle}
+
+\begin{remark}[Measuring the cost of comprehension correctly]\label{rmk:sample-complexity}
+The cost of case (b) is a \emph{sample complexity}, not an amount of reading. If the contract
+hypotheses are confined to a hypothesis class $\mathcal{H}$ (the set of operations in
+Definition \ref{def:operad} provides a natural candidate), then the number of probes required
+to identify the system to $T$-sufficiency at error $\varepsilon$ has a lower bound decided by
+the distinguishing power of $\mathcal{H}$ on $T$, typically of the form
+$\Omega(d/\varepsilon)$, where $d$ is the capacity dimension of the hypothesis class.
+
+This accounting yields a testable prediction: \emph{the factor by which designed probing beats
+exhaustive reading is quantifiable}, and that factor grows with the capacity of the hypothesis
+class. Hypothesis $H_5$ of Chapter \ref{ch:program} thereby acquires a quantitative form.
+\end{remark}
+
+\begin{example}[A typical shape of rank deficiency]\label{ex:rank-deficient}
+A service keeps all its state in process memory and exposes only the return values of requests.
+If the task is to decide ``whether two concurrent requests can read each other's partial
+updates'', then no number of return-value observations suffices, because the difference lies
+entirely outside the return values. The correct action is not to read more code but to
+introduce an observable: a runtime assertion of a concurrency invariant, or a test with
+interleaving injection. The example shows that the distinction of Principle
+\ref{pr:two-failures} is practical rather than merely taxonomic.
+\end{example}
+
+\section{Budget and Stopping Conditions}\label{sec:budget}
+
+\S\ref{sec:comprehension-formal} has given the formal stopping criterion (Proposition
+\ref{prop:stopping}). This section gives its engineering version and the allocation of budget.
+
+\begin{principle}[Allocation of the descent budget]\label{pr:budget}
+Allocate the comprehension budget in order of information gain per unit cost, not by code
+volume or directory order. The typical high-yield entry points, in order, are: external
+interface definitions and the data model $>$ one trace of an end-to-end execution path $>$
+invariant enforcement sites $>$ co-change hotspots $>$ specific implementation details.
+Low-yield entry points are: sequential reading of implementation bodies, reading through a
+utility function library, and reading through generated code.
+\end{principle}
+
+\begin{principle}[Stopping conditions]\label{pr:stop}
+Stop descending as soon as any of the following holds:
+\begin{enumerate}[label=(\alph*)]
+\item you can name every invariant governing the current change;
+\item further descent no longer changes your prediction of ``what this change will affect'';
+\item the cost of obtaining the next piece of evidence exceeds the expected rework cost of the
+      current change.
+\end{enumerate}
+\end{principle}
+
+Condition (a) corresponds to Principle \ref{pr:descent}; condition (b) to Proposition
+\ref{prop:stopping}; condition (c) is an economic judgement: comprehension is not a matter of
+more being better, but of \emph{enough}.
+
+\section{Implications for Machine Comprehension}\label{sec:ai-comprehension}
+
+The difficulty facing AI is not only a limited context length. Even when a model can read a
+large amount of code, three distinct problems remain: too much information drowns the
+important information; local pieces of information depend on one another in complex ways; and
+comprehension of details does not automatically form a correct system-level model. Enlarging
+the context window alone therefore does not solve every problem.
+
+\begin{principle}[A software cognitive architecture for AI]\label{pr:ai-cog}
+An effective machine cognitive architecture should have four layers:
+\begin{enumerate}[label=(\roman*)]
+\item \term{global cognitive model}: system goals, architecture diagram, key invariants, main
+      data flows, core design decisions;
+\item \term{subsystem cognitive model}: component responsibilities, interfaces, state
+      ownership, dependency relations, lifecycle and error semantics;
+\item \term{implementation-level index}: key functions, type definitions, call chains, source
+      locations, tests and runtime evidence;
+\item \term{verification and feedback}: compilation, tests, static analysis, execution traces,
+      profiling, used to correct the models above.
+\end{enumerate}
+Its key property is: \emph{an upper layer model need not replicate all lower-level information,
+but need only retain enough information for the agent to find the correct lower-level evidence
+when it is required.}
+\end{principle}
+
+\begin{definition}[Traceable subsystem cognitive record]\label{def:record}
+The cognitive record of each subsystem should contain at least nine fields, listed in Table
+\ref{tab:record}.
+\end{definition}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{The minimum field set of a subsystem cognitive record}\label{tab:record}
+\begin{tabular}{L{3.0cm}L{11.4cm}}
+\toprule
+\textbf{Field} & \textbf{Role} \\
+\midrule
+Purpose & Why this subsystem exists \\
+Contract & What guarantees it provides upwards (that is, $\Obs_i(\Beh_{i+1})$) \\
+Oblivious & What this layer is allowed never to care about (that is, $\Obl(\Lambda_i)$) \\
+State & What state it owns and who may modify it \\
+Dependencies & Which other components it depends on \\
+Invariants & Which conditions must never be violated, and where they are enforced \\
+Lifecycle & How key objects are created, run and destroyed \\
+Execution paths & How important requests or tasks pass through the system \\
+Evidence & Which source files, tests or experiments support the above conclusions \\
+Uncertainty & What has not been verified, and which assumptions may be wrong \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The last two entries of Table \ref{tab:record}, together with the Oblivious entry, are
+additions of this paper, for the following reasons.
+
+\emph{On Uncertainty}: AI cannot treat an architecture summary it has generated itself as
+fact. It needs to know which conclusions come from actual source code, which come from tests,
+and which are only provisional inferences. This is the same requirement as the epistemic
+discipline of Chapter \ref{ch:objections}.
+
+\emph{On Oblivious}: as stated above, it is the compression boundary itself. Without this
+entry, a cognitive record describes only ``what there is'' and not ``what may be
+disregarded'', and so cannot support the modification capability (U4).
+
+\emph{On dynamic update}: when the code changes, the cognitive record must be updated in step.
+A usable machine comprehension system should therefore not be a static knowledge base but a
+\emph{bidirectionally traceable} relation between the source code and the abstract model.
+
+\begin{principle}[Readability turns from a virtue into infrastructure]\label{pr:readability}
+The ``comprehension interface'' of a system is becoming a first-class engineering deliverable.
+Documentation used to be an appendix written for human readers; now machine-readable
+architecture descriptions, the practice of interface-as-documentation, and agent-facing
+working conventions are becoming components that a system must design, because the readership
+of code now includes a non-human intelligence that relies only on the compression layer.
+\end{principle}
+
+The empirical content of this chapter is Hypothesis $H_5$ (Chapter \ref{ch:program}): a
+comprehension process that uses a layered model together with active probing achieves a higher
+task success rate per unit cost than exhaustive reading. Propositions \ref{prop:stopping},
+\ref{prop:active} and \ref{prop:observability} hold under the stated model; Definition
+\ref{def:understand} is a working definition whose value depends on whether it can be used to
+distinguish ``comprehension'' from ``recitation'', which requires experimental test.

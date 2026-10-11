@@ -1,0 +1,343 @@
+% =====================================================================
+\chapter{设计：正向压缩}\label{ch:design}
+% =====================================================================
+
+如果理解是逆向压缩，设计就是正向压缩：为未来的读者预先造好压缩边界。本章把这一对称
+性转化为可优化的目标函数，给出其动力学约束，并说明分层在何处失效。
+
+\section{读集与目标函数}\label{sec:readset}
+
+架构的可测量目标不是"解耦""高内聚"这些形容词，而是一个可以被统计出来的数字。
+
+\begin{definition}[变更读集]\label{def:readset}
+设代码库由模块集合 $\Mod$ 组成，即 $\bigcup_{c \in \mathcal{C}} \rho(c)$ 中
+$\mathcal{C}$ 为变更集合。对一次变更 $c$，其\term{读集} $\rho(c) \subseteq \Mod$
+定义为：为正确完成 $c$ 而必须被阅读的模块集合。系统的\term{架构质量指标}定义为
+\begin{equation}\label{eq:readset}
+Q(\Mod) \;=\; \mathbb{E}_{c \sim \mathcal{C}}\bigl[\,|\rho(c)|\,\bigr],
+\end{equation}
+即以历史变更分布加权的平均读集大小。
+\end{definition}
+
+定义 \ref{def:readset} 是可操作的：它可以直接从版本历史中估计：统计每个合并变更
+触及的顶层模块数、文件数与目录数，取其分布。这不是完美的代理（触及不等于必须阅读），
+但它是\emph{可测量的}，而"模块化程度"不是。
+
+\begin{definition}[不变量的强制点]\label{def:enforce}
+设 $\Inv$ 为系统的不变量集合。对 $\iota \in \Inv$，其\term{强制点集}
+$\mathrm{S}(\iota) \subseteq \Mod$ 定义为所有\emph{必须正确实现才能保证 $\iota$
+成立}的模块集合。称强制是\term{有效的}，若 $\iota$ 在任一执行中不被违反。
+\end{definition}
+
+\begin{theorem}[不变量集中化]\label{th:centralise}
+设不变量 $\iota$ 的强制有效，且变更 $c$ 可能破坏 $\iota$（即存在一次合法变更序列使
+$\iota$ 在缺少对 $\mathrm{S}(\iota)$ 的理解时被破坏）。则
+\begin{equation}\label{eq:central}
+|\rho(c)| \;\ge\; \bigl|\mathrm{S}(\iota)\bigr| .
+\end{equation}
+因此，在其余条件不变的前提下，最小化 $\mathbb{E}[|\rho|]$ 要求最小化
+$\sum_{\iota \in \Inv} |\mathrm{S}(\iota)|$，其下界由每条不变量在\emph{单一模块}中
+强制达到。
+\end{theorem}
+
+\begin{proof}
+若 $c$ 可能破坏 $\iota$，则执行 $c$ 的智能体必须知道 $\iota$ 在何处以及如何被保证，
+否则无法判断 $c$ 是否安全。$\mathrm{S}(\iota)$ 的每个元素都是该判断的必要证据来源，
+故 $\rho(c) \supseteq \mathrm{S}(\iota)$，得式 \eqref{eq:central}。
+对 $\iota$ 求和：$\mathbb{E}[|\rho|] \ge \mathbb{E}[|\bigcup_\iota \mathrm{S}(\iota)|]$，
+且在 $\mathrm{S}(\iota)$ 不相交的乐观情形下等于 $\sum_\iota |\mathrm{S}(\iota)|$。
+每个非空的 $\mathrm{S}(\iota)$ 至少含一个模块，故下界由 $|\mathrm{S}(\iota)| = 1$
+取得。
+\end{proof}
+
+\begin{corollary}[强制点的最优位置]\label{cor:site}
+在满足有效性约束的所有候选中，最优的强制点是\emph{扇入最小}的模块，即那些被最少
+其他模块依赖、因而最不可能被绕过修改的模块。
+\end{corollary}
+
+\begin{remark}[定理 \ref{th:centralise} 的限度]\label{rmk:central-limit}
+该定理有一个前提：强制必须\emph{有效}。现实中，把不变量集中在单一位置
+常常失败，因为调用者可以绕过该位置。这正是"不变量散落"在工程中反复出现的真实原因
+。它不是无知，而是对绕过风险的防御。因此定理 \ref{th:centralise} 的正确读法是：
+\emph{不变量散落是一种有代价的防御；若不变量可以真正被集中（例如通过类型系统、
+私有构造函数、能力令牌或数据库约束使绕过不可能），则集中严格优于散落。}
+这解释了为什么"把不变量编码进类型"在工程上有超出表达力的额外价值：它把
+$|\mathrm{S}(\iota)|$ 降到 $1$ 而不增加绕过风险。
+\end{remark}
+
+\section{近可分解性}\label{sec:neardecomp}
+
+Simon 的近可分解性\cite{simon1962}是层级结构之所以稳定的经典解释：层内交互频繁，
+层间交互稀薄。但"交互稀薄"本身不可检验。本节给出一个可检验的等价刻画。
+
+\begin{definition}[近可分解]\label{def:neardecomp}
+设模块 $M$ 有一个接口 $I$。对 $M$ 的一次执行 $e$，记
+$\mathrm{trace}_I(e)$ 为 $e$ 在 $I$ 上的交互序列，$\mathrm{behav}_{\mathrm{out}}(e)$
+为 $e$ 在 $M$ 之外可观察到的行为。称 $M$ 关于 $I$ \term{近可分解}，若存在函数 $f$
+使得
+\begin{equation}\label{eq:neardecomp}
+\forall e:\quad \mathrm{behav}_{\mathrm{out}}(e) \;=\;
+f\bigl(\mathrm{trace}_I(e)\bigr),
+\end{equation}
+即 $I$ 上的观察是 $M$ 外部行为的\emph{充分统计量}。
+\end{definition}
+
+定义 \ref{def:neardecomp} 与定义 \ref{def:sufficient}（$T$-充分性）的关系是直接的：
+取任务 $T$ 的查询族 $Q$ 为"外部行为的观察"，则近可分解性正是 $M$ 关于其接口的
+$T$-充分性。由此，Simon 的定性原理被翻译成一个可判定条件。
+
+\begin{proposition}[泄漏对]\label{prop:leakpair}
+$M$ 关于 $I$ \emph{不}近可分解，当且仅当存在两次执行 $e_1, e_2$ 使得
+\begin{equation}\label{eq:leakpair}
+\mathrm{trace}_I(e_1) = \mathrm{trace}_I(e_2)
+\qquad\text{而}\qquad
+\mathrm{behav}_{\mathrm{out}}(e_1) \ne \mathrm{behav}_{\mathrm{out}}(e_2).
+\end{equation}
+称这样的一对为\term{泄漏对}。
+\end{proposition}
+
+\begin{proof}
+$(\Leftarrow)$ 若存在这样的 $e_1, e_2$，则任何函数 $f$ 都无法同时满足
+$f(\mathrm{trace}_I(e_1)) = \mathrm{behav}_{\mathrm{out}}(e_1)$ 与
+$f(\mathrm{trace}_I(e_2)) = \mathrm{behav}_{\mathrm{out}}(e_2)$，因为两边的自变量
+相等而函数值不等，故式 \eqref{eq:neardecomp} 不成立。
+$(\Rightarrow)$ 若式 \eqref{eq:neardecomp} 不成立，则不存在满足条件的 $f$，
+由函数的定义，必然存在两个自变量相同而应取函数值不同的点，即式 \eqref{eq:leakpair}。
+\end{proof}
+
+\begin{corollary}[诊断程序]\label{cor:diagnose}
+命题 \ref{prop:leakpair} 给出一项\emph{可执行的}诊断：构造两个在接口层面完全相同的
+场景，但在内部状态或外部环境上不同，观察外部行为是否分歧。若分歧，则该接口不是充分
+统计量，模块边界在此处泄漏。
+\end{corollary}
+
+推论 \ref{cor:diagnose} 把"这个模块的抽象是否漏了"从一个审美判断变成一次差分测试。
+这一结论的实用价值在于：\emph{抽象是否泄漏是可测的，而不只是可感的}。
+工程上常见的"阴影状态""隐式全局""跨请求缓存污染"，全部是泄漏对的具体实例。
+
+\begin{principle}[设计的等价目标]\label{pr:design-eq}
+由推论 \ref{cor:diagnose}，设计的可检验目标可以写成：
+\emph{对每一个声称的模块边界，其接口观察应当是外部行为的充分统计量；泄漏对的存在
+即边界的失效。}
+\end{principle}
+
+\section{技术债}\label{sec:debt}
+
+"技术债"在工程语境中通常是隐喻。本节给出一个精确但仍有用的定义。
+
+\begin{definition}[技术债]\label{def:debt}
+给定编码方案，系统代码的描述长度为 $\DL(\text{code})$，其\term{最短生成描述}为
+$\DL^{\star} = \min\{\,|d| : d \text{ 生成 code}\,\}$（即 Kolmogorov 意义下该代码的
+最短生成程序）。定义\term{技术债}
+\begin{equation}\label{eq:debt}
+D \;=\; \DL(\text{code}) \;-\; \DL^{\star}.
+\end{equation}
+\end{definition}
+
+这个定义是可辩护的但不可计算的（$\DL^{\star}$ 不可计算），因此它的价值在于给出
+\emph{方向}与\emph{判据}，而不是数值。
+
+\begin{principle}[技术债的产生与偿还]\label{pr:debt}
+技术债在\emph{变更未重新抽象}时增长：每次修改若不重新抽象，代码与"最短生成描述"之间
+的差距就扩大。因此：
+\begin{enumerate}[label=(\alph*)]
+\item 重构 $=$ 重新压缩，是把压缩率维持在可理解阈值之上的生存必需；
+\item 不重构的系统不是停止生长，而是在积累不可理解性；
+\item 判断一次重构是否值得，等价于判断它是否显著降低 $D$，即是否让系统更容易被
+      更短的描述生成。
+\end{enumerate}
+\end{principle}
+
+原则 \ref{pr:debt}(c) 给出一条实践判据：如果一次重构不能让你用更少的话说清这个模块
+做什么，那么它很可能只是格式整理。
+
+\begin{remark}[重构的率失真解释]\label{rmk:rd-refactor}
+把 $(\DL(M), L_T(M))$ 看作率失真平面上的点\cite{shannon1959}（定义 \ref{def:mdl}）。系统的当前状态是
+曲线上或曲线外的一点：\emph{曲线外}意味着存在同描述长度下损失更低的模型，即纯粹的
+改进空间；重构即沿曲线移动或把点搬回曲线。
+
+这一解释给出一个可检验预测：\emph{率失真曲线的斜率 $\partial L_T / \partial \DL$
+应当预测哪些重构划算}，斜率为零处的重构不降低任务损失，因而不值得做；斜率大的位置
+即使代价高昂也值得。若该预测力在真实项目中不成立，则本章的目标函数选择需要被修改
+（第 \ref{ch:program} 章假设 $H_{12}$）。
+\end{remark}
+
+\section{可治理复杂度与理解容量}\label{sec:governable}
+
+第 \ref{sec:readset} 节把架构质量定义为一个静态量 $\mathbb{E}[\rho]$。但真实系统有
+\emph{速率}：变更以某个频率到达，而组织的阅读能力有限。本节补上这一动力学，它是
+全文唯一一处时间变量。
+
+\begin{definition}[可治理复杂度与理解容量]\label{def:governable}
+设 $\lambda(t)$ 为变更到达率（单位时间的变更数），$\mathbb{E}[\rho]$ 为期望读集
+（定义 \ref{def:readset}）。定义\term{可治理复杂度}
+\begin{equation}\label{eq:governable}
+C(t) \;=\; \mathbb{E}\bigl[\rho\bigr] \cdot \lambda(t),
+\end{equation}
+即维持系统所需的信息吞吐，单位为"模块-次/单位时间"。设组织的\term{理解容量}为
+\begin{equation}\label{eq:capacity}
+K \;=\; h \cdot b,
+\end{equation}
+其中 $h$ 为可投入的理解人数，$b$ 为单人理解带宽（模块-次/单位时间）。
+称系统处于\term{可治理状态}，若 $C(t) \le K$ 对所有相关 $t$ 成立。
+\end{definition}
+
+\begin{proposition}[架构决定标度指数]\label{prop:exponent}
+设系统有 $n$ 个特性，每个特性以速率 $\lambda_0$ 独立变更，故 $\lambda \propto n$。
+设读集 $\mathbb{E}[\rho]$ 关于 $n$ 的标度为 $n^{\alpha}$（$\alpha \ge 0$ 由架构决定，
+$\alpha = 0$ 对应完全局部化，$\alpha = 1$ 对应未受约束的耦合）。则可治理复杂度标度为
+\begin{equation}\label{eq:exponent}
+C \;\propto\; n^{1+\alpha}.
+\end{equation}
+由 $C \le K$ 得所需人力标度为 $h \propto n^{1+\alpha}$。因此：
+\begin{enumerate}[label=(\alph*)]
+\item 若架构把 $\alpha$ 压到 $0$，人力随系统规模线性增长，系统可长期存续；
+\item 若 $\alpha = 1$，人力须随规模\emph{平方}增长，系统在某个规模上必然失稳。
+\end{enumerate}
+\end{proposition}
+
+\begin{proof}
+由定义 \ref{def:governable}，$C = \mathbb{E}[\rho]\cdot\lambda$。代入
+$\lambda = n\lambda_0$ 与 $\mathbb{E}[\rho] = \Theta(n^{\alpha})$ 得
+$C = \Theta(n^{1+\alpha})$。由 $C \le K = hb$ 得
+$h \ge C/b = \Theta(n^{1+\alpha})$。
+\end{proof}
+
+\begin{corollary}[架构的实际作用]\label{cor:arch-role}
+命题 \ref{prop:exponent} 给出架构的一个精确职责：它不降低单个变更的成本，而是
+\emph{降低成本随规模增长的指数}。这解释了为什么架构收益在小系统上不可见、在大系统上
+决定存亡，也解释了为什么"架构过度设计"的批评在小规模下总是显得成立。
+\end{corollary}
+
+\begin{corollary}[两个经典结论的导出]\label{cor:brooks}
+\eqref{eq:exponent} 式给出两个经典论断的导出：
+\begin{enumerate}[label=(\alph*)]
+\item \term{组织规模与系统规模的关系}：由 $h \propto n^{1+\alpha}$，组织规模必须随
+      系统规模增长，且增长指数由架构决定。这是组织结构与系统结构对应关系
+      \cite{conway1968} 的\emph{动力学}版本，前者是静力学陈述（结构镜像组织），
+      后者给出可治理的上限。
+\item \term{加人使项目更慢}：增加 $h$ 使 $K$ 线性上升，但同时提高在途变更数从而抬高
+      $\lambda$，并通过新增接口抬高 $\mathbb{E}[\rho]$。当后两项的增幅超过前一项时，
+      $C/K$ 反而恶化。这是对"向延期项目加人使其更延期"这一经验规律的一个模型内
+      解释。
+\end{enumerate}
+\end{corollary}
+
+\begin{principle}[设计含义]\label{pr:governable-design}
+由命题 \ref{prop:exponent}，架构审查的判据不应是"读集是否小"，而应是
+\emph{"读集关于规模的标度指数是多少"}。一个读集目前很小但随着规模增长很快的系统，
+比一个读集当前较大但标度平坦的系统更危险。这使假设 $H_4$ 需要被加强：读集的价值
+主要在于其\emph{标度}，而不在于其\emph{水平}。
+\end{principle}
+
+\begin{remark}[本章的动力学是唯一的]\label{rmk:only-dynamics}
+全文此前是静力学的：结构、不变量、读集、契约都是时不变的量。定义
+\ref{def:governable} 是唯一的动力学变量，因为它是唯一一个"组织的处理能力"与
+"系统的要求"必须在\emph{速率}上匹配的地方。其余各处的时间都可以被消去。
+\end{remark}
+
+\section{设计流程}\label{sec:seven-steps}
+
+\begin{enumerate}[label=(D\arabic*)]
+\item \term{先固定不变量}。在写任何代码之前，写下这个系统必须
+      永远为真的命题（例如"账务总额守恒""I/O 线程永不阻塞""版本号单调递增"）。
+      不变量是层级的引力，一切结构围绕它结晶。由定理 \ref{th:centralise}，每条
+      不变量应当指定一个唯一的强制点，并说明绕过为何不可能。
+\item \term{选原语}。原子、组件、消息、事务、实体……原语一旦选定，
+      就成为整个系统后续讨论的共享语言。\emph{选原语是这个层级最重要的单次决策}，
+      因为它决定了此后所有表达式的形状。
+\item \term{定数据模型}。实体、关系、生命周期、所有权。数据模型比逻辑
+      稳定一个数量级，因此应当先冻结它。
+\item \term{切器官}。模块化的依据不是"功能相似"，而是\emph{会一起
+      变化的信息被藏在一起}\cite{parnas1972}。每个模块的检验标准是：接口小到能一口气
+      记住，实现深到可以整体替换\cite{ousterhout2018}。接口是你刻意维护的压缩摘要，
+      实现是允许被重写的压缩内容。
+\item \term{让物理定律可执行}。不变量写在文档里会腐烂，编码进类型系统、断言、契约
+      测试与性质测试里才长存。\emph{类型是编译器强制执行的架构文档}。这是"设计可
+      理解性"与"设计正确性"的合流点：能被机器检查的不变量，人和 AI 都不必靠记忆
+      维护。
+\item \term{沉淀决策记录}。记录"为什么这么选、放弃了什么"。代码是结果，决策记录是
+      生成规则的一部分，读者逆向压缩时，决策记录能省掉最贵的猜测成本。
+\item \term{重构 $=$ 重新压缩}。见原则 \ref{pr:debt}。
+\end{enumerate}
+
+贯穿全部七条的元规则：
+
+\begin{principle}[为读者的心智带宽设计]\label{pr:reader}
+为你的读者的心智带宽而设计，而非为你的手速。代码被读的次数远多于被写的次数，
+架构的用户是未来的理解者。
+\end{principle}
+
+\section{横切关注点与分层的极限}\label{sec:crosscutting}
+
+必须明确承认分层的失败模式。有一类关注点无法被局部化到任何一层：
+
+\begin{itemize}
+\item 安全与权限（每个模块都可能引入漏洞）；
+\item 多租户隔离（跨越存储、计算与网络）；
+\item 分布式追踪（必须贯穿所有调用路径）；
+\item 事务与一致性（横跨状态所有者的边界）；
+\item 可观测性与配额（在每个资源消费点都需要）。
+\end{itemize}
+
+\begin{principle}[横切关注点是独立维度]\label{pr:crosscutting}
+对横切关注点，成熟的处理方式是承认它们是\emph{独立维度}（策略平面、能力模型、
+污点传播、服务网格），而不是硬塞进层次结构假装它们是某一层。
+\end{principle}
+
+这一原则直接来自第 \ref{ch:convergence} 章的讨论：层级结构由近可分解性支撑，而近
+可分解性的前提是层间交互稀薄。当某个关注点在每个模块上都有非平凡的交互时，它按
+定义破坏了近可分解性，因此不可能被表示为"某一层"。强行表示的结果是层级结构失效，
+而失效往往被误诊为"分层不够彻底"。
+
+\section{设计检查项}\label{sec:checklist}
+
+以下检查表把本章内容转为可执行条目。每一项都应在设计评审中被明确回答。
+
+\begin{longtable}{L{1.0cm}L{13.4cm}}
+\caption{大型系统设计检查表}\label{tab:checklist}\\
+\toprule
+\textbf{编号} & \textbf{检查项} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{编号} & \textbf{检查项} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+A1 & 系统必须永远为真的命题有哪些？每条在何处被强制？绕过为何不可能？\\
+A2 & 每条不变量的强制点是否唯一？若不唯一，代价（读集）是否已被显式接受？\\
+A3 & 本层的原语是什么？它们是否是后继所有讨论的共享语言？\\
+A4 & 数据模型是否已先于逻辑冻结？实体、关系、生命周期、所有权是否明确？\\
+\midrule
+B1 & 每个模块的接口是否小到能一口气记住？\\
+B2 & 每个模块是否深到可以整体替换？\\
+B3 & 对每个声称的边界，是否存在泄漏对？（即：接口相同而外部行为不同的两次执行）\\
+B4 & 每个模块的\emph{无视集}是否已被显式写下？\\
+B5 & 哪些模块会一起变化？该问题是否用共同变更历史验证过，而非仅凭直觉？\\
+\midrule
+C1 & 添加一种新功能，需要修改多少个不相关的模块？（读集实测值）\\
+C2 & 替换底层实现，是否会迫使业务逻辑大规模修改？\\
+C3 & 一个子系统失败时，故障会传播到哪里？\\
+C4 & 新增一种任务类型，是否需要重写公共调度逻辑？\\
+C5 & 并发访问是否会破坏状态不变量？在何处被检测？\\
+C6 & 性能瓶颈是否集中在少数关键路径？\\
+\midrule
+D1 & 不变量是否已被编码为可执行形式（类型、断言、契约测试、性质测试）？\\
+D2 & 每个模块的契约是否可被隔离验证？若不能，它是模块吗？\\
+D3 & 每个关键子系统是否有可追溯的认知记录（表 \ref{tab:record}）？\\
+D4 & 决策记录是否覆盖了"为什么这么选、放弃了什么"？\\
+D5 & 横切关注点是否被作为独立维度处理，而非伪装成某一层？\\
+\midrule
+E1 & 系统是否需要统一基座？由 $n \times m$ 判断，而非代码行数。\\
+E2 & 六职能中，哪些自建、哪些外借？判据是不变量的领域关键性。\\
+E3 & 自建的部分，其不变量是通用宿主无法提供的吗？\\
+E4 & 外借的部分，宿主提供的保证强度是否足以支撑本层契约？\\
+\bottomrule
+\end{longtable}
+
+定理 \ref{th:centralise}、命题 \ref{prop:leakpair} 与 \ref{prop:exponent} 在给定
+模型下成立。经验内容是假设 $H_4$ 与 $H_{12}$：读集的标度指数优于读集水平与传统规模
+指标；不变量集中化（在绕过不可能的前提下）降低读集与缺陷率；率失真斜率预测重构
+收益。若三者被否定，本章的目标函数选择需要修改。

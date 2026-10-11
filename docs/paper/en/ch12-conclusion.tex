@@ -1,0 +1,139 @@
+% =====================================================================
+\chapter{Conclusion}\label{ch:conclusion}
+% =====================================================================
+
+\section{Answers to the four questions}
+
+\begin{problem}[Generality of low-level determinism]
+The answer has three parts. The low level is nearly unique because it is
+\emph{over-constrained}: the number of constraints is at least the number of design
+degrees of freedom, and the solution set degenerates into a discrete point set
+(Proposition \ref{prop:overconstrain}). The upper levels admit many solutions because
+problem-level constraints are far fewer than the degrees of freedom, and the solution
+set is a high-dimensional manifold. The upper levels nevertheless converge, because a
+\emph{second set of constraints}, imposed by the human organisations that build and
+maintain the system, compresses the manifold into a few sharp peaks
+(Principle \ref{pr:org}).
+
+The accurate answer is therefore this: convergence exists, but not towards the
+engineering optimum; it is convergence towards a \emph{structure that a bounded
+organisation can navigate}. What converges is carried by \emph{relations} rather than by
+components (Principle \ref{pr:relations}); its strength decreases monotonically with
+domain binding (Conjecture \ref{conj:strength}).
+\end{problem}
+
+\begin{problem}[Coercion by scale]
+The conclusion is a \emph{conditional necessity} result. The independent variable that
+decides whether a unified substrate is required is the product of the number of live
+entities and the number of shared resources, not the line count
+(Theorem \ref{th:integration}, Corollary \ref{cor:threshold}). The six functions
+(identity and lifecycle, allocation and reclamation, scheduling, naming and addressing,
+communication and synchronisation, and fault isolation and recovery) are necessary
+conditions for the operational semantics to be well defined (Theorem \ref{th:six}). They
+may be built or adopted from a host; the criterion is whether the invariant they carry
+is domain-critical (Corollary \ref{cor:buildadopt}).
+\end{problem}
+
+\begin{problem}[Comprehension and design]
+The conclusion is that comprehension is inverse compression and design is forward
+compression, the two reading directions of one structure. The optimal descent depth of
+comprehension is given by the stationarity condition of rate--distortion
+(Proposition \ref{prop:stopping}); the measurable objective of design is the expected
+read-set (Definition \ref{def:readset}), and minimising it requires the enforcement of
+each invariant at a single site (Theorem \ref{th:centralise}). Whether an abstraction
+leaks is measurable, not merely felt (Proposition \ref{prop:leakpair},
+Corollary \ref{cor:diagnose}). For an AI the advantage lies not in reading more but in
+probing faster (Proposition \ref{prop:active}).
+\end{problem}
+
+\begin{problem}[Correctness without review]
+The conclusion is this: it is attainable that no human reviews the implementation line
+by line, and unattainable that no human remains responsible for the expression of the
+goal. ``Correctness'' must be decomposed into five dimensions
+(Definition \ref{def:five-correctness}); the intermediate process must be defined as a
+seven-stage verifiable refinement chain (Definition \ref{def:chain}); trust must be a
+composite of the two modes of trust generation (Definition \ref{def:two-layer}); and
+artefact binding is the fourth pillar and cannot be omitted (Eq. \eqref{eq:binding}). The
+consolidated assurance condition (Theorem \ref{th:assurance}) gives the complete answer.
+\end{problem}
+
+\section{Compression as the through-line}
+
+Gathering the whole paper together yields a single thread: \term{compression}.
+
+\begin{itemize}
+\item Complex systems compress themselves by \emph{levels}, so that every large system
+      grows a kernel internal to its domain (Chapter \ref{ch:infrastructure});
+\item Bounded intelligence compresses information by \emph{comprehension}, so that a
+      finite cognition accommodates an unbounded world (Chapter \ref{ch:comprehension});
+\item Engineering compresses the cost of change by \emph{architecture}, so that a local
+      modification does not require global comprehension (Chapter \ref{ch:design});
+\item Civilisation compresses trust by \emph{rules}, so that a million lines of code of
+      unknown provenance can be run safely (Chapter \ref{ch:intent}).
+\end{itemize}
+
+The mechanism of compression is the same in all four cases: quotienting by the kernel of
+the abstraction map (Proposition \ref{prop:oblivious}). \emph{All the information a level
+exposes to the level above is the quotient of lower-level behaviour by that kernel.}
+
+\section{The core proposition}
+
+If the whole paper is to be compressed into one testable sentence, this paper chooses the
+following:
+
+\begin{principle}[Core proposition]\label{pr:core}
+A complex system is comprehensible to a bounded intelligence if and only if it is
+compressible; and it is compressible if and only if it admits a separation of scales in
+which every level has an explicit, declared \emph{oblivious set}.
+\end{principle}
+
+Three consequences follow directly.
+
+First, it turns ``comprehensibility'' from a subjective impression into a structural
+property: comprehensibility is equivalent to the existence of a quotient map under which
+task-relevant predictive power is preserved. This makes comprehensibility an
+\emph{objective function} of design rather than a retrospective assessment.
+
+Second, it redefines ``architecture'' as \emph{manufactured separation of scales}. Nature
+obtains levels free from separation of scales and renormalisation; software levels do not
+emerge spontaneously and must be paid for in interfaces, encapsulation and invariants,
+and they are liable to leak. The core deliverable of architecture is therefore not a
+module list but the \emph{declaration of the oblivious set of every level}.
+
+Third, it gives a concrete rule of action for an AI: do not attempt to exhaust low-level
+information; maintain a layered, falsifiable compression model that counterexamples can
+update; obtain gradient by probing rather than by reading; and take task sufficiency as
+the stopping condition.
+
+\section{Closing remarks}
+
+The paper begins with three engineering intuitions and concludes with a joint proposition
+about structure and assurance. What is established is not the answers but \emph{which
+questions have no answer}, and why:
+
+\begin{itemize}
+\item the gap between intent and specification has no mechanical solution, and its
+      grounds are epistemological rather than logical; it is in substance the frame
+      problem, and is therefore avoidable only in interaction;
+\item the basis of trust for mechanical assurance can be narrowed but not eliminated;
+      and ``verification is cheap'' must be decomposed into two independent propositions,
+      cheap checking time and cheap certificate size, of which the latter is the usual
+      bottleneck;
+\item the reliability of consensus assurance is dominated by correlated error modes, so
+      that \emph{diversity} rather than \emph{number} is the design variable, and
+      diversity is ultimately a problem of incentive design, not of statistics;
+\item the structural convergence of large systems is probabilistic, domain-specific and
+      shaped by organisational constraints, rather than unique;
+\item the duty of architecture is not to lower the cost of a single change but to lower
+      the \emph{exponent} with which that cost grows with size.
+\end{itemize}
+
+Set side by side, these items share one shape: \emph{complexity compression is a
+necessity driven by size, and the form the compression takes is a contingency driven by
+domain; while the boundary of assurance falls exactly between what a machine can decide
+and what must be validated by the party that bears the consequences.}
+
+The price is the surrender of a picture expressible as a single theorem; the gain is that
+every claim sits where it can be tested. For a framework about how to establish
+trustworthy conclusions on top of untrusted complexity, this is the only self-consistent
+ending: \emph{it must pass its own test.}

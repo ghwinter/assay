@@ -1,0 +1,274 @@
+% =====================================================================
+\chapter{Objections and Limits}\label{ch:objections}
+% =====================================================================
+
+This chapter performs a self-audit: it removes claims that cannot bear load from the
+structure, and records explicitly what has been removed.
+
+\section{List of Non-Claims}
+
+The following list is binding: no other part of the paper may be read as supporting the
+claims below.
+
+\begin{enumerate}[label=(N\arabic*)]
+\item The paper does \emph{not} claim that all large software eventually converges on one
+      and the same high-level architecture (Hypothesis \ref{hyp:strong} is explicitly
+      rejected).
+\item The paper does \emph{not} claim that code volume by itself causes internal
+      infrastructuralisation; it claims that the cause is the product of entity count and
+      resource count, together with the recurrence of problems and the frequency of
+      evolution.
+\item The paper does \emph{not} claim that the six functions must be \emph{built
+      in-house}; it claims that they must be \emph{defined}, and may be adopted from a host.
+\item The paper does \emph{not} claim that Simon's near-decomposability is a universal law.
+      The paper recasts it as a conditional, testable sufficient-statistic criterion
+      (Definition \ref{def:neardecomp}) and concedes that the original source provides no
+      general theorem about verification cost.
+\item The paper does \emph{not} claim that minimum description length can decide what
+      purpose a system ought to achieve. MDL is a model-selection principle, not a theory
+      of intent.
+\item The paper does \emph{not} claim that ``comprehension is compression'' is a theorem in
+      every domain. Within inductive inference it is a defensible theoretical position;
+      outside that range it is a strong heuristic.
+\item The paper does \emph{not} claim that a mechanical system never errs. It claims that
+      mechanical decision does not depend on the generator's subjective will, and that a
+      mechanical system can still be defective, can fail, and can embody an incomplete
+      model.
+\item The paper does \emph{not} claim that trust can be fully mechanised. The \TCB{} can be
+      reduced, verified and isolated, but it cannot be eliminated outright.
+\item The paper does \emph{not} claim that the intent layer can be closed mechanically. It
+      can be \emph{approached} by adversarial consensus, and the reliability of that
+      approximation is governed by the correlated error mode.
+\item The paper does \emph{not} claim that ``adding more agents to review'' raises
+      reliability. By Corollary \ref{cor:diversity}, reliability rises only when the
+      correlated error mode falls.
+\item The paper does \emph{not} claim that layering can accommodate everything. A
+      cross-cutting concern cannot be localised structurally into any single layer
+      (Principle \ref{pr:crosscutting}).
+\item The paper does \emph{not} claim that formal verification will become cheap
+      \emph{automatically} in the AI era. That is a hypothesis worth investigating, not an
+      established fact (\S\ref{sec:asymmetry}).
+\item The paper does \emph{not} claim that compiler correctness equals system correctness.
+      Linking, loading, the runtime, external libraries, hardware and the operating system
+      need not lie within the scope of the proof.
+\item The paper does \emph{not} claim that resource guarantees can be unified into a single
+      method. Time complexity, symbolic resource bounds, worst-case execution time,
+      statistical quantiles and direct measurement are evidence of different grades.
+\item The paper does \emph{not} claim that ``no violation detected'' equals ``every
+      execution satisfies''. Three states must be distinguished (Principle
+      \ref{pr:three-states}).
+\end{enumerate}
+
+\section{Arguments Removed from the Load-Bearing Structure}
+
+The paper deliberately rejects several arguments that are common in discussions of this
+kind but do not hold. They are rejected not because they are useless, but because they
+state heuristics as theorems, and thereby make the whole framework depend on unproved
+conjectures.
+
+\begin{longtable}{L{3.4cm}L{5.2cm}L{5.6cm}}
+\caption{Arguments removed from the load-bearing structure}\label{tab:overreach}\\
+\toprule
+\textbf{Rejected argument} & \textbf{Why it fails} & \textbf{Replacement in this paper} \\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Rejected argument} & \textbf{Why it fails} & \textbf{Replacement in this paper} \\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+Deriving from G\"odel's incompleteness theorem that ``a permanent gap between intent and
+  specification necessarily exists'' &
+  The incompleteness theorem concerns limits of provability in particular formal systems;
+  it is not a theorem about the relation between human mental intent and formal
+  specification &
+  Replace it with three epistemic grounds: requirements are generative; specification is
+  lossy compression; and the distinction between verification and validation
+  (Proposition \ref{prop:three-grounds}) \\
+Deriving from Rice's theorem that ``intent cannot be formalised'' &
+  Rice's theorem concerns the undecidability of non-trivial semantic properties of
+  programs; it has nothing to do with human intent &
+  Use it only as a boundary on general synthesis and general decision algorithms (Q6 of
+  Remark \ref{rmk:q1q8}) \\
+Calling ``grading is easier than answering'' a dividend of $\mathrm{P}\neq\mathrm{NP}$ &
+  Whether $\mathrm{P}$ equals $\mathrm{NP}$ is still open; the argument depends on an
+  unproved conjecture &
+  Use only the structural asymmetry implied by the definition of the class $\mathrm{NP}$
+  (Proposition \ref{prop:asym-struct}) \\
+Asserting as a mathematical theorem that ``the verifier must be minimal, deterministic and
+  never isomorphic'' &
+  A small trusted kernel is a valuable architectural principle; small does not mean free of
+  defects &
+  \TCB{} minimisation: make the untrusted part inspectable, and concentrate the unavoidable
+  trust on a basis that is as small, and as explicit in its properties, as possible \\
+Asserting that ``a dead thing does not betray'', hence mechanical assurance is absolutely
+  reliable &
+  A mechanical system can be defective, can fail, and can embody an incomplete model &
+  Distinguish ``does not betray'' (does not depend on the generator's will) from ``cannot
+  err'' (impossible) \\
+Asserting that Simon's law of levels proves that every complex system necessarily organises
+  itself into levels &
+  The original source offers an explanation, not a universal law, and no general theorem
+  about verification cost &
+  Recast as a conditional, testable sufficient-statistic criterion
+  (Definition \ref{def:neardecomp}) \\
+Asserting that linear logic makes wasted resources structurally impossible &
+  The exponential structure of linear logic still permits particular forms of duplication
+  and discarding; linear use is not optimal use &
+  Use a composite structure: usage constraints $+$ resource-bound analysis $+$ performance
+  models $+$ runtime instrumentation $+$ qualified worst-case execution time analysis \\
+Asserting that formal verification must become cheap in the AI era &
+  Historical cost magnitudes show that specification design, model selection and proof
+  architecture remain real work (Example \ref{ex:sel4-cost}) &
+  Downgrade it to a hypothesis and give a measurable cost metric (criterion S5 of Chapter
+  \ref{ch:program}) \\
+Asserting that ``comprehension is compression'' is a universal law &
+  Its rigorous formalisation applies to inductive inference, and beyond that range it
+  degenerates into a heuristic &
+  Restrict the scope of application and tie it to task-relative sufficiency
+  (Definition \ref{def:sufficient}) \\
+Asserting a substantive connection between this framework and the Langlands programme &
+  That programme studies the functorial duality between arithmetic objects and automorphic
+  representations; the ``free generation / deterministic admission'' this framework needs
+  is only the \emph{smell of a duality}, not a functor. To write it in would substitute
+  rhetoric for structure &
+  Adopt a duality that pays its way: the LP/SMT duality. Farkas certificates, unsatisfiable
+  cores and unrealisability certificates give a theorem-level correspondence between a
+  synthesis problem and its infeasibility proof, and are already used in engineering \\
+Asserting that the Landauer principle constrains software design &
+  The scale of software is some twelve orders of magnitude away from that bound; the
+  erasure bound is not a constraint surface for architecture &
+  Adopt the memory wall and locality: moving one bit costs about $10^{9}$ times the erasure
+  bound in energy, and this is the physics that actually fixes the memory hierarchy, cache
+  policy and data layout \\
+Asserting that homotopy type theory is a necessary foundation for this framework &
+  That theory extends the foundations of mathematics, but gives no software guarantee that
+  resource analysis or verified compilation does not already give &
+  Restrict the role of type theory to what has been proved: dependent types expressing
+  postconditions and invariants \cite{hott2013} \\
+\bottomrule
+\end{longtable}
+
+\section{Possible Objections and Responses}
+
+\paragraph{Objection 1: read-sets and oblivious sets cannot be measured precisely in real
+systems, so the formalisation is decorative.}
+Response: the read-set of Definition \ref{def:readset} can be counted directly from version
+history, using ``the set of modules touched by each change'' as a proxy; it is a computable
+quantity (Hypothesis $H_4$ exists precisely to test the validity of that proxy). The
+oblivious set is not required here to be extracted automatically; it is required to be
+\emph{explicitly declared}. It is a design artefact, not an analysis artefact. Once
+declared, it can be checked in part by the leak-pair diagnostic (Corollary
+\ref{cor:diagnose}).
+
+\paragraph{Objection 2: the core conclusion that ``a large system grows a kernel'' is too
+broad and almost unfalsifiable.}
+Response: Theorem \ref{th:six} has explicit premises (more than one concurrently live
+entity, finite contended resources, reachable faults), and its conclusion is falsifiable: a
+well-defined system that satisfies the premises but lacks one of the six functions suffices
+to refute it. The empirical part rests on Hypothesis $H_3$, whose falsifier is that ``lines
+of code explain the data no worse than $n \times m$''.
+
+\paragraph{Objection 3: the two-layer trust structure places too much responsibility on
+consensus, and consensus often fails in practice.}
+Response: this is exactly the problem Proposition \ref{th:correlated} addresses. The
+proposition does not defend consensus; it gives the form of its failure and its design
+variables. It also explains a common phenomenon: a ``review panel'' composed of models of
+common origin is structurally not a guarantee, however large it is.
+
+\paragraph{Objection 4: does treating the level as the unit into which verification
+obligations decompose merely rename the existing practice of ``layered verification''?}
+Response: in part, yes, and the paper concedes it. The difference lies in three points:
+(a) the assignment rule given here (Definition \ref{def:obligation-assign}) is an
+operational decision, not a slogan; (b) the paper explicitly introduces the class of
+``obligations this layer cannot express'' and requires that it be assigned to consensus or
+to human approval rather than ignored; (c) the paper gives a quantitative bound on the
+reliability of the consensus layer, which makes ``assign it to consensus'' a decision that
+can be assessed rather than merely trusted.
+
+\paragraph{Objection 5: defining technical debt as a description-length gap is
+uncomputable and therefore useless.}
+Response: the value of the definition lies not in numerical computation but in the
+direction and the criterion it gives (Principle \ref{pr:debt}(c)): deciding whether a
+refactoring is worthwhile is equivalent to deciding whether it makes the system easier to
+generate from a shorter description. That is a question that can be used in review, even
+though $\DL^{\star}$ is uncomputable.
+
+\paragraph{Objection 6: the paper mixes engineering, mathematics and social epistemology;
+does it exceed the defensible range of a single discipline?}
+Response: the criticism holds. Two mitigations are in place. First, every class of claim is
+labelled with its strength (the strength trichotomy of Chapter \ref{ch:program}); second,
+the citations that are \emph{used} are explicitly separated from those that are
+\emph{rejected} (Table \ref{tab:relations}). Cross-disciplinarity is not itself a defect,
+provided that no discipline's conclusion is used outside its scope.
+
+\section{Open Problems}
+
+The following questions are open:
+
+\begin{enumerate}[label=(O\arabic*)]
+\item \term{Independent measurability of $\Dom$ and $\Conv$}. For Conjecture
+      \ref{conj:strength} to become a testable proposition, both quantities must be
+      measurable independently of the conclusion. The paper gives only the direction, not a
+      reproducible annotation protocol.
+\item \term{Formalisation of the completeness argument for the six functions}. The proof of
+      Theorem \ref{th:six} is a structural enumeration, not a derivation in a formal system.
+      Writing it as a completeness theorem for a given operational-semantics framework
+      remains unfinished work.
+\item \term{Whether cross-layer semantics always compose}. Proposition \ref{prop:soundness}
+      gives sufficient conditions, but whether those conditions can be satisfied
+      simultaneously in systems containing nondeterminism, real-time constraints and
+      reflexivity is not known.
+\item \term{How to measure $q$ for the consensus layer}. Proposition \ref{th:correlated}
+      attributes reliability to the correlated error mode, but gives no operational method
+      for estimating $q$. This is the crux of whether the direction can be put into
+      practice.
+\item \term{Whether a joint semantics of resources and function is decidable}. A costed
+      trace semantics can express joint constraints, but the size of its decidable fragment
+      and the tightness of its bounds are unsettled.
+\item \term{Compatibility of artefact binding with dynamically generated implementations}.
+      If an implementation can be regenerated at runtime in response to load, the static
+      identity assertion of Equation \eqref{eq:binding} must be replaced by a stronger
+      question: which changes preserve the existing contract, which require re-verification,
+      and how to fall back to a known safe state when verification fails.
+\item \term{Consistency of level assignment}. Whether Definition
+      \ref{def:obligation-assign} yields consistent assignments across different analysts
+      requires empirical testing.
+\end{enumerate}
+
+\section{Methodological Limitations}
+
+\begin{enumerate}[label=(L\arabic*)]
+\item For every reference cited, the depth of checking is limited to the formal publication
+      page, the author's or project's home page, and preprint metadata; the full text was
+      \emph{not read through in full for each entry}. Every concrete number given in the
+      text should therefore be treated as a \emph{second-hand report awaiting re-checking};
+      several entries with recent nominal years are retained as recorded in the original
+      source, and no independent checking was done here.
+\item The formalisation in this paper consists of \emph{working definitions established for
+      the purposes of this paper}, and should not be mistaken for an existing unified
+      standard. In particular, the three items ``oblivious set'', ``level contract
+      four-tuple'' and ``level assignment of verification obligations'' are working
+      concepts proposed here.
+\item The three epistemic grounds (Proposition \ref{prop:three-grounds}) are arguments
+      rather than theorems; the challengeable point is whether the three are exhaustive.
+\item No experiments were performed. Every hypothesis in Chapter \ref{ch:program} remains
+      in the ``to be tested'' state.
+\end{enumerate}
+
+\begin{principle}[Self-audit conclusion]\label{pr:self-audit}
+After this scrutiny, three minimal independently testable propositions remain in the
+load-bearing structure:
+\begin{enumerate}[label=(\roman*)]
+\item a structural asymmetry between verification and generation, implied by the definition
+      of the class $\mathrm{NP}$;
+\item the level is the unit into which assurance obligations decompose, because every
+      obligation belongs to some observable domain;
+\item the gap between intent and specification has epistemic grounds, and therefore cannot
+      be closed mechanically in general.
+\end{enumerate}
+Every remaining claim (including ``compression'', ``emergence'' and ``internal
+infrastructuralisation'') has either been downgraded to a falsifiable hypothesis or
+confined to an explicit scope of application.
+\end{principle}

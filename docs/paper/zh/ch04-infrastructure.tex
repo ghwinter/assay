@@ -1,0 +1,444 @@
+% =====================================================================
+\chapter[内部基础设施化]{内部基础设施化：内核六职能的条件必然性}\label{ch:infrastructure}
+% =====================================================================
+
+本章处理问题 \ref{prob:scale}。核心主张是：任何足够复杂的软件系统都会在自己的问题域
+内重新发明一个操作系统。其原因不是工程师在模仿内核，而是一组语义义务在规模上无法
+被回避。本章给出该主张的前提、证明与判据，并给出一个可在单一项目内实施的可证伪检验。
+
+\section{现象与术语}\label{sec:phenomenon}
+
+观察到的现象是：当系统规模增长到一定程度，它会开始把原本分散在各处的机制提升为
+统一的系统级能力。具体而言：
+
+\begin{itemize}
+\item 多个功能都需要分配和释放资源；
+\item 多个子系统都需要管理对象生命周期；
+\item 多个组件都需要执行异步任务；
+\item 多个模块都需要共享状态并协调修改；
+\item 多个功能都需要统一的错误处理、日志与诊断机制；
+\item 多个执行路径都需要遵循相同的线程安全与并发规则。
+\end{itemize}
+
+如果每个模块独立解决这些问题，系统就会出现大量重复实现、不一致的行为与难以控制的
+耦合。因此系统开始将这些问题集中处理，形成公共机制、接口、管理器、运行时与执行模型。
+
+\begin{definition}[内部基础设施化]\label{def:infra}
+\term{内部基础设施化}指一个系统依次经历下列三个阶段：
+\begin{enumerate}[label=(\roman*)]
+\item \term{共性识别}：把重复出现的需求识别为同一类问题（问题空间的归并）；
+\item \term{机制统一}：把共性提升为公共能力，使不同功能通过公共接口访问共享资源，
+      遵循共同的生命周期、错误处理与并发规则（机制的集中化与标准化）；
+\item \term{结构统一}：上层功能不再直接解决全部底层问题，而在统一规则之上构建
+      （结构上的统一）。
+\end{enumerate}
+简记为 $\boxed{\text{共性识别} \to \text{机制统一} \to \text{上层组合}}$。
+\end{definition}
+
+机制统一\emph{不}意味着所有逻辑都集中在一个中心模块中。成熟的
+架构也可以\emph{通过协议、接口与分布式所有权}实现统一。统一的是\emph{规则与契约}，
+不一定是\emph{实现与所有权}。这一区分是避免"上帝对象"的关键，第 \ref{ch:design} 章
+会把它写成一条设计原则。
+
+\section{参与者-资源结构}\label{sec:participant}
+
+\begin{definition}[参与者-资源结构]\label{def:pr-structure}
+一个\term{参与者-资源结构}是一个五元组
+\begin{equation}\label{eq:pr}
+\Pi = \bigl(E,\; \mathcal{R},\; \to,\; \mathrm{Ready},\; \mathrm{Fault}\bigr),
+\end{equation}
+其中 $E$ 是并发存活实体的集合，$\mathcal{R} = \{r_1,\dots,r_m\}$ 是有限共享资源集合，
+$\to$ 是操作语义的转移关系，$\mathrm{Ready} \subseteq E \times \mathrm{Conf}$ 指出在
+给定配置下哪些实体可执行，$\mathrm{Fault}$ 是故障事件集合。
+\end{definition}
+
+关键的两个量是 $n = |E|$ 与 $m = |\mathcal{R}|$。第 \ref{sec:integration} 节将证明：
+决定是否需要统一基础设施的自变量是 $n \times m$ 的结构复杂度，而不是代码行数。
+
+\begin{definition}[统一基座]\label{def:substrate}
+$\Pi$ 的一个\term{统一基座}是一组机制 $\mathcal{U}$，使得每个实体 $e \in E$ 与每个
+资源 $r \in \mathcal{R}$ 的交互都通过 $\mathcal{U}$ 声明的接口进行，而不是由 $e$
+直接实现。
+\end{definition}
+
+\section{集成成本定理与相变阈值}\label{sec:integration}
+
+\begin{theorem}[集成成本]\label{th:integration}
+设参与者-资源结构 $\Pi$ 有 $n$ 个实体与 $m$ 个共享资源。假设
+\begin{enumerate}[label=(\alph*)]
+\item 在无基座情形下，每个实体若参与资源 $r$，必须独立实现与 $r$ 的正确交互，
+      包括对 $r$ 的不变量的独立处理；
+\item 在最大耦合情形下，每个实体参与全部 $m$ 个资源；
+\item 有基座情形下，每个实体至多使用 $k$ 个基座接口，且基座自身对 $m$ 个资源各定义
+      一次语义；基座的固定成本为 $F$（设计、实现与长期维护）。
+\end{enumerate}
+则无基座情形的交互对数为 $\Theta(nm)$，有基座情形为 $\mathcal{O}(nk + m)$。基座在
+期望意义上优于无基座，当且仅当
+\begin{equation}\label{eq:threshold}
+n \cdot m \;>\; c\,(n k + m) \;+\; F
+\end{equation}
+其中 $c$ 为单次交互的单位成本系数。
+\end{theorem}
+
+\begin{proof}
+无基座情形：实体 $e$ 与资源 $r$ 的正确交互需要一份独立实现，故交互对数为
+$\sum_{e} |\mathcal{R}(e)| \le nm$，在假设 (b) 下取等号，即 $\Theta(nm)$。此外，
+对每个资源 $r$，$n$ 份独立实现必须对 $r$ 的不变量达成一致，这是一项一致性义务，
+其失败模式数目为 $\Omega(n)$（任一实现偏离即破坏全局不变量）。
+
+有基座情形：$m$ 个资源的语义各定义一次，成本 $\Theta(m)$；每个实体通过至多 $k$ 个
+接口与基座交互，成本 $\mathcal{O}(nk)$；加上固定成本 $F$。故总量为
+$\mathcal{O}(nk + m) + F$。
+
+比较两式并以单位成本系数 $c$ 归一，即得式 \eqref{eq:threshold}。
+\end{proof}
+
+\begin{corollary}[相变阈值]\label{cor:threshold}
+由于 $k$ 是每个实体的\emph{有界}接口使用量，$\mathcal{O}(nk + m)$ 关于 $n$ 是线性的，
+而 $\Theta(nm)$ 关于 $n$ 与 $m$ 都是线性的乘积。因此当 $n$ 或 $m$ 之一显著增长时，
+不等式 \eqref{eq:threshold} 必然被满足。相变发生在 $n m \sim F/c$ 处，即当
+\emph{实体数与资源数的乘积}超过基座的固定成本量级时。
+\end{corollary}
+
+推论 \ref{cor:threshold} 精确化了"代码量达到某个数量级"这一直觉，并给出了它的正确
+形式：
+
+\begin{principle}[阈值不是代码行数]\label{pr:notloc}
+决定是否必须建立统一基座的自变量是\emph{活跃实体数}与\emph{共享资源数}的乘积，
+以及\emph{重复问题的出现频率}、\emph{状态与资源之间的交互数量}、\emph{并发执行的
+复杂程度}、\emph{模块的演化频率}与\emph{对一致性、性能与可靠性的要求}。代码行数
+只是这些量的代理变量。
+\end{principle}
+
+这解释了一个本该令人困惑的事实：两个各有一百万行代码的软件，内部架构可能完全不同。
+一个可能是大量彼此独立的生成代码、数据文件或线性业务逻辑（$m$ 小，$n$ 小）；另一个
+可能有复杂的共享状态、异步任务与大量互相依赖的子系统（$n$、$m$ 都大）。只有后者会
+出现对统一运行时、资源管理与协调机制的需求。
+
+核心归并（\ref{sec:participant}）在这里给出第二个解释：当系统中活跃实体的数量从
+$10^{2}$ 跃迁到 $10^{6}$ 时，朴素管理方式发生\emph{相变}。
+管理 100 个对象时，条件分支与裸分配是足够的；管理 100 万个并发任务、缓存条目或连接
+时，实体间的潜在交互是 $O(N^{2})$，复杂度不可行，于是被迫引入池化、索引、分层、异步、
+批量与缓存局部性，而这套手段的集合恰恰构成"内核技术"的全部清单。
+
+\begin{example}\label{ex:pg-memctx}
+一个关系数据库引擎自建内存上下文（memory context）体系，是因为通用分配器在"每条
+查询创建并销毁数千个元组"的负载下会产生碎片且无法追踪泄漏。于是它构造了上下文树的
+分配与批量回收机制，这是数据库域内的对象池。一个异步运行时自建工作窃取调度器，
+是因为操作系统线程在百万并发面前过重，于是构造了 $M{:}N$ 调度，这是用户态的分时
+调度。数量级跃迁强制引入内核技术，这是第一重必然。
+\end{example}
+
+\section{内核六职能}\label{sec:six}
+
+\begin{definition}[内核六职能]\label{def:six}
+对参与者-资源结构 $\Pi$，定义\term{内核六职能} $\mathcal{K}_6$ 为
+\begin{enumerate}[label=(F\arabic*)]
+\item \term{身份与生命周期} \textnormal{(identity \& lifecycle)}：实体的身份标识、
+      创建、存活与终止关系；
+\item \term{分配与回收} \textnormal{(allocation \& reclamation)}：有限资源的分配
+      策略与回收策略；
+\item \term{调度} \textnormal{(scheduling)}：在就绪实体之间选择下一个执行者的选择
+      函数；
+\item \term{命名与寻址} \textnormal{(naming \& addressing)}：使实体可被发现、可被
+      引用、可被遍历的机制；
+\item \term{通信与同步} \textnormal{(communication \& synchronisation)}：实体之间的
+      交互原语与并发转移的复合规则；
+\item \term{故障隔离与恢复} \textnormal{(isolation \& recovery)}：故障的包含关系与
+      状态的可重放性。
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[六职能的条件必然性]\label{th:six}
+设 $\Pi = (E, \mathcal{R}, \to, \mathrm{Ready}, \mathrm{Fault})$ 为一个参与者-资源
+结构，其操作语义良定义（即在每个可达配置下，下一步转移是被确定的，或其所允许的
+非确定性已被显式规定）。若 $|E| > 1$ 且 $\mathcal{R}$ 有限且受争用，则 $\mathcal{K}_6$
+的六项职能必然已被定义，定义位置或在该系统自身的代码中，或者在其宿主（操作系统、语言
+运行时、框架）中。
+\end{theorem}
+
+\begin{proof}[结构论证]
+逐项说明缺失任一职能将导致语义不完备（存在未定义行为）。
+
+\emph{(F1) 身份与生命周期}：若实体不可区分，则 $\mathrm{Ready}$ 无法被定义为一个
+关于实体集合的函数；若实体无创建与终止关系，则 $E$ 随时间变化而未被规定，$\to$ 在
+"实体出现/消失"的步骤上无定义。
+
+\emph{(F2) 分配与回收}：$\mathcal{R}$ 有限且受争用，故"同时请求超过可供给量的资源"
+是一个可达状态。若缺少分配策略，$\to$ 在该状态下无定义。终止实体的资源若不回收，
+则可用资源单调递减，系统在有限步内进入资源耗尽状态；此时 $\to$ 在前瞻意义下无定义。
+
+\emph{(F3) 调度}：若 $|E| > 1$ 且多个实体同时就绪，则 $\to$ 不再是一个函数而是一个
+关系。若不规定就绪者之间的选择，则"允许的非确定性"未被界定，语义不完备。
+
+\emph{(F4) 命名与寻址}：交互原语（见 F5）必须指定交互的对象。若无引用机制，则交互
+的宾语不可表达。
+
+\emph{(F5) 通信与同步}：若实体之间存在交互，则全局转移不是局部转移的简单积；缺少
+复合规则时，并发转移的语义未被定义。
+
+\emph{(F6) 故障隔离与恢复}：$\mathrm{Fault} \ne \varnothing$（故障是物理与工程的
+既成事实）。若缺少包含关系，则一次局部偏离具有全局语义，等价于系统在故障下没有
+良定义的行为；若缺少恢复规则，则系统在首次故障后不再回到规范状态。
+
+综上，任一职能缺失都会使"良定义"这一前提被破坏。\qed
+\end{proof}
+
+\begin{remark}[定理的性质]\label{rmk:six-nature}
+定理 \ref{th:six} 是一个\emph{条件必然性}结果，而非无条件定理。它的条件是
+$|E| > 1$、$\mathcal{R}$ 有限且受争用、以及故障可达。它的证明是结构性的枚举论证，
+而非某个形式系统中的推导。它可被证伪的方式是：给出一个满足前提却缺少六项之一的
+良定义系统。该判断本身可被挑战。
+\end{remark}
+
+定理 \ref{th:six} 的措辞"或者在该系统自身的代码中，或者在其宿主中"是关键的。它
+把"是否必然出现"与"是否必须自建"两个问题分离开来。
+
+\section{自建与外借}\label{sec:buildadopt}
+
+\begin{corollary}[自建/外借二分]\label{cor:buildadopt}
+由定理 \ref{th:six}，六职能必被定义，但定义的位置是一个设计选择。该选择由不变量
+的\emph{领域关键性}决定：
+\begin{enumerate}[label=(\alph*)]
+\item 若某职能所承载的不变量是\emph{领域关键}的，即该不变量必须由本系统拥有的保证
+      才能成立，则该职能必须自建；
+\item 若某职能所承载的不变量是\emph{通用}的，即通用宿主能够提供强度足够的保证，
+      则应当外借；
+\item 对通用职能自建实现，将产生本文称为\emph{通用件重造}的失败模式：以更高的长期
+      理解与维护成本，重新实现一个更差的通用机制。
+\end{enumerate}
+\end{corollary}
+
+这一判据解释了"应用"与"平台"的边界为什么正好落在它现在的位置：
+\emph{你被迫自己拥有的不变量集合，就是你内核的边界}。
+
+\begin{example}\label{ex:buildadopt}
+一个游戏引擎必须自建实体-组件存储与帧调度，因为通用宿主无法提供"亚毫秒确定性帧
+预算"这一保证。一个数据库必须自建存储引擎与预写日志，因为通用文件系统无法提供
+"崩溃后恢复到确定状态"这一保证。反之，一个 Web 应用应当外借垃圾回收、线程调度与
+内存分配，因为这些职能的不变量是通用的，自建只会得到更差的版本。
+\end{example}
+
+\begin{remark}[一个更锐利的判据：单调性]\label{rmk:calm}
+推论 \ref{cor:buildadopt} 用不变量是否领域关键来判定自建还是外借。对"协调"这一类
+职能，存在一个更锐利且可静态检查的判据：\emph{计算是否单调}。在单调性成立时\cite{calm2011}
+（输出随输入增长而增长，且不依赖否定或聚合的全局知识），协调不是必需的，可以下推
+到各参与者自行完成；非单调性（唯一性约束、否定、阈值聚合、非交换更新）则强制某个
+位置承担协调。
+
+这把第 \ref{sec:six} 节的职能 (F5)（通信与同步）与 (F3)（调度）的一部分从"规模到了
+就必须集中"精确化为"非单调就必须集中"。对单调子系统，集成成本定理
+（定理 \ref{th:integration}）中的 $k$ 可以被降到接近常数，因为参与者之间不需要就
+共享状态达成一致。
+\end{remark}
+
+\section{跨领域对照}\label{sec:instances}
+
+定理 \ref{th:six} 预测：横看每一列是一家不同公司、不同语言、不同时代、不同领域的
+系统；纵看每一行是同一个器官。表 \ref{tab:organs} 给出对照。该表不主张这些机制可以
+一一等同，而是把它们放在相同的\emph{管理职责}维度上比较。
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{同一组管理职责在不同领域的独立实现}\label{tab:organs}
+\begin{tabular}{L{1.5cm}L{2.4cm}L{2.4cm}L{2.2cm}L{2.1cm}L{2.3cm}L{2.4cm}}
+\toprule
+\textbf{职能} & \textbf{Linux} & \textbf{Chromium} & \textbf{Tokio} & \textbf{Bevy}
+& \textbf{Unreal} & \textbf{PostgreSQL} \\
+\midrule
+身份/Lifecycle & task\_struct, inode, file & Frame, Document, Node &
+Task, JoinHandle & Entity, Component & UObject, Actor & backend, xid, tuple \\
+分配/回收 & buddy, slab, page cache & PartitionAlloc, Oilpan &
+slab 式任务分配 & archetype 列存 & FMemory, GC & MemoryContext, shared\_buffers \\
+调度 & EEVDF, workqueue & task queue, RendererScheduler &
+work-stealing, waker & Schedule/System 并行执行器 & TaskGraph, GameThread &
+postmaster, autovacuum \\
+命名/寻址 & kobject, sysfs, fd & DOM, Web IDL & Handle, waker &
+Entity ID & FName, 反射元数据 & OID, 系统目录 \\
+通信/同步 & syscall, netlink, IPC & Mojo IPC & mpsc, oneshot &
+Event, Resource & 委托, 复制 & libpq, LWLock, 扩展钩子 \\
+隔离/恢复 & namespace, cgroup, OOM & site isolation, 渲染进程沙箱 &
+panic 传播, 取消 & 状态机隔离 & crash reporter & MVCC 快照, WAL 重放 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+反过来说，这六个器官在不同宿主中呈现的\emph{形态}差异极大，而这正是第
+\ref{ch:convergence} 章"主干趋同、枝叶各异"的具体内容。形态差异的根源可以被系统
+地列出：
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{宿主内存模型}。手工内存管理的系统（C/C++/Rust）必须自建分配器甚至自建
+      回收器（引擎对象回收、浏览器 Blink 的垃圾回收）；具备托管内存的系统把同样的
+      精力花在停顿行为上，因为分配是现成的，痛点变成了延迟尾部分布。
+\item \term{宿主并发模型}。运行时模型决定调度器官的形状：游戏引擎是帧驱动的协作式
+      调度（可预测延迟优先于吞吐），服务器是事件驱动的抢占式调度（吞吐优先）。因此
+      帧调度器与工作窃取调度器是同一个器官的两个亚种。
+\item \term{领域原语粒度}。通用内核给出的是页、线程、文件描述符、事件轮询；但游戏
+      引擎需要帧、组件与资产，数据库需要缓冲池、事务与版本链，浏览器需要文档节点、
+      安全上下文与跨进程对象。原语粒度错配逼着每个领域自建基础设施。
+\item \term{演化阶段}。这些内部操作系统本身也在持续被重构，且每次重构都是朝着
+      "更完整的六职能"收敛而非发散。
+\end{enumerate}
+
+连操作系统自己也会被其用户绕过：高性能网络与存储栈在用户态轮询重做
+I/O，异步 I/O 接口被重新设计，连操作系统都逃不过被自己的用户态"重新发明"的命运。
+这不是反常，而是推论 \ref{cor:threshold} 的直接结果：当用户态的 $n \times m$ 越过
+阈值，用户态就会长出新的内核。
+
+\section{传输与重新导出}\label{sec:transport}
+
+表 \ref{tab:organs} 显示同一组职能在不同领域中反复出现。但"反复出现"有两种截然不同的
+解释，它们的预测完全不同：
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{同构}：六职能是同一个结构的六次实现，可以彼此翻译；
+\item \term{沿基底的传输}：六职能是某个更一般结构在不同\emph{问题形状}上的纤维，
+      形状改变时结构必须重新导出，不能搬运。
+\end{enumerate}
+
+原文只讲了 (a)。区分二者需要显式引入"问题形状"这个基底。
+
+\begin{definition}[问题形状与层族]\label{def:fibration}
+称一个二元组 $\pi : \mathcal{L} \to \mathcal{P}$ 为一个\term{层族}，其中
+\begin{itemize}
+\item $\mathcal{P}$ 是\term{问题形状}的集合：由该领域的资源形态、并发结构、
+      失效模式与时间尺度决定；
+\item $\mathcal{L}$ 是层实现的集合；
+\item 纤维 $\pi^{-1}(p)$ 是在问题形状 $p$ 下可行的层实现族。
+\end{itemize}
+$\pi$ 把"某个实现"映到"它解决的是什么形状的问题"。$\pi$ 的重索引给出
+\term{沿基底的传输}：给定 $p \to p'$，把 $p$ 上的实现搬到 $p'$ 上。
+\end{definition}
+
+\begin{proposition}[传输的保持范围]\label{prop:transport}
+设 $p \to p'$ 是问题形状之间的映射。若该映射是\emph{等价}（相同的资源形态、并发
+结构、失效模式与时间尺度），则 $\mathcal{K}_6$ 的\emph{槽位}（每个职能所必须回答的
+问题）沿传输保持，实现形态可以改变但不增加或减少槽位。若该映射不是等价，则至少
+一个槽位的语义要求发生改变，实现必须重新导出。
+\end{proposition}
+
+\begin{proof}[论证]
+$\mathcal{K}_6$ 的每一项由定理 \ref{th:six} 的语义义务唯一确定：身份由实体的可区分性
+确定，分配由资源的有限性与争用确定，调度由就绪集合的基数确定，命名由交互的宾语
+确定，通信由并发转移的复合方式确定，隔离由故障的传播范围确定。这六项义务只依赖
+问题形状的四个分量。当映射保持这四个分量时，义务集合不变；当任一分量改变时，
+对应义务的语义要求随之改变。
+\end{proof}
+
+\begin{corollary}[一个可观测的判别]\label{cor:transport-test}
+由命题 \ref{prop:transport}，形态差异可以分成两类：\emph{同一槽位在不同基底上的
+实现差异}（例如帧驱动与事件驱动的调度器，基底的时间尺度不同），与
+\emph{不同槽位的差异}。前者不构成反例，后者构成。
+\end{corollary}
+
+推论 \ref{cor:transport-test} 使第 \ref{ch:convergence} 章的中命题（假设
+\ref{hyp:medium}）可以被更严格地检验：比较两个系统时，必须先在基底上对齐，
+再比较槽位。在基底上不对齐而直接比较模块，是既有架构比较研究最常犯的错误。
+
+\begin{remark}[这一节的地位]\label{rmk:fibration-status}
+定义 \ref{def:fibration} 与命题 \ref{prop:transport} 是一份\emph{结构提案}，不是
+关于范畴论的既有定理的应用。它们的作用是把"同构还是传输"这个此前未被提出的问题
+显式化，并给出一个可判别的推论（推论 \ref{cor:transport-test}）。把 $\pi$ 提升为
+严格的纤维化并证明重索引函子的性质，是尚未完成的工作（第 \ref{ch:objections} 章
+O 项）。
+\end{remark}
+
+\section{粗粒化判据}\label{sec:coarsegrain}
+
+定理 \ref{th:six} 论证了六职能必然\emph{存在}，但没有说明它们是否是最\emph{显著}的
+结构。一个更强的命题是：六职能是系统结构在粗粒化下的\emph{存活集}。
+
+\begin{definition}[粗粒化序列]\label{def:coarsegrain}
+设系统的架构关系型为 $\mathcal{G}$（定义 \ref{def:relgraph}）。一个\term{粗粒化}
+是一个商映射 $q : \mathcal{G} \to q(\mathcal{G})$，它合并构件并保留关系类型。
+称一列商映射 $q_1, q_2, \dots$（每一步的粒度严格变粗）为一个\term{粗粒化序列}。
+结构 $\mathcal{S}$ 在该序列下\term{存活}，若存在 $N$ 使得对所有 $n \ge N$，
+$\mathcal{S}$ 在 $q_n(\mathcal{G})$ 中仍可识别。
+\end{definition}
+
+\begin{conjecture}[六职能是相关结构]\label{conj:relevant}
+在一个正常偏置的大型系统的粗粒化序列下，存活的结构恰为 $\mathcal{K}_6$ 的槽位及
+其关系型；其余结构（具体模块、算法选择、数据布局细节）在足够粗的粒度上被冲掉。
+\end{conjecture}
+
+猜想 \ref{conj:relevant} 的价值在于它给出一个\emph{单项目内}的证伪程序：不需要跨项目
+统计比较，只需对一个代码库反复粗粒化，观察存活集。若存活集不是六职能，猜想被否定，
+且第 \ref{ch:convergence} 章的收敛论题需要一个不同的解释。
+
+\begin{principle}[实施形式]\label{pr:coarsegrain-impl}
+粗粒化可以完全机械地实施：以模块依赖图为基础，反复施加三类操作：(i) 合并扇入扇出
+低于阈值的节点；(ii) 折叠可传递的依赖边；(iii) 抹去不携带不变量（定义
+\ref{def:enforce} 中 $\mathrm{S}(\iota) = \varnothing$）的节点。每一步记录存活结构的
+变化。整个实验只需一个仓库与一个依赖图，不需要标签、不需要人工分类，因此不受
+第 \ref{sec:limits} 节指出的"职责分类系统选择自由度"影响。
+\end{principle}
+
+第 \ref{ch:program} 章把猜想 \ref{conj:relevant} 写成假设 $H_{10}$。
+
+\begin{remark}[与重整化的关系]\label{rmk:rg}
+原则 \ref{pr:coarsegrain-impl} 的操作与重整化群的粗粒化在形式上相同：消去短程自由度，
+观察长程结构是否收敛到不动点。这里的不动点就是六职能槽位。必须明确的是，这
+\emph{不}意味着软件具有重整化群流，因为软件没有尺度分离（原则 \ref{pr:vm} 之前的讨论），
+因而不存在真正意义上无关算符的指数衰减。相同的是\emph{操作}，不是\emph{机制}。
+\end{remark}
+
+\section{虚拟机化与深模块}\label{sec:virtualisation}
+
+"压缩复杂度、为上层提供高级语言与符号"这一表述可以精确化。每个基础设施层的核心
+工作都是同一种动作：
+
+\begin{principle}[虚拟机化]\label{pr:vm}
+基础设施层把\emph{物理的、连续的、易变的}东西，翻译成\emph{离散的、稳定的、
+可组合的}领域级符号。
+\end{principle}
+
+\begin{example}\label{ex:vm}
+操作系统：物理内存 $\to$ 虚拟地址空间；块设备 $\to$ 文件；硬件中断 $\to$ 信号。
+数据库：物理页 $\to$ 多版本元组 $\to$ SQL 中的"行"。
+浏览器：字节流 $\to$ 文档树；套接字事件 $\to$ 事件循环回调。
+游戏引擎：内存中的裸字节 $\to$ 组件与资源；一帧的时间 $\to$ 调度表。
+异步运行时：事件轮询位图 $\to$ \code{async}/\code{await} 中的 Future。
+\end{example}
+
+用模块设计的术语\cite{parnas1972,ousterhout2018}，这些全是\emph{深模块}：
+接口极小，实现极深。一行分配调用背后是
+整个分配器体系；一行任务创建背后是整个调度器。基础设施层的职责就是持续生产深模块，
+把复杂度封在下面，把干净的符号暴露在上面。
+
+这一点把它与第 \ref{ch:comprehension} 章的理解理论直接连接起来：深模块正是压缩率
+（定义 \ref{def:compression}）极高的层级，它商掉了大量底层差异，同时保持了上层
+所需的预测能力。这也解释了为什么好的基础设施同时是"高性能的"与"易理解的"：两者都
+是同一个商映射的后果。
+
+\section{智能体系统的职能分化}\label{sec:agent}
+
+如果定理 \ref{th:six} 成立，那么最新出现的复杂计算域应当正在重演这一演化。表
+\ref{tab:agent} 给出观察。
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{智能体系统对六职能的重新发现}\label{tab:agent}
+\begin{tabular}{L{3.4cm}L{11.0cm}}
+\toprule
+\textbf{职能} & \textbf{在智能体域中的对应物} \\
+\midrule
+分配与回收 & 上下文窗口作为快速存储；检索增强作为缺页处理；外置记忆作为交换区；
+上下文压缩作为内存紧缩 \\
+通信与同步 & 工具调用或函数调用作为系统调用原语 \\
+调度 & 智能体主循环、多智能体编排 \\
+身份与生命周期 & 会话、任务与子目标的生命周期管理 \\
+命名与寻址 & 工具注册与发现协议 \\
+隔离与恢复 & 沙箱、重试、检查点与回滚 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+这一观察的价值在于它是一个\emph{自然实验}：没有人在刻意模仿内核，是复杂度本身把
+同样的解剖结构压了出来。它同时构成假设 $H_3$ 的经验基础（第 \ref{ch:program} 章）。
+
+定理 \ref{th:integration} 与 \ref{th:six} 在给定前提下成立，其可挑战之处在于前提与
+结构论证的严密性。经验上可证伪的是：六职能的出现是否由 $n \times m$ 而非代码行数
+预测（假设 $H_3$ 与 $H_{10}$）；以及是否存在满足前提却长期缺少某一职能的良定义系统。

@@ -1,0 +1,175 @@
+% =====================================================================
+\appendix
+
+\chapter{Supplementary Proofs and Arguments}\label{app:proofs}
+
+This appendix supplies complete proofs, or fuller arguments, for several results in the
+main text. Where a complete proof is already given there, it is not repeated.
+
+\section{Notes on Proposition \ref{prop:overconstrain}}
+
+The proof given in the main text rests on the transversality theorem. Two points are added
+here.
+
+\paragraph{Why ``independent constraints'' are necessary.}
+If two constraints are not independent (for instance, when the second is a consequence of
+the first), their contributions to the codimension do not add,
+$\mathrm{codim}\,\mathcal{S} < c$, and the solution set has dimension greater than
+$d - c$. The conclusion of Proposition \ref{prop:overconstrain} must therefore be read
+under the premise that the constraints are independent and transversal. That premise
+usually holds in low-level design, where each constraint originates in a distinct
+pre-existing object (binary compatibility, the debugger, exception unwinding, the
+system-call interface), and often fails in high-level design, where several
+``constraints'' are in fact different formulations of one preference.
+
+\paragraph{Why ``solution-set degeneracy'' does not mean ``unique solution''.}
+When $c \ge d$ the solution set is finite or empty, and a finite set may contain more than
+one element. Low-level design is nonetheless ``nearly unique'' in practice because, over
+and above the formal constraints, an implicit economic constraint is at work: maintaining
+two incompatible calling conventions at once carries labour and toolchain costs, and that
+cost induces a strict preference order among the admissible options.
+
+\section{Complete Argument for Theorem \ref{th:integration}}
+
+The main text gives the principal argument. The choice of cost function and the
+reasonableness of the assumptions are supplied here.
+
+\paragraph{The definition of cost.}
+Let the unit interaction cost $c$ be the whole of the work required to handle one
+interaction between a particular entity and a particular resource correctly: design,
+implementation, testing and long-term maintenance. In the no-substrate case every entity
+must do this work independently, and must handle the resource invariants independently as
+well.
+
+\paragraph{The magnitude of the consistency obligation.}
+For a resource $r$, $n$ independent implementations must agree on the invariants of $r$.
+If consistency is not enforced, the deviation of any one implementation breaks the global
+invariant. If it is enforced, the enforcement itself requires that all $n$ sites know the
+invariant, so the number of enforcement sites is $\Omega(n)$. Neither case improves on the
+conclusion ``read-set $\ge k$'' (Theorem \ref{th:centralise}). In other words, the absence
+of a substrate is not merely more costly: it forces invariants to be scattered, and
+thereby \emph{permanently raises} the read-set lower bound of the system. This is the
+second benefit of a unified substrate, and it is independent of amortisation.
+
+\paragraph{Relaxing assumption (b).}
+Assumption (b), that every entity participates in all $m$ resources, is the worst case. If
+entity $e$ participates in only $|\mathcal{R}(e)|$ resources, the no-substrate cost is
+$\sum_e |\mathcal{R}(e)|$. As long as $\mathbb{E}_e[|\mathcal{R}(e)|]$ grows with $m$
+(that is, resource use is diffuse and broad), the product-form growth still holds. The
+qualitative conclusion of \eqref{eq:threshold} therefore does not depend on the worst-case
+assumption.
+
+\section{Supplement to the Item-by-Item Argument for Theorem \ref{th:six}}
+
+The main text argues item by item, showing that the omission of any one function yields
+undefined behaviour. Two remarks on the strength of that argument are added here.
+
+\paragraph{Strength of the (F3) scheduling argument.}
+The argument relies on the claim that $\to$ must be a function, or that its
+non-determinism must be explicitly specified. If the semantics of a system is defined as
+the set of \emph{all} interleavings, that is, if non-determinism is taken as part of the
+semantics and no selection among it is made, then the selection function may indeed be
+absent. In that case, however, the \emph{implementation} of the system must still select
+one interleaving in every concrete execution, so the scheduling function remains present
+at the implementation level even though it does not appear in the abstract semantics. The
+formulation used in this paper, ``either in the system's own code or in its host'', covers
+this case.
+
+\paragraph{Strength of the (F6) isolation argument.}
+The argument relies on fault reachability. If the execution environment of a system
+guarantees the absence of faults (pure functional computation, for instance, or execution
+in a restricted environment verified to be fault-free), then (F6) may be absent or may
+degenerate to the trivial. This is precisely why some minimal systems can do without the
+complete six functions, and it shows that the premises of Theorem \ref{th:six} are not
+redundant.
+
+\section{The Read-Set Lower Bound of Theorem \ref{th:centralise}}
+
+The main text proves $|\rho(c)| \ge |\mathrm{S}(\iota)|$. Why that inequality is tight is
+explained here.
+
+If $\mathrm{S}(\iota) = \{M_0\}$ and the interface of $M_0$ is sufficient
+(Definition \ref{def:neardecomp}), then every change that could break $\iota$ must be
+expressed at the interface of $M_0$, so an agent performing the change need only
+understand $M_0$ and its call sites. Then $|\rho(c)| = 1 + O(\text{call sites})$, and the
+lower bound $1$ is attained (when the change itself occurs inside $M_0$).
+
+If $\mathrm{S}(\iota) = \{M_0, M_1\}$ and both modules bear partial responsibility for
+$\iota$, the agent must understand both \emph{and the consistency rule between them},
+whose comprehension cost is strictly greater than that of the two modules together. The
+read-set therefore grows superlinearly in $|\mathrm{S}(\iota)|$, and the linear relation is
+only a lower bound. The bound given in the main text is consequently conservative.
+
+\section{Exhaustiveness of the Three Grounds of Proposition \ref{prop:three-grounds}}
+
+This argument has limits. The three grounds take the following form:
+
+\begin{enumerate}[label=(g\arabic*)]
+\item Preferences are generative: there exist an intent $I$ and a situation $s$ such that
+      some component of $I$ is fixed only after the bearer of the intent encounters $s$.
+\item Specifications are lossy compressions: there exist an intent $I$ and a specification
+      $\Phi$ such that $\Phi$ cannot carry all information relevant to $I$.
+\item Validation does not reduce to verification: there exist a requirement $R$ and an
+      implementation $P$ such that ``$P$ satisfies $\Phi$'' is true while ``$P$ satisfies
+      $R$'' is false, and the procedure that decides the latter cannot be reduced to the
+      procedure that decides the former.
+\end{enumerate}
+
+The three grounds are not independent of one another: (g1) is a source of (g2), and (g3)
+is a consequence of (g2). A more accurate formulation may therefore be that \emph{the root
+of the intent gap is the composite of (g1) and (g2)}. This paper retains the three
+parallel formulations because they correspond to different engineering remedies: (g1) to
+interactive refinement and counterexample generation, (g2) to traceability and coverage
+analysis, and (g3) to an independent validation process and an allocation of
+responsibility.
+
+Whether a fourth ground exists is an open problem (Chapter \ref{ch:objections}, items
+(O)).
+
+\section{Tightness of the Bound in Theorem \ref{th:condorcet}}
+
+Equation \eqref{eq:chernoff} is the Hoeffding bound, which is not tight for large $n$. For
+$p < 1/2$ the probability of a majority error is in fact given by the central limit
+theorem, $\Pr[\text{majority errs}] \approx \Phi\bigl(-\sqrt{n}\,(1/2-p)/\sigma\bigr)$,
+whose exponent is $\Theta(n (1/2-p)^{2})$ with a better constant.
+
+This paper chooses the Hoeffding bound over a tighter estimate for three reasons:
+
+\begin{enumerate}[label=(\alph*)]
+\item it requires no assumption about the distribution of individual errors, only
+      independence, boundedness and a mean;
+\item its form is simpler, and it is therefore less easily misread as an exact value;
+\item the central conclusion of this paper (Proposition \ref{th:correlated}) does not
+      depend on the tightness of the bound: the lower bound $q$ given by a correlated
+      error mode is independent of the constant in the upper bound.
+\end{enumerate}
+
+\section{A Stronger Form of Proposition \ref{th:correlated}}
+
+The main text gives $\Pr[\text{majority errs}] \ge q$. A finer form is available. Let the
+common error mode $C$ and the individual independent errors $I_i$ satisfy: verifier $i$
+errs if and only if $C = 1$ or $I_i = 1$. The event that the majority errs is then
+\[
+\{C = 1\} \;\cup\; \Bigl\{C = 0,\; \sum_{i=1}^{n} I_i \ge \tfrac{n}{2}\Bigr\},
+\]
+so that
+\[
+\Pr[\text{majority errs}] \;=\; q + (1-q)\,\Pr\Bigl[\sum_{i=1}^n I_i \ge \tfrac{n}{2}\Bigr]
+\;\ge\; q .
+\]
+For fixed $q > 0$, moreover,
+$\lim_{n \to \infty} \Pr[\text{majority errs}] = q$. This yields a statement stronger than
+a lower bound of $q$: \emph{consensus reliability has an asymptotic floor determined by
+the correlated error mode; increasing the number of verifiers can only approach that
+floor and cannot break through it}. This is the quantitative basis of
+Corollary \ref{cor:diversity}.
+
+\section{Notes on Proposition \ref{prop:active}}
+
+The argument in the main text uses the definition of information gain. One clarification
+is added here: Proposition \ref{prop:active} does not say that passive reading is without
+value. Passive reading supplies the \emph{prior}, in the Bayesian sense, whereas active
+probing supplies the \emph{likelihood}. A prober with no prior does not know what to
+probe; a reader with only a prior cannot update. The first four of the seven steps of the
+protocol in \S\ref{sec:protocol} are therefore reading (establishing the prior), and the
+last three are probing (acquiring the gradient). Their order is not arbitrary.

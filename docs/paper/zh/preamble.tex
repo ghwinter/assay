@@ -1,0 +1,112 @@
+% =====================================================================
+%  preamble.tex — 压缩与验证：复杂软件系统的层级涌现、结构收敛与可验证执行
+%  编译方式：xelatex main.tex （连续两次，以生成目录与交叉引用）
+%  依赖：TeX Live 2019 及以上完整发行版（ctex / amsmath / amsthm / booktabs /
+%        longtable / enumitem / tikz / hyperref）
+% =====================================================================
+
+% ---------- 页面 ----------
+\usepackage{geometry}
+\geometry{a4paper,left=2.7cm,right=2.7cm,top=2.9cm,bottom=2.9cm}
+
+% 减少中文长行导致的 overfull box
+\setlength{\emergencystretch}{2em}
+\tolerance=2000
+\hbadness=10000
+
+% ---------- 数学 ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{amsthm}
+
+% ---------- 表格与列表 ----------
+\usepackage{array}
+\setlength{\tabcolsep}{4pt}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=2.2em}
+
+% ---------- 图形 ----------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc}
+
+% ---------- 颜色与标题 ----------
+\usepackage{xcolor}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+% ---------- 定理环境 ----------
+% 行内小标题样式：用于承载论断性而非纯数学性的条目，
+% 使其以论文段首小标题的形式排版，而非独立展示块。
+\newtheoremstyle{runin}%
+  {0.7em}%      上间距
+  {0.2em}%      下间距
+  {\normalfont}% 正文
+  {}%           缩进
+  {\bfseries}%  标题字体
+  {.}%          标题后标点
+  {0.5em}%      标题后间距
+  {}%           标题格式（默认）
+
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[chapter]
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{corollary}[theorem]{推论}
+\newtheorem{conjecture}[theorem]{猜想}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{定义}
+\newtheorem{hypothesis}[theorem]{假设}
+\newtheorem{example}[theorem]{例}
+\newtheorem{problem}[theorem]{问题}
+
+\theoremstyle{runin}
+\newtheorem{principle}[theorem]{原则}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{注}
+\newtheorem{observation}[theorem]{观察}
+
+\renewcommand{\proofname}{证明}
+\renewcommand{\qedsymbol}{$\blacksquare$}
+
+% ---------- 常用命令 ----------
+\newcommand{\Beh}{\mathcal{B}}
+\newcommand{\Obs}{\mathcal{O}}
+\newcommand{\Env}{\mathcal{A}}
+\newcommand{\Cost}{\mathcal{C}}
+\newcommand{\Inv}{\mathcal{I}}
+\newcommand{\Mod}{\mathcal{M}}
+\newcommand{\Sem}{\llbracket}
+\newcommand{\Ese}{\rrbracket}
+\newcommand{\Tr}{\operatorname{Traces}}
+\newcommand{\Allow}{\operatorname{Allowed}}
+\newcommand{\Observe}{\alpha}
+\newcommand{\Conc}{\gamma}
+\newcommand{\Obl}{\operatorname{Obl}}
+\newcommand{\Ker}{\operatorname{ker}}
+\newcommand{\TCB}{\ensuremath{\mathrm{TCB}}}
+\newcommand{\DL}{\ell}
+\newcommand{\Entropy}{H}
+\newcommand{\BigO}{\mathcal{O}}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\cn}[1]{\textnormal{#1}}
+
+% 层级宏：\Lk{0} 生成 $\mathrm{L}_0$
+\newcommand{\Lk}[1]{\ensuremath{\mathrm{L}_{#1}}}
+
+% 便于排版的列类型
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ---------- 超链接（最后加载） ----------
+\usepackage[colorlinks=true,
+            linkcolor=blue!55!black,
+            citecolor=teal!70!black,
+            urlcolor=blue!65!black,
+            bookmarksnumbered=true,
+            unicode=true]{hyperref}

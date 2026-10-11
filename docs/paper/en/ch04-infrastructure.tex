@@ -1,0 +1,555 @@
+% =====================================================================
+\chapter[Internal Infrastructuralisation]{Internal Infrastructuralisation: The Conditional Necessity of the Six Functions}\label{ch:infrastructure}
+% =====================================================================
+
+This chapter addresses Problem \ref{prob:scale}. The central claim is that any sufficiently
+complex software system reinvents an operating system inside its own problem domain. The
+cause is not that engineers imitate a kernel; it is that a set of semantic obligations
+cannot be evaded at scale. The chapter gives the premises, the proof and the criteria for
+that claim, together with a falsifiable test that can be carried out inside a single
+project.
+
+\section{The Phenomenon and the Terms}\label{sec:phenomenon}
+
+The observed phenomenon is this: once a system grows past a certain size, it begins to
+promote mechanisms that were previously scattered across it into unified system-level
+capabilities. Specifically:
+
+\begin{itemize}
+\item several facilities need to allocate and release resources;
+\item several subsystems need to manage object lifetime;
+\item several components need to execute asynchronous tasks;
+\item several modules need to share state and coordinate modifications;
+\item several facilities need unified error handling, logging and diagnostics;
+\item several execution paths need to obey the same thread-safety and concurrency rules.
+\end{itemize}
+
+If each module solved these problems on its own, the system would accumulate a mass of
+duplicated implementations, inconsistent behaviour and coupling that is hard to control. The
+system therefore begins to handle them centrally, producing common mechanisms, interfaces,
+managers, runtimes and execution models.
+
+\begin{definition}[Internal infrastructuralisation]\label{def:infra}
+\term{Internal infrastructuralisation} is a system's passage through three successive
+stages:
+\begin{enumerate}[label=(\roman*)]
+\item \term{commonality identification}: recurrent requirements are identified as one class
+      of problem (a merger in problem space);
+\item \term{mechanism unification}: the commonality is promoted to a common capability, so
+      that different facilities access shared resources through common interfaces and obey
+      common lifecycle, error-handling and concurrency rules (centralisation and
+      standardisation of mechanism);
+\item \term{structural unification}: upper-layer facilities no longer solve all lower-level
+      problems directly, but build on unified rules (unification of structure).
+\end{enumerate}
+In shorthand,
+{\small$\boxed{\text{commonality identification} \to \text{mechanism unification} \to
+\text{upper-layer composition}}$}.
+\end{definition}
+
+Mechanism unification does \emph{not} mean that all logic is gathered into one central
+module. A mature architecture can achieve unification \emph{through protocols, interfaces
+and distributed ownership}. What is unified is the \emph{rules and contracts}, not
+necessarily the \emph{implementations and ownership}. That distinction is the key to
+avoiding a god object, and Chapter \ref{ch:design} states it as a design principle.
+
+\section{Participant--Resource Structure}\label{sec:participant}
+
+\begin{definition}[Participant--resource structure]\label{def:pr-structure}
+A \term{participant--resource structure} is a five-tuple
+\begin{equation}\label{eq:pr}
+\Pi = \bigl(E,\; \mathcal{R},\; \to,\; \mathrm{Ready},\; \mathrm{Fault}\bigr),
+\end{equation}
+where $E$ is a set of concurrently live entities,
+$\mathcal{R} = \{r_1,\dots,r_m\}$ is a finite set of shared resources, $\to$ is the
+transition relation of the operational semantics,
+$\mathrm{Ready} \subseteq E \times \mathrm{Conf}$ indicates which entities may execute in a
+given configuration, and $\mathrm{Fault}$ is a set of fault events.
+\end{definition}
+
+The two quantities that matter are $n = |E|$ and $m = |\mathcal{R}|$. Section
+\ref{sec:integration} proves that the independent variable deciding whether a unified
+infrastructure is needed is the structural complexity $n \times m$, not lines of code.
+
+\begin{definition}[Unified substrate]\label{def:substrate}
+A \term{unified substrate} for $\Pi$ is a set of mechanisms $\mathcal{U}$ such that the
+interaction of every entity $e \in E$ with every resource $r \in \mathcal{R}$ proceeds
+through an interface declared by $\mathcal{U}$ rather than being implemented directly by
+$e$.
+\end{definition}
+
+\section{The Integration Cost Theorem and the Phase-Transition Threshold}\label{sec:integration}
+
+\begin{theorem}[Integration cost]\label{th:integration}
+Let the participant--resource structure $\Pi$ have $n$ entities and $m$ shared resources.
+Assume:
+\begin{enumerate}[label=(\alph*)]
+\item without a substrate, every entity that participates in a resource $r$ must implement
+      correct interaction with $r$ independently, including independent handling of the
+      invariants of $r$;
+\item under maximal coupling, every entity participates in all $m$ resources;
+\item with a substrate, every entity uses at most $k$ substrate interfaces, and the
+      substrate itself defines the semantics of each of the $m$ resources once; the fixed
+      cost of the substrate is $F$ (design, implementation and long-term maintenance).
+\end{enumerate}
+Then the number of interacting pairs is $\Theta(nm)$ without a substrate and
+$\mathcal{O}(nk + m)$ with one. The substrate is better than no substrate in expectation if
+and only if
+\begin{equation}\label{eq:threshold}
+n \cdot m \;>\; c\,(n k + m) \;+\; F
+\end{equation}
+where $c$ is the unit cost coefficient of one interaction.
+\end{theorem}
+
+\begin{proof}
+Without a substrate: correct interaction of entity $e$ with resource $r$ requires an
+independent implementation, so the number of interacting pairs is
+$\sum_{e} |\mathcal{R}(e)| \le nm$, with equality under assumption (b), that is
+$\Theta(nm)$. In addition, for each resource $r$ the $n$ independent implementations must
+agree on the invariants of $r$; this is a consistency obligation whose number of failure
+modes is $\Omega(n)$ (any single implementation that deviates breaks the global invariant).
+
+With a substrate: the semantics of the $m$ resources are defined once each, at cost
+$\Theta(m)$; every entity interacts with the substrate through at most $k$ interfaces, at
+cost $\mathcal{O}(nk)$; add the fixed cost $F$. The total is therefore
+$\mathcal{O}(nk + m) + F$.
+
+Comparing the two expressions and normalising by the unit cost coefficient $c$ gives
+\eqref{eq:threshold}.
+\end{proof}
+
+\begin{corollary}[Phase-transition threshold]\label{cor:threshold}
+Because $k$ is the \emph{bounded} interface usage of each entity, $\mathcal{O}(nk + m)$ is
+linear in $n$, whereas $\Theta(nm)$ is a product linear in both $n$ and $m$. Hence when
+either $n$ or $m$ grows substantially, inequality \eqref{eq:threshold} must hold. The phase
+transition occurs at $n m \sim F/c$, that is, when the \emph{product of the number of
+entities and the number of resources} exceeds the order of the fixed cost of the substrate.
+\end{corollary}
+
+Corollary \ref{cor:threshold} makes precise the intuition that ``the code volume reaches
+some order of magnitude'', and supplies its correct form:
+
+\begin{principle}[The threshold is not lines of code]\label{pr:notloc}
+The independent variable deciding whether a unified substrate must be built is the product
+of the \emph{number of live entities} and the \emph{number of shared resources}, together
+with the \emph{frequency of recurrent problems}, the \emph{number of interactions between
+state and resources}, the \emph{complexity of concurrent execution}, the \emph{rate of
+module evolution}, and the \emph{demands on consistency, performance and reliability}.
+Lines of code are only a proxy for these quantities.
+\end{principle}
+
+This explains a fact that ought to be puzzling: two programs of a million lines each may
+have entirely different internal architectures. One may be a large body of mutually
+independent generated code, data files or linear business logic ($m$ small, $n$ small); the
+other may have complex shared state, asynchronous tasks and many interdependent subsystems
+($n$ and $m$ both large). Only the second develops a need for a unified runtime, resource
+management and coordination mechanisms.
+
+The central reduction (Section \ref{sec:participant}) supplies a second explanation here:
+when the number of live entities in a system jumps from $10^{2}$ to $10^{6}$, naive
+management undergoes a \emph{phase transition}. For 100 objects, conditional branching and
+raw allocation suffice; for a million concurrent tasks, cache entries or connections, the
+potential interactions between entities are $O(N^{2})$ and the complexity is infeasible, so
+pooling, indexing, layering, asynchrony, batching and cache locality are forced in. That set
+of techniques is exactly the full inventory of ``kernel technology''.
+
+\begin{example}\label{ex:pg-memctx}
+A relational database engine builds its own memory-context system because a
+general-purpose allocator fragments and cannot track leaks under a load that ``creates and
+destroys thousands of tuples per query''. It therefore constructs allocation and bulk
+reclamation over a tree of contexts, which is an object pool inside the database domain. An
+asynchronous runtime builds its own work-stealing scheduler because operating-system threads
+are too heavy in the face of a million concurrent operations, and therefore constructs
+$M{:}N$ scheduling, which is user-space time-sharing. A jump in order of magnitude forces
+kernel technology in: this is the first necessity.
+\end{example}
+
+\section{The Six Functions}\label{sec:six}
+
+\begin{definition}[The six functions]\label{def:six}
+For a participant--resource structure $\Pi$, the \term{six functions} $\mathcal{K}_6$ are
+defined as
+\begin{enumerate}[label=(F\arabic*)]
+\item \term{Identity and lifecycle}: the identity, creation, liveness and termination
+      relations of entities;
+\item \term{Allocation and reclamation}: the allocation and reclamation policies for finite
+      resources;
+\item \term{Scheduling}: the selection function that chooses the next executor among ready
+      entities;
+\item \term{Naming and addressing}: the mechanisms that make entities discoverable,
+      referenceable and traversable;
+\item \term{Communication and synchronisation}: the interaction primitives between entities
+      and the composition rules for concurrent transitions;
+\item \term{Fault isolation and recovery}: the containment relations of faults and the
+      replayability of state.
+\end{enumerate}
+\end{definition}
+
+\begin{theorem}[Conditional necessity of the six functions]\label{th:six}
+Let $\Pi = (E, \mathcal{R}, \to, \mathrm{Ready}, \mathrm{Fault})$ be a
+participant--resource structure whose operational semantics is well defined (that is, in
+every reachable configuration the next transition is determined, or the non-determinism it
+permits is explicitly specified). If $|E| > 1$ and $\mathcal{R}$ is finite and contended,
+then the six functions of $\mathcal{K}_6$ have necessarily already been defined, either in
+the system's own code or in its host (operating system, language runtime, framework).
+\end{theorem}
+
+\begin{proof}[Structural argument]
+It is shown item by item that the absence of any single function renders the semantics
+incomplete (an undefined behaviour exists).
+
+\emph{(F1) Identity and lifecycle}: if entities were indistinguishable, $\mathrm{Ready}$
+could not be defined as a function on the set of entities; if entities had no creation and
+termination relations, the variation of $E$ over time would be unspecified and $\to$ would
+be undefined at steps where ``an entity appears or disappears''.
+
+\emph{(F2) Allocation and reclamation}: $\mathcal{R}$ is finite and contended, so ``more
+resources are requested at once than can be supplied'' is a reachable state. Without an
+allocation policy, $\to$ is undefined in that state. If the resources of terminated entities
+are not reclaimed, available resources decrease monotonically and the system reaches
+resource exhaustion in finitely many steps; $\to$ is then undefined in the forward-looking
+sense.
+
+\emph{(F3) Scheduling}: if $|E| > 1$ and several entities are ready at once, $\to$ is no
+longer a function but a relation. Without a specified choice among ready entities, the
+``permitted non-determinism'' is not delimited and the semantics is incomplete.
+
+\emph{(F4) Naming and addressing}: an interaction primitive (see F5) must designate the
+object of the interaction. Without a referencing mechanism, the object of an interaction
+cannot be expressed.
+
+\emph{(F5) Communication and synchronisation}: if entities interact, the global transition
+is not the simple product of local transitions; without composition rules, the semantics of
+concurrent transitions is undefined.
+
+\emph{(F6) Fault isolation and recovery}: $\mathrm{Fault} \ne \varnothing$ (faults are a
+physical and engineering given). Without containment relations, a local deviation has global
+semantics, which is equivalent to the system having no well-defined behaviour under fault;
+without recovery rules, the system never returns to a specified state after the first fault.
+
+In sum, the absence of any one function destroys the premise of well-definedness. \qed
+\end{proof}
+
+\begin{remark}[The nature of the theorem]\label{rmk:six-nature}
+Theorem \ref{th:six} is a \emph{conditional necessity} result, not an unconditional theorem.
+Its conditions are $|E| > 1$, $\mathcal{R}$ finite and contended, and faults reachable. Its
+proof is a structural enumeration argument, not a derivation in some formal system. It can
+be falsified by exhibiting a well-defined system that satisfies the premises and lacks one
+of the six. That judgement is itself open to challenge.
+\end{remark}
+
+The wording of Theorem \ref{th:six}, ``either in the system's own code or in its host'', is
+essential. It separates two questions: whether the functions necessarily appear, and whether
+they must be built in-house.
+
+\section{Build or Adopt}\label{sec:buildadopt}
+
+\begin{corollary}[Build-or-adopt dichotomy]\label{cor:buildadopt}
+By Theorem \ref{th:six} the six functions must be defined, but where they are defined is a
+design choice. That choice is decided by the \emph{domain criticality} of the invariants:
+\begin{enumerate}[label=(\alph*)]
+\item if the invariant carried by a function is \emph{domain-critical}, that is, the
+      invariant can hold only under a guarantee owned by this system, the function must be
+      built in-house;
+\item if the invariant carried by a function is \emph{general}, that is, a general-purpose
+      host can provide a guarantee of sufficient strength, the function should be adopted;
+\item implementing a general function in-house produces the failure mode this paper calls
+      \emph{reinvention of commodity parts}: a worse general-purpose mechanism
+      re-implemented at a higher long-term cost of comprehension and maintenance.
+\end{enumerate}
+\end{corollary}
+
+This criterion explains why the boundary between ``application'' and ``platform'' falls
+exactly where it does: \emph{the set of invariants you are forced to own is the boundary of
+your kernel}.
+
+\begin{example}\label{ex:buildadopt}
+A game engine must build its own entity--component storage and frame scheduling, because a
+general-purpose host cannot provide the guarantee of a ``sub-millisecond deterministic frame
+budget''. A database must build its own storage engine and write-ahead log, because a
+general-purpose file system cannot provide the guarantee of ``recovery to a deterministic
+state after a crash''. Conversely, a web application should adopt garbage collection, thread
+scheduling and memory allocation, because the invariants of these functions are general and
+building them in-house yields only a worse version.
+\end{example}
+
+\begin{remark}[A sharper criterion: monotonicity]\label{rmk:calm}
+Corollary \ref{cor:buildadopt} decides build versus adopt by whether the invariant is
+domain-critical. For functions of the ``coordination'' kind there is a sharper criterion that
+can be checked statically: \emph{whether the computation is monotone}. Where monotonicity
+holds \cite{calm2011} (outputs grow with inputs and do not depend on negation or on
+aggregate global knowledge), coordination is not required and can be pushed down to the
+participants; non-monotonicity (uniqueness constraints, negation, threshold aggregation,
+non-commutative updates) forces some site to carry coordination.
+
+This sharpens the claim for function (F5) (communication and synchronisation) and part of
+(F3) (scheduling) of Section \ref{sec:six} from ``centralise once the scale is reached'' to
+``centralise once non-monotonicity appears''. For monotone subsystems the $k$ of the
+integration cost theorem (Theorem \ref{th:integration}) can be reduced to nearly a constant,
+because participants need not agree on shared state.
+\end{remark}
+
+\section{Cross-Domain Comparison}\label{sec:instances}
+
+Theorem \ref{th:six} predicts the pattern of Table \ref{tab:organs}: each column is a system
+from a different company, a different language, a different era and a different domain, while
+each row is the same organ. The table does not claim that these mechanisms can be identified
+one with another; it compares them along the same dimension of \emph{management duty}.
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{Independent implementations of the same set of management duties in different domains}\label{tab:organs}
+\begin{tabular}{L{1.5cm}L{2.4cm}L{2.4cm}L{2.2cm}L{2.1cm}L{2.3cm}L{2.4cm}}
+\toprule
+\textbf{Function} & \textbf{Linux} & \textbf{Chromium} & \textbf{Tokio} & \textbf{Bevy}
+& \textbf{Unreal} & \textbf{PostgreSQL} \\
+\midrule
+Identity/\newline lifecycle & task\_struct, inode, file & Frame, Document, Node &
+Task, JoinHandle & Entity, Component & UObject, Actor & backend, xid, tuple \\
+Allocation/\newline reclamation & buddy, slab, page cache & PartitionAlloc, Oilpan &
+slab-style task allocation & archetype column store & FMemory, GC &
+MemoryContext, shared\_buffers \\
+Scheduling & EEVDF, workqueue & task queue, RendererScheduler &
+work-stealing, waker & Schedule/System parallel executor & TaskGraph, GameThread &
+postmaster, autovacuum \\
+Naming/\newline addressing & kobject, sysfs, fd & DOM, Web IDL & Handle, waker &
+Entity ID & FName, reflection metadata & OID, system catalog \\
+Communi\-cation/\newline synchroni\-sation & syscall, netlink, IPC & Mojo IPC &
+mpsc, oneshot &
+Event, Resource & delegates, replication & libpq, LWLock, extension hooks \\
+Isolation/\newline recovery & namespace, cgroup, OOM & site isolation, renderer process sandbox &
+panic propagation, cancellation & state machine isolation & crash reporter &
+MVCC snapshots, WAL replay \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Conversely, the \emph{form} these six organs take in different hosts varies widely, and that
+variation is the concrete content of ``the trunk converges while the branches diverge'' in
+Chapter \ref{ch:convergence}. The sources of that variation in form can be listed
+systematically:
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Host memory model}. Systems with manual memory management (C/C++/Rust) must
+      build their own allocator and even their own reclaimer (engine object reclamation,
+      Blink's garbage collection in the browser); systems with managed memory spend the same
+      effort on pause behaviour, because allocation is given and the pain point becomes the
+      tail of the latency distribution.
+\item \term{Host concurrency model}. The runtime model determines the shape of the
+      scheduling organ: a game engine uses frame-driven cooperative scheduling (predictable
+      latency over throughput), a server event-driven preemptive scheduling (throughput
+      first). Frame schedulers and work-stealing schedulers are therefore two subspecies of
+      one organ.
+\item \term{Granularity of domain primitives}. A general-purpose kernel offers pages,
+      threads, file descriptors and event polling; but a game engine needs frames,
+      components and assets, a database needs buffer pools, transactions and version chains,
+      and a browser needs document nodes, security contexts and cross-process objects. A
+      mismatch in primitive granularity forces each domain to build its own infrastructure.
+\item \term{Evolutionary stage}. These internal operating systems are themselves
+      continuously refactored, and each refactoring converges towards ``a more complete set
+      of the six functions'' rather than diverging from it.
+\end{enumerate}
+
+Even the operating system itself is circumvented by its users: high-performance network and
+storage stacks redo I/O by polling in user space, asynchronous I/O interfaces are redesigned,
+and the operating system cannot escape being ``reinvented'' by its own user space. This is
+not anomalous; it is a direct consequence of Corollary \ref{cor:threshold}: when the
+$n \times m$ of user space crosses the threshold, user space grows a new kernel.
+
+\section{Transport and Re-Derivation}\label{sec:transport}
+
+Table \ref{tab:organs} shows the same set of functions recurring across domains. But
+``recurrence'' admits two entirely different explanations, with entirely different
+predictions:
+
+\begin{enumerate}[label=(\alph*)]
+\item \term{Isomorphism}: the six functions are six implementations of one structure and can
+      be translated into one another;
+\item \term{Transport along the base}: the six functions are the fibres of some more general
+      structure over different \emph{problem shapes}, and when the shape changes the
+      structure must be re-derived, not carried over.
+\end{enumerate}
+
+The original treatment gives only (a). Distinguishing the two requires making the base
+explicit, namely ``problem shape''.
+
+\begin{definition}[Problem shape and level family]\label{def:fibration}
+A pair $\pi : \mathcal{L} \to \mathcal{P}$ is a \term{level family}, where
+\begin{itemize}
+\item $\mathcal{P}$ is a set of \term{problem shapes}, determined by the resource form,
+      concurrency structure, failure modes and time scales of the domain;
+\item $\mathcal{L}$ is a set of layer implementations;
+\item the fibre $\pi^{-1}(p)$ is the family of layer implementations feasible at problem
+      shape $p$.
+\end{itemize}
+$\pi$ maps ``an implementation'' to ``what shape of problem it solves''. Reindexing $\pi$
+gives \term{transport along the base}: given $p \to p'$, an implementation at $p$ is moved
+to $p'$.
+\end{definition}
+
+\begin{proposition}[What transport preserves]\label{prop:transport}
+Let $p \to p'$ be a map between problem shapes. If the map is an \emph{equivalence} (the same
+resource form, concurrency structure, failure modes and time scales), then the \emph{slots}
+of $\mathcal{K}_6$ (the question each function must answer) are preserved under transport;
+the form of the implementation may change, but the slots are neither added nor removed. If
+the map is not an equivalence, the semantic requirement of at least one slot changes, and
+the implementation must be re-derived.
+\end{proposition}
+
+\begin{proof}[Argument]
+Each item of $\mathcal{K}_6$ is uniquely determined by the semantic obligation of
+Theorem \ref{th:six}: identity by the distinguishability of entities, allocation by the
+finiteness and contention of resources, scheduling by the cardinality of the ready set,
+naming by the object of interaction, communication by the mode of composition of concurrent
+transitions, and isolation by the propagation range of faults. These six obligations depend
+only on the four components of problem shape. When the map preserves the four components,
+the obligation set is unchanged; when any component changes, the semantic requirement of the
+corresponding obligation changes with it.
+\end{proof}
+
+\begin{corollary}[An observable discriminator]\label{cor:transport-test}
+By Proposition \ref{prop:transport}, differences in form fall into two classes:
+\emph{implementation differences of the same slot over different bases} (for instance
+frame-driven and event-driven schedulers, whose bases have different time scales), and
+\emph{differences of slot}. The former is not a counterexample; the latter is.
+\end{corollary}
+
+Corollary \ref{cor:transport-test} makes the middle proposition of Chapter
+\ref{ch:convergence} (Hypothesis \ref{hyp:medium}) testable more rigorously: two systems
+must first be aligned on the base, and only then compared slot by slot. Comparing modules
+directly without aligning the base is the most common error in existing comparative studies
+of architecture.
+
+\begin{remark}[The status of this section]\label{rmk:fibration-status}
+Definition \ref{def:fibration} and Proposition \ref{prop:transport} are a \emph{structural
+proposal}, not an application of an established theorem of category theory. Their role is to
+make explicit a question that has not previously been posed, whether the recurrence is
+isomorphism or transport, and to give a discriminating corollary
+(Corollary \ref{cor:transport-test}). Promoting $\pi$ to a strict fibration and proving the
+properties of the reindexing functor is unfinished work (item O in
+Chapter \ref{ch:objections}).
+\end{remark}
+
+\section{The Coarse-Graining Criterion}\label{sec:coarsegrain}
+
+Theorem \ref{th:six} establishes that the six functions necessarily \emph{exist}, but not
+that they are the most \emph{salient} structure. A stronger proposition is that the six
+functions are the \emph{surviving set} of system structure under coarse-graining.
+
+\begin{definition}[Coarse-graining sequence]\label{def:coarsegrain}
+Let the architecture relational graph of a system be $\mathcal{G}$
+(Definition \ref{def:relgraph}). A \term{coarse-graining} is a quotient map
+$q : \mathcal{G} \to q(\mathcal{G})$ that merges components while preserving relation types.
+A sequence of quotient maps $q_1, q_2, \dots$ (each step strictly coarser than the last) is
+a \term{coarse-graining sequence}. A structure $\mathcal{S}$ \term{survives} under that
+sequence if there exists $N$ such that for all $n \ge N$, $\mathcal{S}$ remains recognisable
+in $q_n(\mathcal{G})$.
+\end{definition}
+
+\begin{conjecture}[The six functions are the relevant structure]\label{conj:relevant}
+Under the coarse-graining sequence of a normally biased large system, the structures that
+survive are exactly the slots of $\mathcal{K}_6$ and their relational graph; the remaining
+structures (concrete modules, algorithm choices, data-layout details) are washed out at a
+sufficiently coarse granularity.
+\end{conjecture}
+
+The value of Conjecture \ref{conj:relevant} is that it yields a falsification procedure
+\emph{inside a single project}: no cross-project statistical comparison is needed, only
+repeated coarse-graining of one code base, observing the surviving set. If the surviving set
+is not the six functions, the conjecture is refuted and the convergence thesis of
+Chapter \ref{ch:convergence} requires a different explanation.
+
+\begin{principle}[Form of implementation]\label{pr:coarsegrain-impl}
+Coarse-graining can be implemented entirely mechanically: starting from a module dependency
+graph, three operations are applied repeatedly: (i) merge nodes whose fan-in and fan-out
+fall below a threshold; (ii) collapse transitive dependency edges; (iii) erase nodes that
+carry no invariant ($\mathrm{S}(\iota) = \varnothing$ in Definition \ref{def:enforce}).
+Each step records the change in the surviving structure. The whole experiment needs one
+repository and one dependency graph, with no labels and no manual classification, and is
+therefore unaffected by the ``freedom in choosing a duty-classification system'' noted in
+Section \ref{sec:limits}.
+\end{principle}
+
+Chapter \ref{ch:program} states Conjecture \ref{conj:relevant} as Hypothesis $H_{10}$.
+
+\begin{remark}[Relation to renormalisation]\label{rmk:rg}
+The operations of Principle \ref{pr:coarsegrain-impl} are formally the same as
+coarse-graining in the renormalisation group: short-range degrees of freedom are eliminated
+and one observes whether long-range structure converges to a fixed point. The fixed point
+here is the six-function slots. It must be stated plainly that this does \emph{not} mean
+that software possesses a renormalisation-group flow: software has no separation of scales
+(the discussion preceding Principle \ref{pr:vm}), hence no exponential decay of genuinely
+irrelevant operators. What is the same is the \emph{operation}, not the \emph{mechanism}.
+\end{remark}
+
+\section{Virtualisation and Deep Modules}\label{sec:virtualisation}
+
+The phrase ``compress complexity and provide the upper layers with a high-level language and
+symbols'' can be made precise. The core work of every infrastructure layer is one and the
+same action:
+
+\begin{principle}[Virtualisation]\label{pr:vm}
+An infrastructure layer translates what is \emph{physical, continuous and volatile} into
+\emph{discrete, stable, composable} domain-level symbols.
+\end{principle}
+
+\begin{example}\label{ex:vm}
+Operating system: physical memory $\to$ virtual address space; block devices $\to$ files;
+hardware interrupts $\to$ signals.
+Database: physical pages $\to$ multi-version tuples $\to$ ``rows'' in SQL.
+Browser: byte streams $\to$ document trees; socket events $\to$ event-loop callbacks.
+Game engine: raw bytes in memory $\to$ components and assets; the time of one frame $\to$ a
+schedule table.
+Asynchronous runtime: event-poll bitmap $\to$ the Future of \code{async}/\code{await}.
+\end{example}
+
+In the vocabulary of module design \cite{parnas1972,ousterhout2018}, these are all \emph{deep
+modules}: minimal interface, very deep implementation. Behind one allocation call stands an
+entire allocator system; behind one task creation stands an entire scheduler. The duty of
+an infrastructure layer is to keep producing deep modules, sealing complexity below and
+exposing clean symbols above.
+
+This connects directly to the theory of comprehension in Chapter \ref{ch:comprehension}: a
+deep module is precisely a level of very high compression ratio
+(Definition \ref{def:compression}) that quotients away a large amount of lower-level
+difference while retaining the predictive power the upper layer needs. It also explains why
+good infrastructure is at once ``high-performance'' and ``easy to understand'': both are
+consequences of the same quotient map.
+
+\section{Functional Differentiation in Agent Systems}\label{sec:agent}
+
+If Theorem \ref{th:six} holds, the most recently emerged complex computational domain should
+be re-enacting this evolution. Table \ref{tab:agent} gives the observation.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Agent systems rediscovering the six functions}\label{tab:agent}
+\begin{tabular}{L{3.4cm}L{11.0cm}}
+\toprule
+\textbf{Function} & \textbf{Counterpart in the agent domain} \\
+\midrule
+Allocation and reclamation & the context window as fast storage; retrieval augmentation as
+page-fault handling; external memory as swap space; context compression as memory
+compaction \\
+Communication and synchronisation & tool calls or function calls as system-call
+primitives \\
+Scheduling & the agent main loop, multi-agent orchestration \\
+Identity and lifecycle & lifecycle management of sessions, tasks and subgoals \\
+Naming and addressing & tool registration and discovery protocols \\
+Isolation and recovery & sandboxing, retries, checkpoints and rollback \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The value of this observation is that it is a \emph{natural experiment}: no one is
+deliberately imitating a kernel; complexity itself has pressed out the same anatomy. It also
+forms the empirical basis of Hypothesis $H_3$ (Chapter \ref{ch:program}).
+
+Theorems \ref{th:integration} and \ref{th:six} hold under their stated premises; what can be
+challenged is the premises and the rigour of the structural argument. What is empirically
+falsifiable is whether the appearance of the six functions is predicted by $n \times m$
+rather than by lines of code (Hypotheses $H_3$ and $H_{10}$), and whether there exists a
+well-defined system that satisfies the premises yet lacks one of the functions over the long
+run.
