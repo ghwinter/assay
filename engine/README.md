@@ -1,6 +1,6 @@
 # assay engine
 
-**协议 v0.6 的哑执行器。** 读清单 → 按阶段选检查 → 跑命令（含 `red_command`）→ 追加版本化证据 → 生成地图 → 比对棘轮 → 报分歧。
+**Assay CLI v0.6.0**：读取清单 → 解释或执行检查计划 → 追加版本化证据 → 生成地图 → 比对棘轮 → 报分歧。支持清单协议 v0.6 和 v0.7。
 
 > **它不认识任何判定工具**（E1／E2 那类后端都是它 exec 的对象，不是它的一部分），
 > **也不拥有任何产物**——声明、检查、证据、地图、棘轮全部住在目标仓里。
@@ -9,12 +9,33 @@
 ## 命令
 
 ```powershell
+assay --help
+assay --version
+assay version
+assay plan --root <目标仓> --base <git-revision> [--change <id>] [--format text|json]
 assay run   [--root <目标仓>] [--stage pre-commit|pr|merge|nightly] [--check <id>] [--change <id>] [--certify]
+assay run   [--root <目标仓>] --base <git-revision> [--change <id>] [--certify]
 assay map   [--root <目标仓>]      # 生成 MAP.md
 assay check [--root <目标仓>]      # 清单自检 + 覆盖 + 出生证明三态 + 变更记录 + 棘轮 + 地图漂移
 ```
 
 退出码：全绿 `0`／有红 `1`／清单本身有问题 `2`。
+
+从 Assay 仓库根目录安装本机 CLI：
+
+```powershell
+cargo install --path engine
+```
+
+不安装时可用 `cargo run --manifest-path <assay-root>/engine/Cargo.toml -- ...`；目标仓通过 `--root` 指定，不需要复制或嵌套 Assay 引擎。
+
+## 变化计划
+
+- `assay plan --base REV` 汇总 Git 相对差异、输入范围命中、未映射路径和待跑检查；`--format json` 输出 `assay-plan/v1`。
+- `assay run --base REV` 使用同一选择算法执行；默认 `assay run` 仍执行全量或所选阶段的检查。
+- `[[check]].inputs` 只接受精确文件路径或目录前缀（尾部 `/`）；无范围检查始终纳入，未命中任何范围的变化会选中全部检查。
+- 选择依据是维护者显式登记的路径，不是语义影响分析；不声明范围或不确定时使用全量 `run`。
+- 目标仓必须是 Git 仓库根目录，且必须显式传入 base revision。
 
 **实测成本**（本仓 9 条检查，Windows，release）：
 
@@ -58,14 +79,26 @@ assay check [--root <目标仓>]      # 清单自检 + 覆盖 + 出生证明三�
 
 ## 依赖登记（照 VENDOR.md 的习惯：每个依赖必须有理由）
 
-见 [VENDOR.md](VENDOR.md)。当前 3 个依赖，全部围绕"读清单、写证据"这两件事。
+见 [VENDOR.md](VENDOR.md)。当前 4 个依赖，分别支撑清单读取、证据写入与 CLI 参数解析。
 
 证据事件格式见 [`../protocol/schemas/evidence-v1.schema.json`](../protocol/schemas/evidence-v1.schema.json)。
+
+## 仓库迭代与发布
+
+`.github/workflows/ci.yml` 在 Linux/Windows 上运行引擎、试点与示例测试，并运行 Spec Ledger
+提交门及端到端示例流程。已提交的工具配置使用 PATH 命令名，不包含开发机绝对路径。
+
+`.github/workflows/release.yml` 仅响应 `vX.Y.Z` 标签；标签必须与 `engine/Cargo.toml` 的包版本
+一致。流程构建各平台 CLI、生成校验和并创建 GitHub Release，不会自动发布到 crates.io。
+只有在更新 Cargo 版本与 `CHANGELOG.md` 后才创建版本标签。
+
+第一版 CI 暂不安装 TLA+ 或 Verus；需要先为这些外部判定器建立可复现、跨 runner 的安装步骤，
+再将对应义务接入强制门。
 
 ## 明确不做
 
 - 不认识判定工具，不解析任何检查的输出语义
 - 不拥有产物（不写任何领域知识）
 - 不做插件系统、不联网、不做 UI
-- **不做影响分析**：`--change` 只把清单里已有的 `claim ↔ check` 绑定当作边，不建图、不新理论
+- **不推断语义影响**：`--change` 沿清单里已有的 `claim ↔ check` 绑定选检查；`--base` 只按维护者显式登记的路径范围规划，无法证明这些关系完整
 - **不为"将来可能的项目"加特性**：每个特性都要能说出是"哪个项目的哪一次真实摩擦"买来的

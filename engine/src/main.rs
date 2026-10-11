@@ -1,13 +1,13 @@
-//! assay engine v0.1 — 协议 v0.1 的哑执行器
+//! Assay CLI — manifest-driven checks and change-scoped planning.
 //!
 //! 做：读清单 → 按阶段选检查 → 跑命令 → 写证据 → 生成地图 → 比对棘轮 → 输出最小反例
 //! 不做：解释任何检查输出的语义；认识任何工具；拥有任何产物；替人做判断
 //!
-//! 用法：
-//!   assay run   [--root <path>] [--stage <s>] [--check <id>]
-//!   assay map   [--root <path>]
-//!   assay check [--root <path>]
+mod cli;
+mod planner;
+mod readiness;
 
+use clap::Parser;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -110,6 +110,8 @@ struct Check {
     bound: Option<u64>,
     #[serde(default)]
     command: String,
+    #[serde(default)]
+    inputs: Vec<String>,
     #[serde(default)]
     stage: String,
     #[serde(default)]
@@ -477,7 +479,33 @@ fn assay_dir(root: &Path) -> PathBuf {
 fn load_manifest(root: &Path) -> Result<Manifest, String> {
     let p = assay_dir(root).join("manifest.toml");
     let raw = fs::read_to_string(&p).map_err(|e| format!("读不到清单 {}: {e}", p.display()))?;
-    toml::from_str(&raw).map_err(|e| format!("清单解析失败 {}: {e}", p.display()))
+    let manifest: Manifest =
+        toml::from_str(&raw).map_err(|e| format!("清单解析失败 {}: {e}", p.display()))?;
+    validate_manifest_protocol(&manifest)?;
+    Ok(manifest)
+}
+
+fn validate_manifest_protocol(manifest: &Manifest) -> Result<(), String> {
+    let protocol = manifest
+        .assay
+        .as_ref()
+        .and_then(|meta| meta.protocol.as_deref())
+        .ok_or_else(|| "清单缺少 [assay].protocol".to_string())?;
+    if !matches!(protocol, "v0.6" | "v0.7") {
+        return Err(format!(
+            "不支持清单协议 {protocol:?}；当前支持 v0.6 和 v0.7"
+        ));
+    }
+    if protocol == "v0.6" && manifest.check.iter().any(|check| !check.inputs.is_empty()) {
+        return Err("[[check]].inputs 需要清单协议 v0.7".to_string());
+    }
+    for check in &manifest.check {
+        for input in &check.inputs {
+            planner::validate_input_scope(input)
+                .map_err(|error| format!("检查 {}：{error}", check.id))?;
+        }
+    }
+    Ok(())
 }
 
 fn load_ratchet(root: &Path) -> Ratchet {
@@ -653,14 +681,19 @@ fn map_content(m: &Manifest, r: &Ratchet) -> String {
         }
     }
 
-    s.push_str("\n## 检查\n\n| 检查 | 能力 | 档 | 范围 | 阶段 | 预算 | 出生证明 | 命令 |\n|---|---|---|---|---|---|---|---|\n");
+    s.push_str("\n## 检查\n\n| 检查 | 能力 | 档 | 范围 | 输入范围 | 阶段 | 预算 | 出生证明 | 命令 |\n|---|---|---|---|---|---|---|---|---|---|\n");
     for c in &m.check {
         s.push_str(&format!(
-            "| {} | {} | {} | {} | {} | {}s | {} | `{}` |\n",
+            "| {} | {} | {} | {} | {} | {} | {}s | {} | `{}` |\n",
             c.id,
             c.capability,
             c.strength,
             scope_of(c.scope.as_deref(), c.bound),
+            if c.inputs.is_empty() {
+                "—".to_string()
+            } else {
+                c.inputs.join(", ")
+            },
             c.stage,
             c.budget_s.map(|b| b.to_string()).unwrap_or("—".into()),
             if c.red_command.is_some() {
@@ -828,10 +861,117 @@ fn gaps(m: &Manifest) -> Vec<&Claim> {
         .collect()
 }
 
+fn required_check_ids(m: &Manifest, change: Option<&str>) -> Result<Vec<String>, String> {
+    let Some(change_id) = change else {
+        return Ok(Vec::new());
+    };
+    let change_record = m
+        .change
+        .iter()
+        .find(|record| record.id == change_id)
+        .ok_or_else(|| format!("清单中没有变更 {change_id:?}"))?;
+    let required = checks_required_by(m, change_record);
+    if required.is_empty() {
+        return Err(format!("变更 {change_id} 没有要求任何检查"));
+    }
+    Ok(required.iter().map(|check| check.id.clone()).collect())
+}
+
+fn build_plan(
+    root: &Path,
+    base: &str,
+    change: Option<&str>,
+    manifest: &Manifest,
+) -> Result<planner::Plan, String> {
+    let changes = planner::git_changes(root, base)?;
+    let required = required_check_ids(manifest, change)?;
+    let check_scopes: Vec<planner::CheckScope> = manifest
+        .check
+        .iter()
+        .map(|check| planner::CheckScope {
+            id: check.id.clone(),
+            inputs: check.inputs.clone(),
+        })
+        .collect();
+    Ok(planner::plan_checks(
+        changes.base_revision,
+        changes.paths,
+        &check_scopes,
+        &required,
+    ))
+}
+
+fn print_plan(plan: &planner::Plan, format: cli::OutputFormat) -> Result<(), String> {
+    if format == cli::OutputFormat::Json {
+        let output = serde_json::to_string_pretty(plan)
+            .map_err(|error| format!("计划 JSON 序列化失败：{error}"))?;
+        println!("{output}");
+        return Ok(());
+    }
+
+    println!("Assay change plan ({})", plan.schema_version);
+    println!("base revision: {}", plan.base_revision);
+    println!("changed paths: {}", plan.changed_paths.len());
+    for path in &plan.changed_paths {
+        println!("  {path}");
+    }
+    if plan.full_run_fallback {
+        println!(
+            "selection: full-run fallback (unmapped paths: {})",
+            plan.unmatched_paths.join(", ")
+        );
+    } else {
+        println!("selection: declared input scopes");
+    }
+    println!("checks: {}", plan.checks.len());
+    for check in &plan.checks {
+        println!("  {}", check.id);
+        for reason in &check.reasons {
+            println!("    - {reason}");
+        }
+    }
+    println!("note: selection follows declared paths; it does not infer semantic dependencies");
+    Ok(())
+}
+
+fn cmd_plan(root: &Path, base: &str, change: Option<&str>, format: cli::OutputFormat) -> i32 {
+    let manifest = match load_manifest(root) {
+        Ok(manifest) => manifest,
+        Err(error) => {
+            eprintln!("[清单错误] {error}");
+            return 2;
+        }
+    };
+    if manifest.check.is_empty() {
+        eprintln!("[清单错误] 没有登记任何检查");
+        return 2;
+    }
+    let plan = match build_plan(root, base, change, &manifest) {
+        Ok(plan) => plan,
+        Err(error) => {
+            eprintln!("[计划失败] {error}");
+            return 2;
+        }
+    };
+    if let Err(error) = print_plan(&plan, format) {
+        eprintln!("[计划输出失败] {error}");
+        return 2;
+    }
+    0
+}
+
+fn cmd_version() -> i32 {
+    println!("Assay engine {}", env!("CARGO_PKG_VERSION"));
+    println!("Manifest protocols: v0.6, v0.7");
+    println!("Evidence schema: assay-evidence/v1");
+    0
+}
+
 // ── run ─────────────────────────────────────────────────────────────────────
 
 fn cmd_run(
     root: &Path,
+    base: Option<&str>,
     stage: Option<&str>,
     only: Option<&str>,
     change: Option<&str>,
@@ -861,40 +1001,64 @@ fn cmd_run(
     let source_revision = std::env::var("ASSAY_SOURCE_REVISION").ok();
     let run_id = new_run_id();
 
-    let targets: Vec<&Check> = match change {
-        Some(cid) => match m.change.iter().find(|c| c.id == cid) {
-            None => {
-                eprintln!("[未知变更] {cid}：清单里没有这条 [[change]]。");
-                eprintln!("  变更必须在改代码之前写下——否则它就只能事后从 diff 里猜。");
+    let targets: Vec<&Check> = if let Some(base) = base {
+        let plan = match build_plan(root, base, change, &m) {
+            Ok(plan) => plan,
+            Err(error) => {
+                eprintln!("[计划失败] {error}");
                 return 2;
             }
-            Some(ch) => {
-                let req = checks_required_by(&m, ch);
-                if req.is_empty() {
-                    eprintln!("[变更没有要求任何证据] {cid}：它凭什么算完成？");
+        };
+        if let Err(error) = print_plan(&plan, cli::OutputFormat::Text) {
+            eprintln!("[计划输出失败] {error}");
+            return 2;
+        }
+        let selected: std::collections::BTreeSet<&str> =
+            plan.checks.iter().map(|check| check.id.as_str()).collect();
+        m.check
+            .iter()
+            .filter(|check| selected.contains(check.id.as_str()))
+            .collect()
+    } else {
+        match change {
+            Some(cid) => match m.change.iter().find(|c| c.id == cid) {
+                None => {
+                    eprintln!("[未知变更] {cid}：清单里没有这条 [[change]]。");
+                    eprintln!("  变更必须在改代码之前写下——否则它就只能事后从 diff 里猜。");
                     return 2;
                 }
-                println!("变更 {cid}：{}", ch.intent);
-                println!(
-                    "  要求的检查（{} 条）：{}",
-                    req.len(),
-                    req.iter()
-                        .map(|c| c.id.as_str())
-                        .collect::<Vec<_>>()
-                        .join(", ")
-                );
-                req
-            }
-        },
-        None => m
-            .check
-            .iter()
-            .filter(|c| stage.map(|s| c.stage == s).unwrap_or(true))
-            .filter(|c| only.map(|o| c.id == o).unwrap_or(true))
-            .collect(),
+                Some(ch) => {
+                    let req = checks_required_by(&m, ch);
+                    if req.is_empty() {
+                        eprintln!("[变更没有要求任何证据] {cid}：它凭什么算完成？");
+                        return 2;
+                    }
+                    println!("变更 {cid}：{}", ch.intent);
+                    println!(
+                        "  要求的检查（{} 条）：{}",
+                        req.len(),
+                        req.iter()
+                            .map(|c| c.id.as_str())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
+                    req
+                }
+            },
+            None => m
+                .check
+                .iter()
+                .filter(|c| stage.map(|s| c.stage == s).unwrap_or(true))
+                .filter(|c| only.map(|o| c.id == o).unwrap_or(true))
+                .collect(),
+        }
     };
 
     if targets.is_empty() {
+        if base.is_some() {
+            println!("没有变化或变更义务需要检查；未执行检查。");
+            return 0;
+        }
         println!("[无匹配检查] stage={stage:?} check={only:?}");
         return 1;
     }
@@ -1228,7 +1392,7 @@ fn cmd_check(root: &Path) -> i32 {
         .and_then(|a| a.protocol.clone())
         .unwrap_or_else(|| "未声明".into());
     println!("== 清单自检（协议 {proto}） ==");
-    if proto.starts_with("v0.6") {
+    if matches!(proto.as_str(), "v0.6" | "v0.7") {
         let bad_sources: Vec<&str> = m
             .claim
             .iter()
@@ -1606,61 +1770,32 @@ fn cmd_check(root: &Path) -> i32 {
 // ── main ────────────────────────────────────────────────────────────────────
 
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let mut sub = String::new();
-    let mut root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-    let mut stage: Option<String> = None;
-    let mut only: Option<String> = None;
-    let mut change: Option<String> = None;
-    let mut certify = false;
-
-    let mut i = 0;
-    while i < args.len() {
-        match args[i].as_str() {
-            "--root" => {
-                i += 1;
-                root = PathBuf::from(args.get(i).cloned().unwrap_or_default());
-            }
-            "--stage" => {
-                i += 1;
-                stage = args.get(i).cloned();
-            }
-            "--check" => {
-                i += 1;
-                only = args.get(i).cloned();
-            }
-            "--change" => {
-                i += 1;
-                change = args.get(i).cloned();
-            }
-            "--certify" => certify = true,
-            other => {
-                if sub.is_empty() {
-                    sub = other.to_string();
-                }
-            }
-        }
-        i += 1;
-    }
-
-    let code = match sub.as_str() {
-        "run" => cmd_run(
-            &root,
+    let cli = cli::Cli::parse();
+    let code = match cli.command {
+        cli::Command::Run {
+            base,
+            stage,
+            check,
+            change,
+            certify,
+        } => cmd_run(
+            &cli.root,
+            base.as_deref(),
             stage.as_deref(),
-            only.as_deref(),
+            check.as_deref(),
             change.as_deref(),
             certify,
         ),
-        "map" => cmd_map(&root),
-        "check" => cmd_check(&root),
-        "" => {
-            eprintln!("usage: assay <run|map|check> [--root <path>] [--stage <s>] [--check <id>] [--change <id>] [--certify]");
-            2
-        }
-        other => {
-            eprintln!("未知子命令 {other:?}；可用：run / map / check");
-            2
-        }
+        cli::Command::Plan {
+            base,
+            change,
+            format,
+        } => cmd_plan(&cli.root, &base, change.as_deref(), format),
+        cli::Command::Map => cmd_map(&cli.root),
+        cli::Command::Check => cmd_check(&cli.root),
+        cli::Command::Doctor { format } => readiness::doctor(&cli.root, format),
+        cli::Command::Next { format } => readiness::next(&cli.root, format),
+        cli::Command::Version => cmd_version(),
     };
     std::process::exit(code);
 }
@@ -1711,5 +1846,24 @@ mod tests {
         assert_eq!(records[1]["run"], 2);
         drop(contents);
         fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn manifest_protocol_versions_are_explicit_and_gated() {
+        let manifest = |protocol: &str, inputs: Vec<String>| Manifest {
+            assay: Some(Meta {
+                protocol: Some(protocol.to_string()),
+            }),
+            check: vec![Check {
+                inputs,
+                ..Check::default()
+            }],
+            ..Manifest::default()
+        };
+
+        assert!(validate_manifest_protocol(&manifest("v0.6", Vec::new())).is_ok());
+        assert!(validate_manifest_protocol(&manifest("v0.7", vec!["src/".to_string()])).is_ok());
+        assert!(validate_manifest_protocol(&manifest("v9.0", Vec::new())).is_err());
+        assert!(validate_manifest_protocol(&manifest("v0.6", vec!["src/".to_string()])).is_err());
     }
 }

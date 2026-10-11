@@ -10,12 +10,12 @@
 | `toml` | 0.8 | 读 `<target>/assay/manifest.toml` 与 `ratchet.toml`（协议 v0.1 §2） | `load_manifest` / `load_ratchet` | 若协议改用其它格式 |
 | `serde` | 1（derive） | 把清单反序列化成结构体；避免手写解析器 | `Manifest`/`Claim`/`Check`/`Waiver`/`Ratchet` | 同上 |
 | `serde_json` | 1 | 写证据记录（协议 §2.4，JSON） | `cmd_run` 的证据落盘 | 若证据改用其它格式 |
+| `clap` | 4（derive） | 为 CLI 子命令提供可测试的类型化解析、统一帮助/版本输出和参数冲突校验 | `cli::Cli` / `cli::Command` | 若 CLI 移除或替换为同等可靠的解析方案 |
 
 ## 明确不引入
 
 | 候选 | 为什么不 |
 |---|---|
-| `clap` | 只有 3 个子命令 + 4 个开关；手写解析 20 行，不值得一个依赖树 |
 | `chrono` / `time` | 证据只需要"可排序、无歧义"的时间戳。ISO8601(UTC) 用 civil-from-days 算法 20 行自算，实测可用 |
 | `sha2` | 棘轮指纹是**防误改**不是防伪造，FNV-1a 足够且零依赖 |
 | 任何 HTTP / 异步 / 日志框架 | 引擎不联网、不并发、不需要日志分级 |

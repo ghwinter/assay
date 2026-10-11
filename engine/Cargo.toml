@@ -1,12 +1,14 @@
 [package]
+license = "MIT OR Apache-2.0"
 name = "assay"
-version = "0.5.0"
+version = "0.6.0"
 edition = "2021"
 
 # 哑执行器：读清单 → 跑命令 → 写证据 → 生成地图 → 比对棘轮。
 # 它**不认识任何判定工具**，也不拥有任何产物。
 
 [dependencies]
+clap = { version = "4.6.7", features = ["derive"] }
 toml = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
