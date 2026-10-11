@@ -5,3 +5,9 @@ version = "0.1.0"
 edition = "2021"
 
 # 主实现试点（D-007）：零第三方依赖；verus 集成见 D-006（draft）
+
+# `verus_verify` 是 verus 驱动透传的 cfg（契约门控，见 src/qcore.rs 与 D-017）。
+# 不声明它，`cargo clippy -D warnings` 会以 `unexpected cfg condition name` 报错——
+# 新版 CI 正是这么跑的。engine/Cargo.toml 已有同一先例。
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_verify)'] }

@@ -13,9 +13,9 @@
 // 事实可证、组合不可证）；owned 使每个调用点都是显式等式（D-006 备忘延续）。
 
 #[cfg(verus_verify)]
-use vstd::prelude::*;
-#[cfg(verus_verify)]
 use verus_builtin_macros::{verus, verus_spec};
+#[cfg(verus_verify)]
+use vstd::prelude::*;
 
 #[cfg(verus_verify)]
 mod vspecs {
@@ -44,7 +44,10 @@ pub struct QueueCore<T> {
 impl<T> QueueCore<T> {
     /// 占位值（mem::take 用）：cap=0、空队列——inv 成立，锁内短暂存在无人观测
     pub fn placeholder() -> Self {
-        QueueCore { cap: 0, q: Vec::new() }
+        QueueCore {
+            cap: 0,
+            q: Vec::new(),
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -102,6 +105,11 @@ pub fn push<T>(mut q: QueueCore<T>, v: T) -> (QueueCore<T>, bool) {
             res.0.is_none() && res.1.q@ == q.q@
             && res.1.q@.len() == q.q@.len(),
 ))]
+// `q.q.len() > 0` 与上面 spec 里的 `q.q@.len() > 0` 是同一条件在两层的写法，刻意保持一致。
+// clippy 建议改成 `!q.q.is_empty()`，但那会动到 Verus **已验证**的函数体，
+// 而本机没有 verus（O-028 无法复跑）——**改自己无法验证的东西**正是判例 BS-011/BS-012 防的事。
+// 因此这里用定点豁免，把语义改动留给能跑 O-028 的人。
+#[allow(clippy::len_zero)]
 pub fn pop<T>(mut q: QueueCore<T>) -> (Option<T>, QueueCore<T>) {
     if q.q.len() > 0 {
         let hd = q.q.remove(0);

@@ -221,7 +221,10 @@ fn bench_p99() {
     let n = all.len();
     let p50 = all[n / 2];
     let p99 = all[n * 99 / 100];
-    println!("bench_p99 {P}x{C} x{N}: {} pushes, p50={p50}ns, p99={p99}ns", n);
+    println!(
+        "bench_p99 {P}x{C} x{N}: {} pushes, p50={p50}ns, p99={p99}ns",
+        n
+    );
     const BUDGET_NS: u32 = 10_000; // G-003 v1 预算——已由 D-013 方案A 撤回（synthetic）
     println!("  G-003 v1 预算 {BUDGET_NS}ns: 已撤回（D-013 方案A），本基准转报告型仪表，不判废");
 }
@@ -267,9 +270,16 @@ fn bench_throughput() {
     }
     let us = t0.elapsed().as_micros() as f64;
     let ops = total.load(Ordering::SeqCst) as f64 * 1e6 / us;
-    println!("bench {P}x{C} x{N}: {} ops, {:.0} ops/s", total.load(Ordering::SeqCst), ops);
+    println!(
+        "bench {P}x{C} x{N}: {} ops, {:.0} ops/s",
+        total.load(Ordering::SeqCst),
+        ops
+    );
     const BUDGET: f64 = 50_000.0; // G-003 v0 预算
-    assert!(ops >= BUDGET, "低于 G-003 预算 {BUDGET} ops/s（实测 {ops:.0}）");
+    assert!(
+        ops >= BUDGET,
+        "低于 G-003 预算 {BUDGET} ops/s（实测 {ops:.0}）"
+    );
     println!("  G-003 预算 {BUDGET} ops/s: ok");
 }
 
@@ -282,7 +292,7 @@ fn timed_pop_timeout_returns_none() {
     let ms = t0.elapsed().as_millis();
     assert!((150..=2000).contains(&ms), "超时应接近 200ms，实测 {ms}ms");
     assert_eq!(q.size(), 0); // 超时路径不动队列状态（O-030）
-    // 超时后队列仍可正常使用
+                             // 超时后队列仍可正常使用
     assert!(q.push(1));
     assert_eq!(q.pop(), Some(1));
 }
@@ -328,5 +338,8 @@ fn timed_pop_closed_empty_immediate() {
     q.close();
     let t0 = Instant::now();
     assert_eq!(q.timed_pop(Duration::from_secs(10)), None); // 关闭且排空 → 不等待
-    assert!(t0.elapsed() < Duration::from_millis(500), "关闭后不应消耗 timeout");
+    assert!(
+        t0.elapsed() < Duration::from_millis(500),
+        "关闭后不应消耗 timeout"
+    );
 }
