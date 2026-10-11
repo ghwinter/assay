@@ -1,5 +1,5 @@
 [assay]
-protocol = "v0.6"
+protocol = "v0.7"
 
 [[claim]]
 id = "C-001"
@@ -17,6 +17,7 @@ capability = "coverage-search"
 strength = 2
 scope = "sampled"
 command = "cargo test --manifest-path Cargo.toml"
+inputs = ["src/", "Cargo.toml", "Cargo.lock"]
 red_command = "cargo test --manifest-path Cargo.toml --features intentionally-undefined-feature"
 stage = "pre-commit"
 budget_s = 60

@@ -24,9 +24,9 @@
 
 ## 检查
 
-| 检查 | 能力 | 档 | 范围 | 阶段 | 预算 | 出生证明 | 命令 |
-|---|---|---|---|---|---|---|---|
-| K-001 | coverage-search | 2 | sampled | pre-commit | 60s | 🎓 可复现 | `cargo test --manifest-path Cargo.toml` |
+| 检查 | 能力 | 档 | 范围 | 输入范围 | 阶段 | 预算 | 出生证明 | 命令 |
+|---|---|---|---|---|---|---|---|---|---|
+| K-001 | coverage-search | 2 | sampled | src/, Cargo.toml, Cargo.lock | pre-commit | 60s | 🎓 可复现 | `cargo test --manifest-path Cargo.toml` |
 
 ## 变更（改代码之前就该写下的东西）
 

@@ -1,0 +1,71 @@
+[assay]
+protocol = "v0.7"
+
+[[claim]]
+id = "C-001"
+text = "256 counts match oracle"
+rejected_by = "Any missing, duplicated, or misclassified input byte changes at least one checked count"
+capability = "coverage-search"
+strength_required = 2
+obligations = ["O-040"]
+scope = "sampled"
+
+[[check]]
+id = "K-001"
+claims = ["C-001"]
+capability = "coverage-search"
+strength = 2
+scope = "sampled"
+command = "cargo test --locked --manifest-path Cargo.toml"
+inputs = ["src/", "Cargo.toml", "Cargo.lock", "assay/manifest.toml"]
+red_command = "cargo test --locked --manifest-path Cargo.toml --features intentionally-undefined-feature"
+stage = "pre-commit"
+budget_s = 120
+seen_red = "Requesting an undefined Cargo feature must fail rather than produce a passing check."
+ref = "src/lib.rs::tests"
+
+[[claim]]
+id = "C-002"
+text = "Bounded work drains after producer close"
+rejected_by = "A committed job remains stranded after all input has been submitted and the queue is closed"
+capability = "coverage-search"
+strength_required = 2
+obligations = ["O-044"]
+scope = "sampled"
+
+[[check]]
+id = "K-002"
+claims = ["C-002"]
+capability = "coverage-search"
+strength = 2
+scope = "sampled"
+command = "python tla/check.py"
+inputs = ["tla/", "assay/manifest.toml"]
+red_command = "python -c \"raise SystemExit(1)\""
+stage = "pr"
+budget_s = 120
+seen_red = "A failing checker command exits nonzero; the Assay runner must not record it as passing."
+ref = "tla/BoundedPipeline.tla"
+
+[[claim]]
+id = "C-003"
+text = "Streaming output matches the byte reference"
+rejected_by = "Any input byte is lost, duplicated, or assigned to the wrong bucket"
+capability = "coverage-search"
+strength_required = 2
+obligations = ["O-045", "O-046"]
+scope = "sampled"
+
+[[check]]
+id = "K-003"
+claims = ["C-003"]
+capability = "coverage-search"
+strength = 2
+scope = "sampled"
+command = "cargo test --locked --manifest-path Cargo.toml"
+inputs = ["src/", "tests/", "Cargo.toml", "Cargo.lock", "assay/manifest.toml"]
+red_command = "cargo test --locked --manifest-path Cargo.toml --features intentionally-undefined-feature"
+stage = "pre-commit"
+budget_s = 120
+seen_red = "Requesting an undefined Cargo feature must fail rather than produce passing tests."
+ref = "src/pipeline.rs::tests and tests/cli.rs"

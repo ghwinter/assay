@@ -1,0 +1,15 @@
+[package]
+license = "MIT OR Apache-2.0"
+name = "parallel-histogram-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+name = "parallel_histogram"
+path = "src/lib.rs"
+
+[[bench]]
+name = "scaling"
+path = "benches/scaling.rs"
+harness = false
